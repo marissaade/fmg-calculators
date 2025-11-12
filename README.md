@@ -171,6 +171,8 @@ Files are deployed to AWS S3 buckets:
 - `contributingToIra`
 - `whatIsMyMonthlyBudget`
 - `debtOrInvest`
+- `comparingInvestments` (legacy)
+- `savingForCollege` (legacy)
 
 ## UX Guidelines
 
