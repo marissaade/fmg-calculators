@@ -69,6 +69,8 @@ Each calculator uses a unique prefix for all classes and IDs:
 - `ira-`: Contributing to an IRA
 - `wimb-`: What Is My Monthly Budget
 - `doi-`: Debt or Invest
+- `ci-`: Comparing Investments (legacy)
+- `sfc-`: Saving for College (legacy)
 
 ### Code Patterns
 All calculators follow patterns documented in `.cursorrules`:
