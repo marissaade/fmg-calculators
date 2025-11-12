@@ -12,9 +12,20 @@ This project contains financial calculators redesigned for consistency, accessib
 - **What Is My Monthly Budget** (`what-is-my-monthly-budget/`) - Prefix: `wimb-`
 - **Debt or Invest** (`debt-or-invest/`) - Prefix: `doi-`
 
-### Legacy Calculators
+### Legacy Calculators (Pending Update)
+These calculators have not yet been updated to match the new design patterns and will be updated in the future:
+
 - **Comparing Investments** (`comparing-investments/`) - Prefix: `ci-`
+  - Still uses "Calculate" button pattern
+  - Forms are not pre-filled
+  - Does not auto-calculate on page load
+  - Missing slider implementations where applicable
+  
 - **Saving for College** (`saving-for-college/`) - Prefix: `sfc-`
+  - Still uses "Calculate" button pattern
+  - Forms are not pre-filled
+  - Does not auto-calculate on page load
+  - Missing slider implementations where applicable
 
 ## Key Features
 
