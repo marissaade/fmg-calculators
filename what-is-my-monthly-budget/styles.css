@@ -1,0 +1,495 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+body {
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure body doesn't constrain width */
+.wimb-body {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Copy exact body styling from Comparing Investments calculator */
+.c-matter--article .c-matter__body {
+    max-width: 1170px;
+}
+@media (max-width: 950px) {
+    .c-matter--article .c-matter__body {
+        max-width: 750px;
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 750px) {
+    .c-matter--article .c-matter__body {
+        max-width: 100%;
+        margin: 10px;
+        padding: 1rem;
+        border-radius: 8px;
+    }
+}
+
+/* Apply CMS calculator styling - use ci-body class for consistency */
+/* TODO: Update class name to something more universal (e.g., .calculator-body) when dev team refactors */
+@media(min-width: 992px) {
+  .c-matter--article .c-matter__body:has(.ci-body) {
+    max-width: 1170px;
+    width: auto;
+  }
+}
+
+/* Container and layout */
+.wimb-container {
+    max-width: 1170px;
+    margin: 2rem auto 4rem auto;
+    padding: 0 2rem;
+    background: transparent;
+    box-sizing: border-box;
+}
+
+/* Two-column layout for desktop */
+.wimb-calculator-layout {
+    display: grid;
+    grid-template-columns: 48% 52%;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible !important;
+    align-items: start;
+}
+
+.wimb-form-column {
+    /* Form takes up left column */
+    background: #f7fafc;
+    border: 2px solid #f3f4f6;
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    min-width: 0;
+    max-width: 100%;
+    overflow: visible;
+}
+
+.wimb-results-column {
+    /* Results take up right column */
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 0 !important;
+    align-self: start !important;
+    min-width: 0;
+    max-width: 100%;
+    overflow: visible;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.wimb-results-column * {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Header */
+.wimb-header {
+    text-align: center;
+    margin-bottom: 48px;
+    padding-bottom: 0;
+}
+
+.wimb-header p {
+    max-width: none;
+    margin: 0;
+    line-height: 1.7;
+    font-weight: 400;
+}
+
+/* Form sections */
+.wimb-input-section {
+    margin-bottom: 32px;
+    padding: 0;
+    background: transparent;
+    border: none;
+}
+
+.wimb-input-section h2 {
+    font-weight: 500;
+    margin-bottom: 28px;
+    letter-spacing: -0.01em;
+    text-align: center;
+}
+
+/* Input groups */
+.wimb-input-group {
+    margin-bottom: 24px;
+}
+
+.wimb-input-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    position: relative;
+    letter-spacing: -0.005em;
+    cursor: default !important;
+}
+
+/* Input wrapper for currency symbols */
+.wimb-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.wimb-currency {
+    position: absolute !important;
+    left: 12px !important;
+    transform: translateY(-10%) !important;
+    font-weight: 400 !important;
+    z-index: 1 !important;
+    font-size: 1rem !important;
+    line-height: 1 !important;
+    font-family: inherit !important;
+    pointer-events: none !important;
+}
+
+/* Input styles */
+input[type="text"],
+input[type="number"] {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+    font-family: inherit;
+    font-weight: 400;
+}
+
+/* Placeholder text styling */
+input[type="text"]::placeholder,
+input[type="number"]::placeholder {
+    color: #d1d5db;
+}
+
+/* Currency inputs need extra left padding */
+.wimb-input-wrapper:has(.wimb-currency) input {
+    padding-left: 32px !important;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgb(16 185 129 / 0.08);
+}
+
+/* Error messages */
+.wimb-error-message {
+    margin-top: 4px;
+    font-weight: 400;
+    display: none;
+}
+
+.wimb-error-message.show {
+    display: block;
+}
+
+.wimb-input-group.error input {
+    box-shadow: 0 0 0 3px rgb(239 68 68 / 0.1);
+}
+
+/* Button styles */
+.wimb-button-group {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-start;
+    margin-top: 32px;
+    align-items: flex-start;
+}
+
+.wimb-reset-btn {
+    min-width: 200px;
+    flex: 0 0 auto;
+}
+
+/* Results section */
+.wimb-results-section {
+    margin-top: 24px;
+    padding: 0;
+    background: transparent;
+    border: none;
+}
+
+.wimb-main-result {
+    background: #f8fafc;
+    padding: 32px 24px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 32px;
+    border: 1px solid #e2e8f0;
+}
+
+.wimb-main-result h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.wimb-main-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+}
+
+.wimb-main-value.wimb-surplus {
+    color: #059669;
+}
+
+.wimb-main-value.wimb-deficit {
+    color: #dc2626;
+}
+
+.wimb-breakdown {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.wimb-breakdown-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.wimb-breakdown-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.wimb-breakdown-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+}
+
+.wimb-breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+}
+
+.wimb-breakdown-label {
+    font-size: 0.95rem;
+    font-weight: 400;
+}
+
+.wimb-breakdown-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+/* Chart section */
+.wimb-chart-section {
+    background: #f7fafc;
+    border: 2px solid #f3f4f6;
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin: 0;
+    box-shadow: none;
+}
+
+.wimb-chart-heading {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    letter-spacing: -0.01em;
+    color: #1e293b;
+}
+
+.wimb-chart-container {
+    position: relative;
+    height: 380px;
+    width: 100%;
+}
+
+.wimb-chart-section .wimb-placeholder-content {
+    padding: 0;
+    text-align: left;
+}
+
+.wimb-chart-section .wimb-placeholder-content p {
+    line-height: 1.6;
+    margin: 0;
+}
+
+.wimb-chart-container canvas {
+    max-width: 100%;
+    height: 380px !important;
+    width: 100% !important;
+}
+
+/* Explanation text */
+.wimb-explanation-text {
+    background: #f7fafc;
+    padding: 28px;
+    border-radius: var(--radius-lg);
+    margin: 32px 0;
+    line-height: 1.6;
+    box-shadow: var(--shadow-sm);
+    border: 2px solid #f3f4f6;
+}
+
+/* Download section */
+.wimb-download-section {
+    margin-top: 24px;
+}
+
+.wimb-download-btn {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+    font-family: inherit;
+}
+
+/* Standard Breakpoints */
+@media (max-width: 950px) {
+    .wimb-container {
+        max-width: 750px;
+        padding: 0 1.5rem;
+        margin: 1.5rem auto 3rem auto;
+    }
+}
+
+@media (max-width: 750px) {
+    .wimb-container {
+        max-width: 100%;
+        margin: 0.5rem auto 1rem auto;
+        padding: 0;
+    }
+    
+    /* Stack vertically on mobile */
+    .wimb-calculator-layout {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .wimb-results-column {
+        position: static;
+    }
+    
+    /* Left align all text on mobile */
+    .wimb-header {
+        text-align: left;
+        margin-bottom: 24px;
+    }
+    
+    .wimb-input-section h2,
+    .wimb-chart-section h2 {
+        text-align: left;
+    }
+    
+    .wimb-main-result {
+        text-align: left;
+    }
+    
+    .wimb-breakdown-header {
+        text-align: left;
+    }
+    
+    .wimb-form-column {
+        padding: 16px;
+    }
+    
+    .wimb-chart-section {
+        padding: 16px;
+    }
+    
+    .wimb-placeholder-content {
+        padding: 0;
+    }
+    
+    .wimb-results-section {
+        padding: 0;
+    }
+    
+    .wimb-main-result {
+        padding: 24px 16px;
+    }
+    
+    .wimb-input-section {
+        margin-bottom: 20px;
+        padding: 0;
+    }
+    
+    .wimb-button-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .wimb-reset-btn {
+        width: 100%;
+    }
+    
+    .wimb-download-section {
+        width: 100%;
+    }
+    
+    .wimb-download-btn {
+        width: 100%;
+    }
+    
+    .wimb-chart-container {
+        height: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .wimb-form-column {
+        padding: 12px;
+    }
+    
+    .wimb-chart-section {
+        padding: 12px;
+    }
+    
+    .wimb-main-result {
+        padding: 20px 12px;
+    }
+    
+    .wimb-breakdown {
+        padding: 20px 12px;
+    }
+    
+    .wimb-main-value {
+        font-size: 2rem;
+    }
+    
+    .wimb-breakdown-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .wimb-chart-container {
+        height: auto;
+    }
+}
+

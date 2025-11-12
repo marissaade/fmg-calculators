@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Should I Pay Off Debt or Invest? - Calculator Test</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="doi-body ci-body">
+        <div class="doi-container">
+            <div class="doi-header">
+                <h1>Should I Pay Off Debt or Invest?</h1>
+                <p>"Should I pay off debt or invest?" is one of the most frequent questions posed to a financial professional. The answer depends so much on your personal situation, but tools like this calculator can help someone start to see the pros and cons of each decision.</p>
+            </div>
+            
+            <div class="doi-calculator-layout">
+                <!-- Input Section -->
+                <div class="doi-form-column">
+                    <div class="doi-input-section">
+                        <h2>Debt Information</h2>
+                        <div class="doi-input-group">
+                            <label for="doi-total-debt">Total Debt Amount</label>
+                            <div class="doi-input-wrapper">
+                                <span class="doi-currency">$</span>
+                                <input type="number" id="doi-total-debt" value="10000" min="0" step="100" />
+                            </div>
+                        </div>
+                        
+                        <div class="doi-input-group">
+                            <label for="doi-debt-interest-rate">Debt Interest Rate (%)</label>
+                            <div class="doi-input-wrapper">
+                                <input type="number" id="doi-debt-interest-rate" value="30" min="0" max="100" step="0.1" />
+                                <span class="doi-unit">%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="doi-input-section">
+                        <h2>Investment Information</h2>
+                        <div class="doi-input-group">
+                            <label for="doi-investment-rate">Investment Rate of Return (%)</label>
+                            <div class="doi-input-wrapper">
+                                <input type="number" id="doi-investment-rate" value="2" min="0" max="100" step="0.1" />
+                                <span class="doi-unit">%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="doi-input-section">
+                        <h2>Monthly Allocation</h2>
+                        <div class="doi-input-group">
+                            <label for="doi-monthly-payment">Monthly Payment / Investment</label>
+                            <div class="doi-input-wrapper">
+                                <span class="doi-currency">$</span>
+                                <input type="number" id="doi-monthly-payment" value="400" min="0" step="10" />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="doi-calculateBtn" class="c-btn doi-calculate-btn" title="Please complete all fields above to calculate your best option">Calculate</button>
+                </div>
+                
+                <!-- Results Section -->
+                <div class="doi-results-column">
+                    <div class="doi-chart-section">
+                        <h3>Interest Comparison</h3>
+                        <div class="doi-chart-container">
+                            <canvas id="doi-comparison-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div id="doi-results-section" class="doi-results-section" style="display: none;">
+                        <h3>Your Analysis</h3>
+                        
+                        <div class="doi-results-grid">
+                            <div class="doi-result-card doi-primary">
+                                <div class="doi-result-label">Recommendation</div>
+                                <div class="doi-result-value" id="doi-recommendation">Pay Off Debt</div>
+                            </div>
+                            
+                            <div class="doi-result-card">
+                                <div class="doi-result-label">Time to Pay Off Debt</div>
+                                <div class="doi-result-value" id="doi-time-to-payoff">0 months</div>
+                            </div>
+                            
+                            <div class="doi-result-card">
+                                <div class="doi-result-label">Total Interest Saved (Debt)</div>
+                                <div class="doi-result-value" id="doi-interest-saved">$0</div>
+                            </div>
+                            
+                            <div class="doi-result-card">
+                                <div class="doi-result-label">Future Value of Investment</div>
+                                <div class="doi-result-value" id="doi-investment-value">$0</div>
+                            </div>
+                            
+                            <div class="doi-result-card">
+                                <div class="doi-result-label">Total Interest Accrued (Investment)</div>
+                                <div class="doi-result-value" id="doi-investment-interest">$0</div>
+                            </div>
+                        </div>
+                        
+                        <div class="doi-recommendation-text" id="doi-recommendation-text">
+                            <p>If your answer suggests investing, you might want to play with your expected interest rates and monthly investments to see what kind of outcomes you get. Often, people have the goal of paying off debt in a steady, timely fashion, but life gets in the way. Experiment to see what could change your mind.</p>
+                        </div>
+                        
+                        <div class="doi-download-section">
+                            <button id="doi-downloadBtn" class="c-btn doi-download-btn">Download Results</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+

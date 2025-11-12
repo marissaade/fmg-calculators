@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contributing to an IRA - Calculator Test</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="ira-body ci-body">
+        <div class="ira-container">
+            <div class="ira-header">
+                <h1>Contributing to an IRA</h1>
+                <p>Contributing to an Individual Retirement Account (IRA) can be a smart way to save for retirement with potential tax advantages. Use this calculator to determine your eligibility, estimate your future IRA value, and see how your contributions can grow over time.</p>
+            </div>
+            
+            <div class="ira-calculator-layout">
+                <!-- Input Section -->
+                <div class="ira-form-column">
+                    <div class="ira-input-section">
+                        <h2>Income and Tax Status</h2>
+                        <div class="ira-input-group">
+                            <label for="ira-magi">Modified Adjusted Gross Income (MAGI)</label>
+                            <div class="ira-input-wrapper">
+                                <span class="ira-currency">$</span>
+                                <input type="number" id="ira-magi" value="100000" min="0" step="1000" />
+                            </div>
+                        </div>
+                        
+                        <div class="ira-input-group">
+                            <label for="ira-filing-status">Tax Filing Status</label>
+                            <select id="ira-filing-status" class="ira-select">
+                                <option value="single">Single</option>
+                                <option value="married-joint">Married Filing Jointly</option>
+                                <option value="married-separate">Married Filing Separately</option>
+                                <option value="head-of-household">Head of Household</option>
+                            </select>
+                        </div>
+                        
+                        <div class="ira-input-group">
+                            <label for="ira-retirement-plan">Participate in Employer Retirement Plan?</label>
+                            <select id="ira-retirement-plan" class="ira-select">
+                                <option value="yes">Yes</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="ira-input-section">
+                        <h2>IRA Contribution Details</h2>
+                        <div class="ira-input-group">
+                            <label for="ira-initial-balance">Initial IRA Balance</label>
+                            <div class="ira-input-wrapper">
+                                <span class="ira-currency">$</span>
+                                <input type="number" id="ira-initial-balance" value="50000" min="0" step="1000" />
+                            </div>
+                        </div>
+                        
+                        <div class="ira-input-group">
+                            <label for="ira-annual-contribution">Annual Contribution</label>
+                            <div class="ira-input-wrapper">
+                                <span class="ira-currency">$</span>
+                                <input type="number" id="ira-annual-contribution" value="6500" min="0" step="500" />
+                            </div>
+                        </div>
+                        
+                        <div class="ira-input-group">
+                            <label for="ira-rate-of-return">Expected Annual Rate of Return (%)</label>
+                            <div class="ira-input-wrapper">
+                                <input type="number" id="ira-rate-of-return" value="7" min="0" max="20" step="0.1" />
+                                <span class="ira-unit">%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="ira-input-group">
+                            <label for="ira-years-to-contribute">Number of Years to Contribute</label>
+                            <div class="ira-input-wrapper">
+                                <input type="number" id="ira-years-to-contribute" value="30" min="1" max="50" step="1" />
+                                <span class="ira-unit">years</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="ira-calculateBtn" class="c-btn ira-calculate-btn" title="Please complete all fields above to calculate your IRA projection">Calculate</button>
+                </div>
+                
+                <!-- Results Section -->
+                <div class="ira-results-column">
+                    <div class="ira-chart-section">
+                        <h3>IRA Growth Projection</h3>
+                        <div class="ira-chart-container">
+                            <canvas id="ira-growth-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div id="ira-results-section" class="ira-results-section" style="display: none;">
+                        <h3>Your IRA Projection</h3>
+                        
+                        <div class="ira-eligibility-card" id="ira-eligibility-card">
+                            <div class="ira-eligibility-status" id="ira-eligibility-status">
+                                <span class="ira-status-icon">✓</span>
+                                <span class="ira-status-text">Eligible to Contribute</span>
+                            </div>
+                            <div class="ira-deductible-info" id="ira-deductible-info">
+                                Max Deductible Contribution: <strong>$6,500</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="ira-results-grid">
+                            <div class="ira-result-card ira-primary">
+                                <div class="ira-result-label">Future Value of IRA</div>
+                                <div class="ira-result-value" id="ira-future-value">$0</div>
+                            </div>
+                            
+                            <div class="ira-result-card">
+                                <div class="ira-result-label">Total Contributions</div>
+                                <div class="ira-result-value" id="ira-total-contributions">$0</div>
+                            </div>
+                            
+                            <div class="ira-result-card">
+                                <div class="ira-result-label">Total Earnings</div>
+                                <div class="ira-result-value" id="ira-total-earnings">$0</div>
+                            </div>
+                        </div>
+                        
+                        <div class="ira-download-section">
+                            <button id="ira-downloadBtn" class="c-btn ira-download-btn">Download Results</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+

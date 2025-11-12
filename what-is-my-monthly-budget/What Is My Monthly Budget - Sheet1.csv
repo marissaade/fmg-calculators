@@ -1,0 +1,15 @@
+Income,,,,,
+Monthly Take-Home Pay,"$5,000",,,,
+Other Monthly Income,$500,,,DESIGNER NOTE: Copy to the right should be static and visible as the customer inputs data.,"Understanding your ""sources and uses"" of money is key first step in personal finance. Knowing if your ""sources"" are greater than your ""uses"" can help determine what types of investments you can consider. This calculator can help you add it all up."
+Total Income,"$5,500",,,,
+Expenses,,,,,
+Housing (Rent/Mortgage),"$1,500",,,,
+Utilities,$200,,,DESIGNER NOTE: This copy should appear AFTER the customer inputs their information and the calculator does its thing.,"Are you running a surplus or a deficit? If you have a surplus, there are several options to consider. If you're at a deficit, you'll need to address you current situation before using your monthly cash flow to help with an investment."
+Food/Groceries,$600,,,,
+Transportation,$300,,,,
+Debt Payments (Excluding Mortgage),$350,,,,
+Discretionary Spending,$500,,,,
+Other Expenses,$100,,,,
+Total Expenses,"$3,550",,,,
+,,,,,
+Net Monthly Cash Flow,"$1,950",,,,

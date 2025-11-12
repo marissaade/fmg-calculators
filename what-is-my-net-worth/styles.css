@@ -1,0 +1,813 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+body {
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure body doesn't constrain width */
+.winw-body {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Copy exact body styling from Comparing Investments calculator */
+.c-matter--article .c-matter__body {
+    max-width: 1170px;
+}
+@media (max-width: 950px) {
+    .c-matter--article .c-matter__body {
+        max-width: 750px;
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 750px) {
+    .c-matter--article .c-matter__body {
+        max-width: 100%;
+        margin: 10px;
+        padding: 1rem;
+        border-radius: 8px;
+    }
+}
+
+/* Apply CMS calculator styling - use ci-body class for consistency */
+/* TODO: Update class name to something more universal (e.g., .calculator-body) when dev team refactors */
+@media(min-width: 992px) {
+  .c-matter--article .c-matter__body:has(.ci-body) {
+    max-width: 1170px;
+    width: auto;
+  }
+}
+
+/* Container and layout */
+.winw-container {
+    max-width: 1170px;
+    margin: 2rem auto 4rem auto;
+    padding: 0 2rem;
+    background: transparent;
+    box-sizing: border-box;
+}
+
+/* Two-column layout for desktop */
+.winw-calculator-layout {
+    display: grid;
+    grid-template-columns: 48% 52%;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible !important;
+    align-items: start;
+}
+
+.winw-form-column {
+    /* Form takes up left column */
+    background: #f7fafc;
+    border: 2px solid #f3f4f6;
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    min-width: 0;
+    max-width: 100%;
+    overflow: visible;
+}
+
+.winw-results-column {
+    /* Results take up right column */
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 0 !important;
+    align-self: start !important;
+    min-width: 0;
+    max-width: 100%;
+    overflow: visible;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.winw-results-column * {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Placeholder content styles - removed old styling */
+
+/* Chart placeholder styles */
+.winw-chart-placeholder {
+    background: #f7fafc;
+    border: 2px solid #f3f4f6;
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: none;
+    text-align: center;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.winw-chart-placeholder-content h3 {
+    margin-bottom: 1rem;
+}
+
+.winw-chart-placeholder-content p {
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.winw-chart-placeholder-icon {
+    font-size: 4rem;
+    opacity: 0.3;
+}
+
+.winw-placeholder-header {
+    margin-bottom: 2rem;
+    padding-top: 24px;
+    text-align: center;
+}
+
+.winw-placeholder-header h3 {
+    margin-bottom: 0.5rem;
+}
+
+.winw-placeholder-header p {
+    line-height: 1.6;
+}
+
+.winw-placeholder-features {
+    margin-bottom: 2rem;
+}
+
+.winw-feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: #f3f4f6;
+    transition: all 0.2s ease;
+}
+
+.winw-feature-item:hover {
+    background: #e5e7eb;
+}
+
+.winw-feature-icon {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    border-radius: var(--radius-sm);
+    border: 1px solid #e5e7eb;
+}
+
+.winw-feature-text h4 {
+    margin-bottom: 0.25rem;
+}
+
+.winw-feature-text p {
+    line-height: 1.5;
+    margin: 0;
+}
+
+.winw-placeholder-cta {
+    text-align: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.02), rgba(16, 185, 129, 0.05));
+    border: 1px solid rgba(16, 185, 129, 0.1);
+    border-radius: var(--radius-md);
+}
+
+.winw-placeholder-cta p {
+    line-height: 1.6;
+    margin: 0;
+}
+
+.winw-placeholder-cta strong {
+}
+
+/* Header */
+.winw-header {
+    text-align: center;
+    margin-bottom: 48px;
+    padding-bottom: 0;
+}
+
+
+.winw-header p {
+    max-width: none;
+    margin: 0;
+    line-height: 1.7;
+    font-weight: 400;
+}
+
+/* Form sections */
+.winw-input-section {
+    margin-bottom: 32px;
+    padding: 0;
+    background: transparent;
+    border: none;
+}
+
+.winw-input-section h2 {
+    font-weight: 500;
+    margin-bottom: 28px;
+    letter-spacing: -0.01em;
+    text-align: center;
+}
+
+/* Input groups */
+.winw-input-group {
+    margin-bottom: 24px;
+}
+
+.winw-input-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    position: relative;
+    letter-spacing: -0.005em;
+    cursor: default !important;
+}
+
+/* Tooltip styles */
+.winw-tooltip {
+    display: inline-block;
+    margin-left: 6px;
+    width: 16px;
+    height: 16px;
+    background: var(--color-text-muted);
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 10px;
+    cursor: help;
+    position: relative;
+    line-height: 16px;
+    transition: all 0.2s ease;
+}
+
+.winw-tooltip:hover {
+    background: var(--color-text-secondary);
+    transform: scale(1.1);
+}
+
+.winw-tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    font-weight: 400;
+    white-space: normal;
+    width: 240px;
+    text-align: left;
+    z-index: 1000;
+    box-shadow: var(--shadow-lg);
+    line-height: 1.4;
+}
+
+.winw-tooltip:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    z-index: 1001;
+}
+
+/* Input wrapper for currency and percent symbols */
+.winw-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.winw-currency {
+    position: absolute !important;
+    left: 12px !important;
+    transform: translateY(-10%) !important;
+    font-weight: 400 !important;
+    z-index: 1 !important;
+    font-size: 1rem !important;
+    line-height: 1 !important;
+    font-family: inherit !important;
+    pointer-events: none !important;
+}
+
+.winw-unit {
+    position: absolute;
+    right: 45px;
+    top: 45%;
+    transform: translateY(-50%);
+    font-weight: 500;
+    pointer-events: none;
+}
+
+/* Input styles */
+input[type="text"],
+input[type="number"] {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+    font-family: inherit;
+    font-weight: 400;
+}
+
+/* Placeholder text styling */
+input[type="text"]::placeholder,
+input[type="number"]::placeholder {
+    color: #d1d5db;
+}
+
+/* Currency inputs need extra left padding */
+.winw-input-wrapper:has(.winw-currency) input {
+    padding-left: 32px !important;
+}
+
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgb(16 185 129 / 0.08);
+}
+
+input[type="text"]:hover,
+input[type="number"]:hover {
+}
+
+/* Currency inputs need left padding for $ symbol */
+#current-savings,
+#annual-contribution,
+#current-college-cost {
+    padding-left: 32px;
+}
+
+/* Percentage inputs need right padding for % symbol */
+#rate-of-return,
+#college-inflation-rate {
+    padding-right: 32px;
+}
+
+/* Error messages */
+.winw-error-message {
+    margin-top: 4px;
+    font-weight: 400;
+    display: none;
+}
+
+.winw-error-message.show {
+    display: block;
+}
+
+/* Visual alert for capped values */
+.winw-input-group.value-capped {
+    animation: valueCappedPulse 1s ease-in-out;
+}
+
+@keyframes valueCappedPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.winw-input-group.value-capped input {
+    box-shadow: 0 0 0 2px #ffc107;
+}
+
+.winw-input-group.error input {
+    box-shadow: 0 0 0 3px rgb(239 68 68 / 0.1);
+}
+
+/* Button styles */
+.winw-button-group {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-start;
+    margin-top: 32px;
+    align-items: flex-start;
+}
+
+.winw-calculate-btn {
+    flex: 1;
+}
+
+.winw-reset-btn {
+    min-width: 200px;
+    flex: 0 0 auto;
+}
+
+
+/* Enabled state - only when not disabled */
+.c-btn.winw-calculate-btn:not(:disabled) {
+    opacity: 1 !important;
+    cursor: pointer !important;
+}
+
+/* Disabled state - prevent all hover effects including background changes */
+.c-btn.winw-calculate-btn:disabled,
+.c-btn.winw-calculate-btn:disabled:hover,
+.c-btn.winw-calculate-btn:disabled:focus,
+.c-btn.winw-calculate-btn:disabled:active {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+    background: #cccccc !important;
+    background-color: #cccccc !important;
+    background-image: none !important;
+    color: #666666 !important;
+    border-color: #cccccc !important;
+}
+
+.winw-calculate-btn:active {
+    transform: translateY(0);
+}
+
+
+.winw-reset-btn:hover {
+}
+
+/* Results section */
+.winw-results-section {
+    margin-top: 48px;
+    padding: 0;
+    background: transparent;
+    border: none;
+}
+
+.winw-results-section h2 {
+    text-align: center;
+    margin-bottom: 32px;
+    letter-spacing: -0.025em;
+}
+
+.winw-main-result {
+    background: #f8fafc;
+    padding: 32px 24px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 32px;
+    border: 1px solid #e2e8f0;
+}
+
+.winw-main-result h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.winw-main-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+}
+
+.winw-breakdown {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.winw-breakdown-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.winw-breakdown-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+#winw-status-message {
+    font-weight: 400 !important;
+    text-align: left !important;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.winw-breakdown-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+}
+
+.winw-breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+}
+
+.winw-breakdown-label {
+    font-size: 0.95rem;
+    font-weight: 400;
+}
+
+.winw-breakdown-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.winw-breakdown-value.winw-surplus {
+    color: #059669;
+}
+
+/* Status card colors */
+.winw-status-card.surplus {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.02), rgba(16, 185, 129, 0.05));
+}
+
+.winw-status-card.surplus .winw-result-value {
+    color: var(--color-accent);
+}
+
+.winw-status-card.shortfall {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.02), rgba(239, 68, 68, 0.05));
+}
+
+.winw-status-card.shortfall .winw-result-value {
+}
+
+/* Chart section */
+.winw-chart-section {
+    background: #f7fafc;
+    border: 2px solid #f3f4f6;
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin: 0;
+    box-shadow: none;
+}
+
+.winw-chart-heading {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    letter-spacing: -0.01em;
+    color: #1e293b;
+}
+
+.winw-chart-container {
+    position: relative;
+    height: 380px;
+    width: 100%;
+}
+
+.winw-chart-section .winw-placeholder-content {
+    padding: 0;
+    text-align: left;
+}
+
+.winw-chart-section .winw-placeholder-content p {
+    line-height: 1.6;
+    margin: 0;
+}
+
+.winw-chart-container canvas {
+    max-width: 100%;
+    height: 380px !important;
+    width: 100% !important;
+}
+
+/* Explanation text */
+.winw-explanation-text {
+    background: #f7fafc;
+    padding: 28px;
+    border-radius: var(--radius-lg);
+    margin: 32px 0;
+    line-height: 1.6;
+    box-shadow: var(--shadow-sm);
+    border: 2px solid #f3f4f6;
+}
+
+/* Action buttons */
+.winw-action-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 32px;
+}
+
+.winw-print-btn,
+.winw-download-btn {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+    font-family: inherit;
+}
+
+.winw-print-btn:hover,
+.winw-download-btn:hover {
+}
+
+/* CMS Testing Styles */
+/* 
+
+.c-matter__meta {
+    display: none;
+} */
+
+
+.c-matter--article .c-matter__body {
+    max-width: 1170px;
+}
+
+@media (max-width: 950px) {
+    .c-matter--article .c-matter__body {
+        max-width: 750px;
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 750px) {
+    .c-matter--article .c-matter__body {
+        max-width: 100%;
+        margin: 10px;
+        padding: 1rem;
+        border-radius: 8px;
+    }
+}
+
+/* Standard Breakpoints */
+@media (max-width: 950px) {
+    .winw-container {
+        max-width: 750px;
+        padding: 0 1.5rem;
+        margin: 1.5rem auto 3rem auto;
+    }
+}
+
+@media (max-width: 750px) {
+    .winw-container {
+        max-width: 100%;
+        margin: 0.5rem auto 1rem auto;
+        padding: 0;
+    }
+    
+    /* Stack vertically on mobile */
+    .winw-calculator-layout {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .winw-results-column {
+        position: static;
+    }
+    
+    /* Left align all text on mobile */
+    .winw-header {
+        text-align: left;
+        margin-bottom: 24px;
+    }
+    
+    .winw-input-section h2,
+    .winw-chart-section h2 {
+        text-align: left;
+    }
+    
+    .winw-main-result {
+        text-align: left;
+    }
+    
+    .winw-breakdown-header {
+        text-align: left;
+    }
+    
+    .winw-form-column {
+        padding: 16px;
+    }
+    
+    .winw-chart-section {
+        padding: 16px;
+    }
+    
+    .winw-placeholder-content {
+        padding: 0;
+    }
+    
+    .winw-results-section {
+        padding: 0;
+    }
+    
+    .winw-main-result {
+        padding: 24px 16px;
+    }
+    
+    .winw-input-section {
+        margin-bottom: 20px;
+        padding: 0;
+    }
+    
+    .winw-button-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .winw-calculate-btn,
+    .winw-reset-btn {
+        width: 100%;
+    }
+    
+    .winw-download-section {
+        width: 100%;
+    }
+    
+    .winw-download-btn {
+        width: 100%;
+    }
+    
+    .winw-chart-container {
+        height: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .winw-form-column {
+        padding: 12px;
+    }
+    
+    .winw-chart-section {
+        padding: 12px;
+    }
+    
+    .winw-main-result {
+        padding: 20px 12px;
+    }
+    
+    .winw-breakdown {
+        padding: 20px 12px;
+    }
+    
+    .winw-main-value {
+        font-size: 2rem;
+    }
+    
+    .winw-breakdown-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .winw-chart-container {
+        height: auto;
+    }
+}
+
+/* Print styles */
+@media print {
+    body {
+        background: white;
+    }
+    
+    .winw-container {
+        box-shadow: none;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .winw-calculator-form,
+    .winw-action-buttons {
+        display: none;
+    }
+    
+    .winw-results-section {
+        background: white;
+        border: 1px solid #333;
+        padding: 30px;
+    }
+    
+    .winw-result-card {
+        border-bottom: 1px solid #333;
+    }
+}

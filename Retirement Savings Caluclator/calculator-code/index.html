@@ -1,0 +1,34 @@
+<head><link rel="stylesheet" href="https://fmg-websites-custom.s3.amazonaws.com/calculators/retirementIncomeInteractive/styles.css" /></head>
+<div class="calculator-section" id="retirementForm">
+   <div class="current-situation">
+   <h4>Your Current Situation</h4>
+   <p>I'm <input type="number" id="currentAge" name="currentAge" required /> years old and want to retire at <input type="number" id="retirementAge" name="retirementAge" required />. My current annual income is <span class="no-wrap">$<input type="text" id="annualIncome" name="annualIncome" required /></span>, and I'm currently saving <span class="no-wrap">$<input type="text" id="annualSavings" name="annualSavings" /></span> each year for retirement&nbsp;(<input type="text" id="savingsRate" name="savingsRate" readonly class="auto-calculated" />%<span class="tooltip-container"><span class="info-icon" tabindex="0" role="button" aria-label="Information about savings rate calculation">?</span><span class="tooltip" role="tooltip">This is automatically calculated based on your income and savings.</span></span> of my&nbsp;income). I've already saved <span class="no-wrap">$<input type="text" id="currentSavings" name="currentSavings" required /></span> for&nbsp;retirement.</p>
+   </div>
+   
+   <div class="retirement-vision">
+   <h4>Your Retirement Vision</h4>
+   <p>I'll need <span class="no-wrap"><input type="number" id="retirementIncomeRate" name="retirementIncomeRate" min="0" max="100" value="75" required />%</span> of my current income in retirement to maintain my desired lifestyle. I expect my retirement investments to grow at a rate of<span class="no-wrap"><input type="number" id="annualReturn" name="annualReturn" step="0.01" value="6" required />%</span> annually.</p>
+
+   <div class="button-container">
+      <button id="calculateButton" type="button" onclick="calculateRetirement()">Calculate My Retirement Readiness</button>
+      <span class="button-tooltip" id="buttonTooltip">Please fill out all required fields</span>
+   </div>
+   </div>
+</div>
+
+<div id="results">
+   <h2>Results</h2>
+   <div class="results-content">
+      <div class="results-text">
+         <p>Retirement Savings: <b><span id="retirementBalanceResult"></span></b></p>
+         <p>Monthly Retirement Expenses: <b><span id="monthlyExpensesResult"></span></b></p>
+         <p>Monthly Retirement Income: <b><span id="monthlyIncomeResult"></span></b></p>
+         <button id="savePdfButton" type="button" onclick="printResults()">Save Results as PDF</button>
+      </div>
+      <div class="chart-container">
+         <canvas id="incomeExpensesChart" width="400" height="250"></canvas>
+      </div>
+   </div>
+   <p class="results-message">Were the results better than you expected or below what you thought? If they were better than expected, congratulations. You're on your way. If they were below what you thought, don't get discouraged. Sometimes, all it takes is a few changes to get back on track.</p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://fmg-websites-custom.s3.amazonaws.com/calculators/retirementIncomeInteractive/script.js"></script>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparing Investments Calculator - Local Test</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="ci-body">
+        <div class="ci-container">
+            <div class="ci-header">
+                <p>Use this calculator to compare the potential returns of different investment options. Enter your investment details below to see how each option might perform over time.</p>
+            </div>
+            
+            <div class="ci-calculator-layout">
+                <!-- Input Section -->
+                <div class="ci-form-column">
+                    <div class="ci-input-section">
+                        <h2>Investment Comparison</h2>
+                        <div class="ci-input-group">
+                            <label for="ci-initial-amount">Initial Investment Amount</label>
+                            <div class="ci-input-wrapper">
+                                <span class="ci-currency">$</span>
+                                <input type="number" id="ci-initial-amount" placeholder="10000" min="0" step="100" />
+                            </div>
+                        </div>
+                        <div class="ci-input-group">
+                            <label for="ci-investment-period">Investment Period (Years)</label>
+                            <div class="ci-input-wrapper">
+                                <input type="number" id="ci-investment-period" placeholder="10" min="1" max="50" step="1" />
+                                <span class="ci-unit">years</span>
+                            </div>
+                        </div>
+                        <div class="ci-input-group">
+                            <label for="ci-monthly-contribution">Monthly Contribution</label>
+                            <div class="ci-input-wrapper">
+                                <span class="ci-currency">$</span>
+                                <input type="number" id="ci-monthly-contribution" placeholder="500" min="0" step="50" />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ci-input-section">
+                        <h2>Investment Options</h2>
+                        <div class="ci-input-group">
+                            <label for="ci-option1-rate">Option 1 - Annual Return Rate (%)</label>
+                            <div class="ci-input-wrapper">
+                                <input type="number" id="ci-option1-rate" placeholder="7" min="0" max="20" step="0.1" />
+                                <span class="ci-unit">%</span>
+                            </div>
+                        </div>
+                        <div class="ci-input-group">
+                            <label for="ci-option2-rate">Option 2 - Annual Return Rate (%)</label>
+                            <div class="ci-input-wrapper">
+                                <input type="number" id="ci-option2-rate" placeholder="5" min="0" max="20" step="0.1" />
+                                <span class="ci-unit">%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="ci-calculateBtn" class="c-btn ci-calculate-btn" title="Please fill out all fields above to compare your investment options">Compare Investments</button>
+                </div>
+                
+                <!-- Results Section -->
+                <div class="ci-results-column">
+                    <div id="ci-placeholder-content" class="ci-placeholder-content">
+                        <div class="ci-placeholder-header">
+                            <h3>Investment Comparison Results</h3>
+                            <p>Compare the potential returns of different investment strategies to make informed decisions about your financial future.</p>
+                        </div>
+                        <div class="ci-placeholder-features">
+                            <div class="ci-feature-item">
+                                <div class="ci-feature-icon">📊</div>
+                                <div class="ci-feature-text">
+                                    <h4>Side-by-Side Comparison</h4>
+                                    <p>See how different return rates affect your investment growth</p>
+                                </div>
+                            </div>
+                            <div class="ci-feature-item">
+                                <div class="ci-feature-icon">📈</div>
+                                <div class="ci-feature-text">
+                                    <h4>Growth Projections</h4>
+                                    <p>Visualize the potential growth of your investments over time</p>
+                                </div>
+                            </div>
+                            <div class="ci-feature-item">
+                                <div class="ci-feature-icon">💰</div>
+                                <div class="ci-feature-text">
+                                    <h4>Total Returns</h4>
+                                    <p>Compare total returns and see the impact of different strategies</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ci-placeholder-cta">
+                            <p>Enter your investment details on the left and click <strong>"Compare Investments"</strong> to see your personalized comparison.</p>
+                        </div>
+                    </div>
+                    
+                    <div id="ci-results-section" class="ci-results-section" style="display: none;">
+                        <h3>Investment Comparison Results</h3>
+                        <div class="ci-results-grid">
+                            <div class="ci-result-card ci-primary">
+                                <div class="ci-result-label">Option 1 Total Value</div>
+                                <div class="ci-result-value" id="ci-option1-total">$0</div>
+                            </div>
+                            <div class="ci-result-card">
+                                <div class="ci-result-label">Option 2 Total Value</div>
+                                <div class="ci-result-value" id="ci-option2-total">$0</div>
+                            </div>
+                            <div class="ci-result-card">
+                                <div class="ci-result-label">Difference</div>
+                                <div class="ci-result-value" id="ci-difference-amount">$0</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Chart Section -->
+                        <div class="ci-chart-section">
+                            <h3>Investment Growth Comparison</h3>
+                            <div class="ci-chart-container">
+                                <canvas id="ci-comparison-chart" />
+                            </div>
+                        </div>
+                        
+                        <!-- Download Section -->
+                        <div class="ci-download-section">
+                            <button id="ci-downloadBtn" class="c-btn ci-download-btn">Download Results</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,389 @@
+   <head>
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+      <script src="https://fmg-websites-custom.s3.amazonaws.com/marissaade/retirement-income-calculator/script.js"></script>
+          <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="X-UA-Compatible" content="IE=9" />
+    <meta http-equiv="X-UA-Compatible" content="IE=10" />
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
+      <style>
+         /*------------------*/
+         /*----- GLOBAL -----*/
+         /*------------------*/
+         /* Firefox */
+         .dev-calculator input[type="number"] {
+            -moz-appearance: textfield;
+         }
+
+         /* keep calcuator paragraph inline */
+         .dev-calculator input {
+            display: inline-block;
+         }
+
+         .c-rich-text__section {
+            margin-left: 0;
+         }
+
+         /* hide js section in page builder */
+         .dev-js {
+            display: none;
+         }
+
+         /* adjust page's padding on older themes */
+         .subpage #content section .container,
+         .subpage #content article .container {
+            padding: 60px 0;
+         }
+
+         /* full width fix from CMS styling */
+         .dev-calculator .c-rich-text__section {
+            width: 100%;
+         }
+
+         /*----------------*/
+         /*----- HERO -----*/
+         /*----------------*/
+         .dev-ds_hero .overlay {
+            background-color: rgba(0, 0, 0, 0.1) !important;
+         }
+
+         .dev-ds_hero .c-rich-text__section,
+         .dev-ds_hero .c-text__section,
+         .dev-ds_hero.section_SimpleText .box {
+            padding: 40px 0;
+            margin-left: 20px;
+            width: 50%;
+            color: var(--headingColor) !important;
+         }
+
+         /* test because its not working on some themes */
+         /* {
+   padding: 40px 0;
+   margin-left: 20px;
+   width: 50%;
+   color: var(--headingColor) !important;
+} */
+
+         .dev-ds_hero h2 {
+            margin-top: 0;
+         }
+
+         .dev-ds_hero p {
+            font-size: 20px !important;
+            color: #000;
+         }
+
+         h1 {
+            /* text-align: center; */
+            color: #000;
+         }
+
+         /*----------------------*/
+         /*----- CALCULATOR -----*/
+         /*----------------------*/
+         .dev-calculator #retirementForm {
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 28px;
+            font-weight: 300px;
+         }
+
+         /* .dev-calculator #retirementForm p {
+   line-height: 2;
+} */
+
+         .dev-calculator .current-situation {
+            margin-bottom: 50px;
+         }
+
+         .dev-calculator #retirementForm h2 {
+            font-weight: bold;
+         }
+
+         .dev-calculator #retirementForm h4 {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 32px !important;
+         }
+
+         .dev-calculator #retirementForm div {
+            margin-bottom: 15px;
+         }
+
+         .dev-calculator label {
+            margin-right: 5px;
+         }
+
+         .dev-calculator input[type="number"] {
+            padding: 8px 8px 0 8px;
+            border: 0 !important;
+            border-radius: 0 !important;
+            border-bottom: 1.5px solid var(--paletteColor1, #4a678c) !important;
+            box-sizing: border-box;
+            margin-right: 5px;
+            width: 150px;
+            text-align: center;
+            font-size: 26px;
+            font-weight: 300px;
+         }
+
+         .dev-calculator button {
+            color: var(--btnTextColor, #ffffff);
+            background: var(--btnBackgroundColor, var(--paletteColor3, #4a678c));
+            border: var(--btnBorderWidth, 0px) solid var(--btnBorderColor, transparent);
+            border-radius: var(--btnBorderRadius, 0px);
+            font-size: 16px;
+            text-transform: var(--btnTextTransform, uppercase);
+            font-weight: var(--btnFontWeight, bold);
+            padding: var(--btnPadding, 15px 20px);
+            opacity: 0.5; /* Style for disabled state */
+            cursor: not-allowed; /* Not clickable by default */
+         }
+
+         .dev-calculator button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+         }
+
+         .dev-calculator button:enabled {
+            opacity: 1;
+            cursor: pointer; /* Show pointer when enabled/clickable */
+         }
+
+         .dev-calculator button:hover,
+         .dev-calculator #savePdfButton {
+            background-color: var(--btnBackgroundColor, var(--paletteColor2, #3e5675));
+         }
+
+         .dev-calculator #results {
+            margin-top: 100px;
+            display: none; /* Hide the results section initially */
+            flex-direction: row; /* Display children side-by-side */
+            gap: 30px; /* Add space between flex items */
+            align-items: flex-start; /* Align items at the top */
+         }
+
+         .dev-calculator .results-text {
+            width: 40%;
+            flex-shrink: 0;
+         }
+
+         .dev-calculator .results-text p {
+            font-size: 18px !important;
+         }
+
+         .dev-calculator #results h2 {
+            margin-top: 0;
+            color: #000;
+         }
+
+         .dev-calculator #results p {
+            margin-bottom: 10px;
+            font-size: 20px;
+         }
+
+         .dev-calculator .input-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+         }
+
+         .dev-calculator .input-row label {
+            margin-bottom: 0;
+         }
+
+         .dev-calculator .chart-container {
+            margin-top: 0;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            width: 55%;
+            flex-grow: 1;
+         }
+
+         .dev-calculator #incomeExpensesChart {
+            width: 100% !important;
+            max-height: 600px !important;
+         }
+
+         .dev-calculator #savePdfButton {
+            display: none;
+            cursor: pointer;
+            opacity: 1 !important; /* Force opacity to be 1 */
+            background-color: var(--btnBackgroundColor, var(--paletteColor3, #4a678c));
+            color: var(--btnTextColor, #ffffff);
+         }
+
+         .dev-calculator #savePdfButton.enabled {
+            opacity: 1 !important;
+            cursor: pointer !important;
+         }
+
+         /*---------------*/
+         /*----- CTA -----*/
+         /*---------------*/
+         .dev-ds .c-btn {
+            background-color: var(--paletteColor2);
+         }
+
+         .c-contact__form h2 {
+            margin-top: 0 !important;
+         }
+
+         /*----------------------*/
+         /*----- RESPONSIVE -----*/
+         /*----------------------*/
+
+         /* Tablet and larger mobile devices */
+         @media (max-width: 900px) {
+            .dev-calculator #results {
+               flex-direction: column; /* Stack items vertically */
+               gap: 20px;
+            }
+
+            .dev-calculator .results-text {
+               width: 100%; /* Full width */
+            }
+
+            .dev-calculator .chart-container {
+               width: 100%; /* Full width */
+            }
+         }
+
+         /* Medium mobile devices */
+         @media (max-width: 767px) {
+            .dev-calculator .o-container {
+               padding: 50px 25px;
+            }
+
+            .dev-ds_hero h2 span {
+               font-size: 40px !important;
+            }
+
+            .dev-calculator #retirementForm h4 {
+               font-size: 26px;
+            }
+
+            .dev-calculator input[type="number"] {
+               font-size: 18px;
+               width: 125px;
+            }
+
+            .dev-calculator #retirementForm p {
+               font-size: 18px;
+            }
+         }
+
+         /* Small mobile devices */
+         @media (max-width: 600px) {
+            /* Hide background image on mobile for better text legibility */
+            .dev-ds_hero {
+               background-image: none !important;
+               background-color: #eeeeee !important;
+            }
+
+            .dev-ds_hero .overlay {
+               background-color: transparent !important;
+            }
+
+            .dev-ds_hero .c-rich-text__section,
+            .dev-ds_hero .c-text__section {
+               width: 90%;
+            }
+
+            .dev-ds_hero.section_SimpleText .box {
+               width: 90%;
+            }
+
+            .dev-ds_hero h2 span {
+               font-size: 32px !important;
+            }
+
+            .dev-calculator #retirementForm form {
+               padding: 10px;
+            }
+
+            .dev-calculator button {
+               width: 100%;
+            }
+
+            .input-row {
+               flex-direction: column;
+               align-items: flex-start;
+            }
+
+            .input-row input {
+               margin-bottom: 10px;
+               width: calc(100% - 20px);
+            }
+
+            .input-row label {
+               margin-right: 0;
+            }
+         }
+
+         /* Print styles */
+         @media print {
+            /* Minimize page margins */
+            @page {
+               margin: 0.5cm;
+            }
+
+            /* Hide irrelevant content */
+            body * {
+               visibility: hidden;
+            }
+
+            /* Only show calculator content */
+            #retirementForm,
+            #results,
+            #retirementForm *,
+            #results * {
+               visibility: visible;
+            }
+
+            /* Hide PDF button when printing */
+            #savePdfButton {
+               display: none !important;
+            }
+         }
+      </style>
+   </head>
+   <html>
+   <body>
+      <div class="calculator-section" id="retirementForm">
+         <div class="current-situation">
+            <h4>Your Current Situation</h4>
+            <p>I'm <input type="number" id="currentAge" name="currentAge" required /> years old and want to retire at <input type="number" id="retirementAge" name="retirementAge" required />. My current annual income is $<input type="number" id="annualIncome" name="annualIncome" required />, and I'm currently saving $<input type="number" id="annualSavings" name="annualSavings" oninput="calculateSavingsRate()" /> each year for retirement (<input type="number" id="savingsRate" name="savingsRate" min="0" max="100" readonly />% of my income). I've already saved $<input type="number" id="currentSavings" name="currentSavings" required /> for retirement.</p>
+         </div>
+
+         <div class="retirement-vision">
+            <h4>Your Retirement Vision</h4>
+            <p>I'll need <input type="number" id="retirementIncomeRate" name="retirementIncomeRate" min="0" max="100" value="75" required />% of my current income in retirement to maintain my desired lifestyle. I expect my retirement investments to grow at <input type="number" id="annualReturn" name="annualReturn" step="0.01" value="6" required />% annually.</p>
+
+            <button id="calculateButton" type="button" onclick="calculateRetirement()">Calculate My Retirement Readiness</button>
+         </div>
+      </div>
+
+      <div id="results">
+         <div class="results-text">
+            <h2>Results</h2>
+            <!-- <p>Retirement Age: <span id="retirementAgeResult"></span></p> -->
+            <p>
+               Retirement Savings: <b><span id="retirementBalanceResult"></span></b>
+            </p>
+            <p>
+               Monthly Retirement Expenses: <b><span id="monthlyExpensesResult"></span></b>
+            </p>
+            <p>
+               Monthly Retirement Income: <b><span id="monthlyIncomeResult"></span></b>
+            </p>
+            <button id="savePdfButton" type="button" onclick="printResults()">Save Results as PDF</button>
+         </div>
+         <div class="chart-container">
+            <canvas id="incomeExpensesChart" width="400" height="250"></canvas>
+         </div>
+      </div>
+   </body>

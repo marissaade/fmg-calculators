@@ -1,0 +1,106 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Monaco;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red227\green227\blue226;\red199\green200\blue201;
+\red141\green96\blue3;\red212\green151\blue7;}
+{\*\expandedcolortbl;;\cssrgb\c0\c1\c1;\cssrgb\c91081\c91081\c90967\c3922;\cssrgb\c82054\c82447\c82737;
+\cssrgb\c62534\c44837\c0\c18039;\cssrgb\c86755\c65116\c0;}
+\margl1440\margr1440\vieww10840\viewh14220\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs24 \cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 # FMG Calculators\
+\
+A collection of independent financial calculators built with React, TypeScript, and Vite. Each calculator can be compiled to a single, self-contained HTML file for easy distribution and embedding.\
+\
+## Current Calculators\
+\
+### Retirement Calculator \
+**URL:** `/src/retirement.html`  \
+**Build Output:** `dist/retirement.html`\
+\
+A comprehensive retirement planning calculator that helps users determine if they're on track to meet their retirement goals.\
+\
+**Features:**\
+- Natural language form input for better user experience\
+- Real-time retirement projections with compound interest calculations\
+- Interactive chart showing savings progression over time\
+- Clear guidance on whether user is on track or needs to save more\
+- Calculates additional monthly savings needed if behind on goals\
+\
+**Form Inputs:**\
+- Current age and planned retirement age\
+- Annual income and current annual savings\
+- Current retirement savings balance\
+- Expected retirement income needs (% of current income)\
+- Expected annual investment return\
+\
+## Development\
+\
+```bash\
+# Install dependencies\
+npm install\
+\
+# Start development server\
+npm run dev\
+\
+# Build all calculators\
+npm run build\
+```\
+\
+### Accessing Calculators in Development\
+\
+- **Main app:** {\field{\*\fldinst{HYPERLINK "http://localhost:5173/"}}{\fldrslt \cf2 \cb3 \strokec4 http://localhost:5173/}}\
+- **Retirement calculator:** {\field{\*\fldinst{HYPERLINK "http://localhost:5173/src/retirement.html"}}{\fldrslt \cf2 \cb3 \strokec4 http://localhost:5173/src/retirement.html}}\
+\
+### Building Individual Calculators\
+\
+Each calculator builds to its own standalone HTML file in the `dist/` directory:\
+- `dist/retirement.html` - Complete retirement calculator\
+\
+## Tech Stack\
+\
+- **React 18.2.0** with TypeScript 5.2.2\
+- **Vite 5.0.0** with React plugin\
+- **Recharts 2.8.0** for data visualization\
+- **Lucide React 0.294.0** for icons\
+- **vite-plugin-singlefile** for single HTML file distribution\
+\
+## Architecture\
+\
+Each calculator is completely independent and follows these principles:\
+- **KISS (Keep It Simple, Stupid)** - Clean, minimal code\
+- **Component-based** - Reusable React components\
+- **Two-step UX** - Clean input form \uc0\u8594  Results display\
+- **Natural language forms** - Embedded inputs in conversational text\
+- **Single file distribution** - Each calculator compiles to one HTML file\
+- **Clean \cf2 \cb5 \strokec6 design\cf2 \cb3 \strokec4 ** - Following Airbnb/Coinbase \cf2 \cb5 \strokec6 design\cf2 \cb3 \strokec4  principles\
+\
+## Adding New Calculators\
+\
+1. Create a new directory under `src/` (e.g., `src/mortgage/`)\
+2. Add HTML entry point (e.g., `src/mortgage.html`)\
+3. Create calculator component with natural language form\
+4. Update `vite.config.ts` to include new entry point\
+5. Follow the established patterns for styling and UX\
+\
+\
+## Development\
+\
+1. Give the tool your instructions\
+2. Refine\
+3. Validate and Iterate\
+\
+\
+npm run dev - Start dev server\
+Visit {\field{\*\fldinst{HYPERLINK "http://localhost:5173/src/retirement.html"}}{\fldrslt \cf2 \cb3 \strokec4 http://localhost:5173/src/retirement.html}}\
+\
+\
+## Production\
+\
+How to build specific calculators into a single file. \
+\
+npm run build:retirement - Build standalone HTML\
+npm run build:all - Build main app + retirement calculator\
+Distribute dist/retirement.html as a single file\cf2 \cb1 \strokec4 \
+}

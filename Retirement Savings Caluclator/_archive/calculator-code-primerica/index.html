@@ -1,0 +1,31 @@
+<div class="calculator-section" id="retirementForm">
+   <div class="language-selector">
+      <label for="languageSelect" data-translate="language">Language:</label>
+      <select id="languageSelect" onchange="changeLanguage(this.value)">
+         <option value="en">English</option>
+         <option value="fr">Français</option>
+         <option value="es">Español</option>
+      </select>
+   </div>
+   <h4 data-translate="current_situation">Your Current Situation</h4>
+   <p id="currentSituationText">I'm <input type="number" id="currentAge" name="currentAge" required /> years old and want to retire at <input type="number" id="retirementAge" name="retirementAge" required />. My current annual income is $<input type="number" id="annualIncome" name="annualIncome" required />, and I'm currently saving $<input type="number" id="annualSavings" name="annualSavings" oninput="calculateSavingsRate()" /> each year for retirement (<input type="number" id="savingsRate" name="savingsRate" min="0" max="100" readonly />% of my income). I've already saved $<input type="number" id="currentSavings" name="currentSavings" required /> for retirement.</p>
+
+   <h4 data-translate="retirement_vision">Your Retirement Vision</h4>
+   <p id="retirementVisionText">I'll need <input type="number" id="retirementIncomeRate" name="retirementIncomeRate" min="0" max="100" value="75" required />% of my current income in retirement to maintain my desired lifestyle. I expect my retirement investments to grow at <input type="number" id="annualReturn" name="annualReturn" step="0.01" value="6" required />% annually.</p>
+
+   <button id="calculateButton" type="button" onclick="calculateRetirement()" data-translate="calculate_button">Calculate My Retirement Readiness</button>
+</div>
+
+<div id="results">
+   <div class="results-text">
+      <h2 data-translate="results">Results</h2>
+      <!-- <p>Retirement Age: <span id="retirementAgeResult"></span></p> -->
+      <p><span data-translate="retirement_savings">Retirement Savings</span>: <b><span id="retirementBalanceResult"></span></b></p>
+      <p><span data-translate="monthly_expenses">Monthly Retirement Expenses</span>: <b><span id="monthlyExpensesResult"></span></b></p>
+      <p><span data-translate="monthly_income">Monthly Retirement Income</span>: <b><span id="monthlyIncomeResult"></span></b></p>
+      <button id="savePdfButton" type="button" onclick="printResults()" data-translate="save_pdf">Save Results as PDF</button>
+   </div>
+   <div class="chart-container">
+      <canvas id="incomeExpensesChart" width="400" height="250"></canvas>
+   </div>
+</div>
