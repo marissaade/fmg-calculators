@@ -1,57 +1,90 @@
-# Calculator Redesign Project
+# FMG Calculator Redesign Project
 
 ## Overview
-This project contains four financial calculators that have been redesigned for consistency, accessibility, and improved user experience.
+This project contains financial calculators redesigned for consistency, accessibility, and improved user experience. All calculators follow standardized patterns documented in `.cursorrules` for maintainability and UX consistency.
 
 ## Calculators Included
-- **How Long Will Your Money Last** (`how-long-money-lasts/`)
-- **What Is My Net Worth** (`what-is-my-net-worth/`)
-- **Contributing to IRA** (`contributing-to-ira/`)
-- **What Is My Monthly Budget** (`what-is-my-monthly-budget/`)
-- **Debt or Invest** (`debt-or-invest/`)
-- **Comparing Investments** (`comparing-investments/`)
-- **Saving for College** (`saving-for-college/`)
 
-## Recent Updates
+### Active Calculators (Redesigned)
+- **How Long Will Your Money Last** (`how-long-money-lasts/`) - Prefix: `hlywml-`
+- **What Is My Net Worth** (`what-is-my-net-worth/`) - Prefix: `winw-`
+- **Contributing to an IRA** (`contributing-to-ira/`) - Prefix: `ira-`
+- **What Is My Monthly Budget** (`what-is-my-monthly-budget/`) - Prefix: `wimb-`
+- **Debt or Invest** (`debt-or-invest/`) - Prefix: `doi-`
 
-### ✅ Accessibility Improvements
-- **Fixed label associations**: All form labels now have proper `for` attributes matching their input `id`s
-- **Added autocomplete attributes**: All inputs have `autocomplete="off"` to prevent browser interference
-- **Improved screen reader support**: Proper label-input associations for better accessibility
+### Legacy Calculators
+- **Comparing Investments** (`comparing-investments/`) - Prefix: `ci-`
+- **Saving for College** (`saving-for-college/`) - Prefix: `sfc-`
 
-### ✅ Visual Consistency
-- **Dynamic chart colors**: Charts now use CSS custom properties (`--paletteColor1`, `--paletteColor2`, `--paletteColor3`, `--bodyFontFamily`)
-- **Consistent styling**: Dollar sign alignment, background colors, and heading centering across all calculators
-- **Responsive design**: Mobile-friendly layouts with proper button stacking
+## Key Features
 
-### ✅ User Experience Enhancements
-- **Reset buttons**: Added to all calculators for easy form clearing
-- **Comma formatting**: Currency inputs automatically format with commas
-- **Removed browser alerts**: No more disruptive popup alerts for input validation
-- **Placeholder content**: Inspirational messages shown before calculation (Saving for College)
+### ✅ Pre-filled Forms with Auto-Calculation
+- All calculators are pre-filled with realistic default values
+- Results display automatically on page load
+- Real-time calculation as users modify inputs (debounced)
+- No "Calculate" buttons required for pre-filled forms
 
-## Console Issues Status
+### ✅ Input Formatting & Sliders
+- **Currency inputs**: Automatically format with commas (e.g., $10,000)
+- **Sliders**: Available for percentage and currency fields where appropriate
+- **No spinner arrows**: Removed for better UX and accuracy
+- **Bidirectional sync**: Sliders and text inputs stay in sync
 
-### ✅ Resolved Issues (From Our Code)
-- **"No label associated with a form field"** - Fixed by adding `for` attributes to all labels
-- **"An element doesn't have an autocomplete attribute"** - Fixed by adding `autocomplete="off"` to all inputs
+### ✅ Tooltips
+- Clickable '?' icons for field explanations
+- Mobile-friendly (click to show/hide)
+- Desktop hover support
+- Reduces visual clutter compared to persistent helper text
 
-### ⚠️ External Issues (Not From Our Code)
-- **"Deprecated feature used: Unload event listeners"** - This comes from:
-  - CMS scripts (`scripts.js?v=2.86.45.33681.2977:12`)
-  - Third-party libraries (Chart.js, jspdf)
-  - Main website JavaScript
-  
-  **Note**: This is outside our control as it's part of the CMS infrastructure. The `window.onunload` event listener is deprecated but still functional. Consider this a known issue that would need to be addressed at the CMS level.
+### ✅ Consistent Styling
+- Unified color palette (soft, muted colors for charts)
+- Consistent button styling and placement
+- Responsive design (mobile, tablet, desktop)
+- Chart integration with Chart.js
+- PDF download functionality (jsPDF)
+
+### ✅ User Experience
+- **Reset/Start Over buttons**: Restore defaults and clear results
+- **Mobile scrolling**: Auto-scroll to results/form sections
+- **Breakdown sections**: Nested in main result cards with dividers
+- **Chart headings**: Consistent styling and positioning
+
+## Development Standards
+
+### Naming Conventions
+Each calculator uses a unique prefix for all classes and IDs:
+- `hlywml-`: How Long Will Your Money Last
+- `winw-`: What Is My Net Worth
+- `ira-`: Contributing to an IRA
+- `wimb-`: What Is My Monthly Budget
+- `doi-`: Debt or Invest
+
+### Code Patterns
+All calculators follow patterns documented in `.cursorrules`:
+- Single-line HTML format (CMS compatibility)
+- Consistent class structure
+- Standardized JavaScript methods
+- Unified CSS patterns
+
+### Required Methods
+- `calculateOnLoad()`: Format defaults and trigger initial calculation
+- `calculateAndDisplay()`: Main calculation logic
+- `initializeInputFormatting()`: Currency comma formatting
+- `initializeSliders()`: Slider synchronization
+- `resetForm()`: Restore defaults
 
 ## File Structure
 ```
 Calculator Redesign Project/
-├── comparing-investments/
+├── .cursorrules                    # Development standards and patterns
+├── .gitignore                      # Git ignore rules
+├── README.md                       # This file
+├── GITHUB_SETUP.md                 # GitHub setup instructions
+├── how-long-money-lasts/
 │   ├── index.html
 │   ├── styles.css
 │   └── script.js
-├── saving-for-college/
+├── what-is-my-net-worth/
 │   ├── index.html
 │   ├── styles.css
 │   └── script.js
@@ -59,40 +92,113 @@ Calculator Redesign Project/
 │   ├── index.html
 │   ├── styles.css
 │   └── script.js
+├── what-is-my-monthly-budget/
+│   ├── index.html
+│   ├── styles.css
+│   └── script.js
 ├── debt-or-invest/
 │   ├── index.html
 │   ├── styles.css
 │   └── script.js
-└── README.md
+├── comparing-investments/          # Legacy
+│   ├── index.html
+│   ├── styles.css
+│   └── script.js
+└── saving-for-college/             # Legacy
+    ├── index.html
+    ├── styles.css
+    └── script.js
 ```
 
-## Technical Notes
+## Technical Implementation
+
+### HTML Structure
+- **Single-line format**: Required for CMS compatibility
+- **No form tags**: Direct button click handlers
+- **Self-closing canvas**: `<canvas id="name" />`
+- **CDN scripts**: Chart.js and jsPDF included
+
+### CSS Patterns
+- Consistent spacing and typography
+- Responsive breakpoints
+- Slider styling (green theme: `#10b981`)
+- Tooltip positioning and styling
+- Breakdown sections with dividers
+
+### JavaScript Patterns
+- Class-based structure
+- Debounced calculations (300ms)
+- Currency parsing with comma support
+- Slider synchronization
+- Chart initialization and updates
 
 ### CMS Compatibility
-- Single-line HTML format required
-- No form tags - direct button click handlers
-- Self-closing canvas tags: `<canvas id="name" />`
-- Consistent class prefixes (sfc-, ci-, ira-, doi-)
+- **Do NOT include `.dev-calculator` class**: CMS adds it automatically
+- Single-line HTML required
+- Full CDN URLs for scripts/stylesheets
+- Consistent prefix system for all classes/IDs
 
-### Dynamic Theming
-All calculators now support dynamic color theming through CSS custom properties:
-- `--paletteColor1`: Primary chart color
-- `--paletteColor2`: Secondary chart color  
-- `--paletteColor3`: Tertiary chart color
-- `--bodyFontFamily`: Font family for charts
+## Dependencies
+
+### External Libraries
+- **Chart.js**: `https://cdn.jsdelivr.net/npm/chart.js`
+- **jsPDF**: `https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js`
 
 ### Browser Support
 - Modern browsers with CSS custom properties support
 - Chart.js 3.x+ for interactive charts
-- jspdf for PDF generation
+- Mobile-friendly touch interactions
 
 ## Deployment
+
 Files are deployed to AWS S3 buckets:
 - `https://fmg-websites-custom.s3.amazonaws.com/calculators/[calculatorName]/`
 
-## Future Enhancements
-- Quick Start (≤5 fields) and Customize expandable panels
-- Up/down arrows and mobile sliders for numeric inputs
-- Sticky Calculate button behavior
-- Enhanced focus management and ARIA labels
-- Improved mobile touch interactions
+### Calculator Names (S3 paths)
+- `howLongMoneyLasts`
+- `whatIsMyNetWorth`
+- `contributingToIra`
+- `whatIsMyMonthlyBudget`
+- `debtOrInvest`
+
+## UX Guidelines
+
+### Form & Results Layout
+- Form on left, results on right (desktop)
+- Stacked layout on mobile
+- Pre-filled data preferred over empty fields
+- Placeholder format: `"10,000"` (no "i.e.," or "$" since currency symbol is shown)
+
+### Calculation Behavior
+- **Pre-filled forms**: Auto-calculate on load and input changes
+- **Empty forms**: Require "Calculate" button (not currently used)
+- Mobile: Auto-scroll to results after calculation
+
+### Input Guidelines
+- **No steppers**: Up/down arrows removed for accuracy
+- **Sliders**: Always paired with text inputs for precision
+- **Tooltips**: Preferred over persistent helper text
+- **Dropdowns**: Use for ≤10 options, text fields for precise values
+
+## Contributing
+
+When adding new calculators:
+1. Review `.cursorrules` for patterns and standards
+2. Use consistent prefix for all classes/IDs
+3. Follow established HTML, CSS, and JavaScript patterns
+4. Test on mobile, tablet, and desktop
+5. Ensure CMS compatibility (single-line HTML)
+
+## Repository
+
+This project is hosted on GitHub:
+- **Repository**: https://github.com/marissaade/fmg-calculators
+- **Main branch**: `main`
+
+## Notes
+
+- All calculators follow the patterns documented in `.cursorrules`
+- Color palettes use soft, muted tones (avoid black/red)
+- Calculations are accurate and match expected financial formulas
+- Maintain consistency with existing calculators for user experience
+- Document any deviations from standards with clear reasoning
