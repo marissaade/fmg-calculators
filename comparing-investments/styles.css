@@ -430,6 +430,99 @@ input[type="number"]::-webkit-outer-spin-button {
     color: #059669;
 }
 
+/* Tooltip styles */
+.ci-tooltip {
+    display: inline-block;
+    margin-left: 6px;
+    width: 18px;
+    height: 18px;
+    background: #64748b;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 18px;
+    cursor: pointer;
+    position: relative;
+    vertical-align: middle;
+    user-select: none;
+    z-index: 10000;
+}
+
+.ci-tooltip:hover {
+    background: #475569;
+    transform: scale(1.1);
+}
+
+.ci-tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: white;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: nowrap;
+    min-width: 200px;
+    max-width: 300px;
+    white-space: normal;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 10001;
+    pointer-events: none;
+    font-weight: 400;
+}
+
+.ci-tooltip:hover::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1e293b;
+    z-index: 10001;
+    pointer-events: none;
+}
+
+.ci-tooltip.active::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: white;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: nowrap;
+    min-width: 200px;
+    max-width: 300px;
+    white-space: normal;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 10001;
+    pointer-events: none;
+    font-weight: 400;
+}
+
+.ci-tooltip.active::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1e293b;
+    z-index: 10001;
+    pointer-events: none;
+}
+
 /* Explanation text */
 .ci-explanation-text {
     background: #f7fafc;

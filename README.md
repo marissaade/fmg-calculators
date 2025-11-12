@@ -25,7 +25,7 @@ This project contains financial calculators redesigned for consistency, accessib
 ### ✅ Input Formatting & Sliders
 - **Currency inputs**: Automatically format with commas (e.g., $10,000)
 - **Sliders**: Available for percentage and currency fields where appropriate
-- **No spinner arrows**: Removed for better UX and accuracy
+- **Input steppers**: Currently removed; hover-only steppers will be added per UX specifications (pending field identification)
 - **Bidirectional sync**: Sliders and text inputs stay in sync
 
 ### ✅ Tooltips
@@ -177,7 +177,7 @@ Files are deployed to AWS S3 buckets:
 - Mobile: Auto-scroll to results after calculation
 
 ### Input Guidelines
-- **No steppers**: Up/down arrows removed for accuracy
+- **Input steppers**: Currently removed; hover-only steppers will be added for fields specified by UX (pending)
 - **Sliders**: Always paired with text inputs for precision
 - **Tooltips**: Preferred over persistent helper text
 - **Dropdowns**: Use for ≤10 options, text fields for precise values

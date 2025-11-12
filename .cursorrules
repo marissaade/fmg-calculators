@@ -140,13 +140,13 @@ Each calculator must have a unique prefix (e.g., `hlywml-`, `winw-`, `ira-`, `wi
 3. **Focus**: Remove commas on `focus` for easier editing
 4. **Parsing**: Use `parseCurrencyValue()` method to strip commas before calculations
 5. **Default values**: Format with commas on page load
-6. **No steppers**: Text inputs don't have steppers (up/down arrows), which is intentional per UX recommendations
+6. **Steppers**: Currently no steppers. Per UX: hover-only steppers will be added for fields specified by Kyle (pending)
 
 ### Percentage/Number Inputs with Sliders
 1. **Type**: Keep as `type="number"`
-2. **CSS**: Add `appearance: textfield` to remove spinner arrows (UX does not recommend steppers)
+2. **CSS**: Add `appearance: textfield` to remove spinner arrows (currently no steppers)
 3. **Positioning**: Unit symbol positioned at `right: 12px`
-4. **No steppers**: Remove spinner arrows via CSS - UX does not recommend up/down arrow steppers as they introduce inaccuracy
+4. **Steppers**: Currently no steppers. Per UX: hover-only steppers will be added for fields specified by Kyle (pending)
 
 ### Currency Symbol Positioning
 - Currency symbol (`$`): Positioned inside input wrapper
@@ -224,6 +224,9 @@ this.defaultValues = {
 
 ### Handling Averages
 - **Disclaimers**: Must add disclaimer when using national/regional averages
+  - **Webpage disclaimer**: Add visible disclaimer on webpage (not just PDF) noting pre-filled values are hypothetical averages
+  - **Copy**: Kyle/Mike will provide exact disclaimer text (pending)
+  - **PDF disclaimer**: Continue including disclaimers in PDF downloads
 - **Advanced option**: Consider allowing users to enter data manually OR provide zip code for local average
 
 ---

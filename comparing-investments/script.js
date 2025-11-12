@@ -26,6 +26,7 @@ class InvestmentComparisonCalculator {
         
         this.initializeInputFormatting();
         this.initializeSliders();
+        this.initializeTooltips();
         this.initializeEventListeners();
         this.calculateOnLoad();
     }
@@ -86,8 +87,31 @@ class InvestmentComparisonCalculator {
         });
     }
 
-
-
+    initializeTooltips() {
+        // Make tooltips clickable for mobile compatibility
+        const tooltips = document.querySelectorAll('.ci-tooltip');
+        tooltips.forEach(tooltip => {
+            tooltip.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Toggle active class
+                const isActive = tooltip.classList.contains('active');
+                // Close all tooltips first
+                document.querySelectorAll('.ci-tooltip').forEach(t => t.classList.remove('active'));
+                // Toggle this tooltip
+                if (!isActive) {
+                    tooltip.classList.add('active');
+                }
+            });
+        });
+        
+        // Close tooltips when clicking outside (single global listener)
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.ci-tooltip')) {
+                document.querySelectorAll('.ci-tooltip').forEach(t => t.classList.remove('active'));
+            }
+        });
+    }
 
     initializeInputFormatting() {
         // Format currency inputs with commas
