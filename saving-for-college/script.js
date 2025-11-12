@@ -1133,6 +1133,15 @@ class CollegeSavingsCalculator {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
+            // Add PDF metadata
+            doc.setProperties({
+                title: 'College Savings Projection',
+                subject: 'Financial Calculator Results',
+                author: 'FMG Financial Calculators',
+                keywords: 'college savings, 529 plan, education savings, financial calculator, college planning',
+                creator: 'FMG Financial Calculators'
+            });
+            
             // Set up fonts and colors
             const primaryColor = [51, 51, 51]; // #333333
             const accentColor = [79, 70, 229]; // #4f46e5

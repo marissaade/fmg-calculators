@@ -695,6 +695,16 @@ class HowLongWillYourMoneyLastCalculator {
         const results = this.calculateResults(formData);
         
         const doc = new jsPDF();
+        
+        // Add PDF metadata
+        doc.setProperties({
+            title: 'How Long Will Your Money Last - Retirement Analysis',
+            subject: 'Financial Calculator Results',
+            author: 'FMG Financial Calculators',
+            keywords: 'retirement, savings, withdrawal, financial calculator, retirement planning',
+            creator: 'FMG Financial Calculators'
+        });
+        
         let yPosition = 20;
         
         // Title

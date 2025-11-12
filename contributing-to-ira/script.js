@@ -599,6 +599,16 @@ class IRACalculator {
         }
         
         const doc = new jsPDF();
+        
+        // Add PDF metadata
+        doc.setProperties({
+            title: 'IRA Contribution Analysis',
+            subject: 'Financial Calculator Results',
+            author: 'FMG Financial Calculators',
+            keywords: 'IRA, retirement savings, IRA contribution, financial calculator, retirement planning',
+            creator: 'FMG Financial Calculators'
+        });
+        
         const formData = this.getFormData();
         const eligibility = this.calculateEligibility(formData);
         const results = this.calculateProjection(formData, eligibility);

@@ -336,9 +336,9 @@ class DebtOrInvestCalculator {
         if (input.id === 'doi-total-debt' || input.id === 'doi-monthly-payment') {
             // Currency formatting is handled by formatCurrencyInput
             const value = this.parseCurrencyValue(input.value);
-            
-            if (isNaN(value) || value < 0) {
-                input.value = '';
+        
+        if (isNaN(value) || value < 0) {
+            input.value = '';
                 return;
             }
             
@@ -352,19 +352,19 @@ class DebtOrInvestCalculator {
             if (maxValue && value > maxValue) {
                 input.value = maxValue.toLocaleString();
                 this.updateSliderFromInput(input);
-            }
-            
-            // Special validation for monthly payment - must be at least 4% of debt
-            if (input === this.elements.monthlyPayment) {
+        }
+        
+        // Special validation for monthly payment - must be at least 4% of debt
+        if (input === this.elements.monthlyPayment) {
                 const totalDebt = this.parseCurrencyValue(this.elements.totalDebt.value);
-                if (!isNaN(totalDebt) && totalDebt > 0) {
-                    const minPayment = totalDebt * 0.04;
-                    if (value < minPayment) {
-                        // Show warning but don't prevent calculation
-                        console.warn(`Monthly payment should be at least ${this.formatCurrency(minPayment)} (4% of debt)`);
-                    }
+            if (!isNaN(totalDebt) && totalDebt > 0) {
+                const minPayment = totalDebt * 0.04;
+                if (value < minPayment) {
+                    // Show warning but don't prevent calculation
+                    console.warn(`Monthly payment should be at least ${this.formatCurrency(minPayment)} (4% of debt)`);
                 }
             }
+        }
         } else {
             // Handle percentage inputs
             const value = parseFloat(input.value);
@@ -536,10 +536,10 @@ class DebtOrInvestCalculator {
         
         // Update existing chart or create new one
         if (this.chart) {
-            this.chart.data.datasets[0].data = [
-                results.interestSaved,
-                results.investmentInterest
-            ];
+        this.chart.data.datasets[0].data = [
+            results.interestSaved,
+            results.investmentInterest
+        ];
             
             // Update colors to use dynamic values
             this.chart.data.datasets[0].backgroundColor = [
@@ -550,8 +550,8 @@ class DebtOrInvestCalculator {
                 debtColor,
                 investmentColor
             ];
-            
-            this.chart.update();
+        
+        this.chart.update();
         } else {
             // Create chart if it doesn't exist
             if (!this.chartCanvas) return;
@@ -705,6 +705,16 @@ class DebtOrInvestCalculator {
             const { jsPDF } = window.jspdf;
         
         const doc = new jsPDF();
+        
+        // Add PDF metadata
+        doc.setProperties({
+            title: 'Debt vs Invest Analysis',
+            subject: 'Financial Calculator Results',
+            author: 'FMG Financial Calculators',
+            keywords: 'debt, investment, financial calculator, debt payoff, investment strategy',
+            creator: 'FMG Financial Calculators'
+        });
+        
         const formData = this.getFormData();
         const results = this.calculateResults(formData);
         

@@ -12,15 +12,7 @@ This project contains financial calculators redesigned for consistency, accessib
 - **What Is My Monthly Budget** (`what-is-my-monthly-budget/`) - Prefix: `wimb-`
 - **Debt or Invest** (`debt-or-invest/`) - Prefix: `doi-`
 - **Saving for College** (`saving-for-college/`) - Prefix: `sfc-`
-
-### Legacy Calculators (Pending Update)
-These calculators have not yet been updated to match the new design patterns and will be updated in the future:
-
 - **Comparing Investments** (`comparing-investments/`) - Prefix: `ci-`
-  - Still uses "Calculate" button pattern
-  - Forms are not pre-filled
-  - Does not auto-calculate on page load
-  - Missing slider implementations where applicable
 
 ## Key Features
 
@@ -65,7 +57,7 @@ Each calculator uses a unique prefix for all classes and IDs:
 - `wimb-`: What Is My Monthly Budget
 - `doi-`: Debt or Invest
 - `sfc-`: Saving for College
-- `ci-`: Comparing Investments (legacy)
+- `ci-`: Comparing Investments
 
 ### Code Patterns
 All calculators follow patterns documented in `.cursorrules`:
@@ -112,7 +104,7 @@ Calculator Redesign Project/
 │   ├── index.html
 │   ├── styles.css
 │   └── script.js
-└── comparing-investments/          # Legacy
+└── comparing-investments/
     ├── index.html
     ├── styles.css
     └── script.js
@@ -169,7 +161,7 @@ Files are deployed to AWS S3 buckets:
 - `whatIsMyMonthlyBudget`
 - `debtOrInvest`
 - `savingForCollege`
-- `comparingInvestments` (legacy)
+- `comparingInvestments`
 
 ## UX Guidelines
 

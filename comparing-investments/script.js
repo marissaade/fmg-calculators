@@ -2,32 +2,35 @@
 
 class InvestmentComparisonCalculator {
     constructor() {
-        this.calculateBtn = document.getElementById('ci-calculateBtn');
         this.mainResultSection = document.querySelector('.ci-main-result');
         this.breakdownSection = document.querySelector('.ci-breakdown');
         this.downloadBtn = document.getElementById('ci-downloadBtn');
         this.resetBtn = document.getElementById('ci-reset-btn');
         this.printBtn = document.getElementById('ci-print-btn');
-        this.placeholderContent = document.querySelector('.ci-placeholder-content');
         this.chartContainer = document.querySelector('.ci-chart-container');
-        this.chartHeading = document.querySelector('.ci-chart-section h2');
         this.chartInstance = null; // Store chart instance for updates
         
-        // Check if essential elements exist
-        if (!this.calculateBtn) {
-            console.error('Calculate button not found. Expected ID: ci-calculateBtn');
-            return;
-        }
+        // Default values
+        this.defaultValues = {
+            'ci-initial-investment-a': '5000',
+            'ci-annual-contribution-a': '2000',
+            'ci-rate-of-return-a': '9',
+            'ci-initial-investment-b': '5000',
+            'ci-annual-contribution-b': '2000',
+            'ci-rate-of-return-b': '5',
+            'ci-years-to-grow': '20'
+        };
         
-        this.initializeEventListeners();
+        // Calculation timeout for debouncing
+        this.calculationTimeout = null;
+        
         this.initializeInputFormatting();
-        this.initializeCustomTooltip();
+        this.initializeSliders();
+        this.initializeEventListeners();
+        this.calculateOnLoad();
     }
 
     initializeEventListeners() {
-        if (this.calculateBtn) {
-            this.calculateBtn.addEventListener('click', (e) => this.handleCalculate(e));
-        }
         if (this.resetBtn) {
             this.resetBtn.addEventListener('click', () => this.resetForm());
         }
@@ -38,13 +41,21 @@ class InvestmentComparisonCalculator {
             this.downloadBtn.addEventListener('click', () => this.downloadResults());
         }
         
-        // Add input validation listeners
+        // Real-time calculation on all inputs
         const inputs = document.querySelectorAll('input');
         inputs.forEach(input => {
-            input.addEventListener('blur', () => this.validateAndCapInput(input));
             input.addEventListener('input', () => {
                 this.clearError(input);
-                this.checkFormValidity();
+                this.validateAndCapInput(input);
+                clearTimeout(this.calculationTimeout);
+                this.calculationTimeout = setTimeout(() => {
+                    this.calculateAndDisplay();
+                }, 300);
+            });
+            
+            input.addEventListener('blur', () => {
+                this.validateAndCapInput(input);
+                this.calculateAndDisplay();
             });
         });
         
@@ -58,8 +69,6 @@ class InvestmentComparisonCalculator {
                 } else if (value < 1 && e.target.value !== '') {
                     e.target.value = 1;
                 }
-                // Re-check form validity after capping
-                this.checkFormValidity();
             });
         }
         
@@ -73,13 +82,8 @@ class InvestmentComparisonCalculator {
                 } else if (value < 0 && e.target.value !== '') {
                     e.target.value = 0;
                 }
-                // Re-check form validity after capping
-                this.checkFormValidity();
             });
         });
-        
-        // Initial form validity check
-        this.checkFormValidity();
     }
 
 
@@ -100,93 +104,6 @@ class InvestmentComparisonCalculator {
         });
     }
 
-    initializeCustomTooltip() {
-        // Create custom tooltip for the calculate button
-        if (!this.calculateBtn) return;
-        
-        // Remove the title attribute to prevent native tooltip
-        const tooltipText = this.calculateBtn.getAttribute('title') || 'Please fill out all fields above to compare your investment options';
-        this.calculateBtn.removeAttribute('title');
-        
-        // Create tooltip element
-        const tooltip = document.createElement('div');
-        tooltip.className = 'ci-custom-tooltip';
-        tooltip.textContent = tooltipText;
-        tooltip.style.cssText = `
-            position: fixed !important;
-            background: #333 !important;
-            color: white !important;
-            padding: 8px 12px !important;
-            border-radius: 4px !important;
-            font-size: 14px !important;
-            white-space: nowrap !important;
-            z-index: 999999 !important;
-            pointer-events: none !important;
-            opacity: 0 !important;
-            transition: opacity 0.2s ease !important;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
-            display: block !important;
-            visibility: visible !important;
-        `;
-        
-        // Add tooltip to document body
-        document.body.appendChild(tooltip);
-        
-        // Show tooltip on mouseenter
-        this.calculateBtn.addEventListener('mouseenter', (e) => {
-            if (this.calculateBtn.disabled) {
-                // Get button position and size
-                const rect = this.calculateBtn.getBoundingClientRect();
-                const viewportWidth = window.innerWidth;
-                const viewportHeight = window.innerHeight;
-                
-                // Temporarily show tooltip to measure its size
-                tooltip.style.opacity = '0';
-                tooltip.style.display = 'block';
-                tooltip.style.visibility = 'visible';
-                const tooltipRect = tooltip.getBoundingClientRect();
-                const tooltipWidth = tooltipRect.width;
-                const tooltipHeight = tooltipRect.height;
-                
-                // Calculate ideal position (centered above button)
-                let left = rect.left + (rect.width / 2);
-                let top = rect.top - tooltipHeight - 8; // 8px gap above button
-                
-                // Adjust horizontal position if tooltip would go off-screen
-                const tooltipHalfWidth = tooltipWidth / 2;
-                if (left - tooltipHalfWidth < 10) {
-                    // Too far left - align to left edge with padding
-                    left = tooltipHalfWidth + 10;
-                } else if (left + tooltipHalfWidth > viewportWidth - 10) {
-                    // Too far right - align to right edge with padding
-                    left = viewportWidth - tooltipHalfWidth - 10;
-                }
-                
-                // Adjust vertical position if tooltip would go off-screen
-                if (top < 10) {
-                    // Not enough space above - show below button instead
-                    top = rect.bottom + 8;
-                }
-                
-                // Apply final positioning
-                tooltip.style.position = 'fixed';
-                tooltip.style.left = left + 'px';
-                tooltip.style.top = top + 'px';
-                tooltip.style.transform = 'translateX(-50%)';
-                tooltip.style.zIndex = '999999';
-                tooltip.style.opacity = '1';
-            }
-        });
-        
-        // Hide tooltip on mouseleave
-        this.calculateBtn.addEventListener('mouseleave', () => {
-            tooltip.style.opacity = '0';
-        });
-        
-        // Store reference for cleanup
-        this.customTooltip = tooltip;
-    }
-
     handleCurrencyFocus(event) {
         // Remove formatting on focus for easier editing
         const input = event.target;
@@ -204,9 +121,9 @@ class InvestmentComparisonCalculator {
             let maxValue;
             
             if (input.id.includes('initial-investment')) {
-                maxValue = 100000000; // $100 million cap
+                maxValue = 500000; // $500K cap
             } else if (input.id.includes('annual-contribution')) {
-                maxValue = 10000000; // $10 million annual cap
+                maxValue = 100000; // $100K annual cap
             }
             
             if (maxValue && numValue > maxValue) {
@@ -220,19 +137,91 @@ class InvestmentComparisonCalculator {
             } else if (value === '0') {
                 input.value = '0';
             }
+            
+            // Update corresponding slider
+            this.updateSliderFromInput(input);
         } else {
             input.value = '';
         }
         
-        // Re-check form validity after formatting
-        this.checkFormValidity();
+        // Trigger calculation after formatting
+        clearTimeout(this.calculationTimeout);
+        this.calculationTimeout = setTimeout(() => {
+            this.calculateAndDisplay();
+        }, 300);
     }
 
     parseCurrencyValue(value) {
         return parseFloat(value.replace(/[^\d.]/g, '')) || 0;
     }
 
-    checkFormValidity() {
+    initializeSliders() {
+        // Sync sliders with currency text inputs
+        const sliderPairs = [
+            { slider: 'ci-initial-investment-a-slider', input: 'ci-initial-investment-a', max: 500000 },
+            { slider: 'ci-annual-contribution-a-slider', input: 'ci-annual-contribution-a', max: 100000 },
+            { slider: 'ci-initial-investment-b-slider', input: 'ci-initial-investment-b', max: 500000 },
+            { slider: 'ci-annual-contribution-b-slider', input: 'ci-annual-contribution-b', max: 100000 }
+        ];
+        
+        sliderPairs.forEach(pair => {
+            const slider = document.getElementById(pair.slider);
+            const input = document.getElementById(pair.input);
+            
+            if (slider && input) {
+                // Update input when slider changes
+                slider.addEventListener('input', (e) => {
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value)) {
+                        // Format with commas
+                        input.value = value.toLocaleString();
+                        clearTimeout(this.calculationTimeout);
+                        this.calculationTimeout = setTimeout(() => {
+                            this.calculateAndDisplay();
+                        }, 300);
+                    }
+                });
+                
+                // Update slider when input changes (via formatCurrencyInput)
+                // Note: formatCurrencyInput already calls updateSliderFromInput, so this is redundant
+                // but kept for consistency
+            }
+        });
+    }
+
+    updateSliderFromInput(input) {
+        const value = this.parseCurrencyValue(input.value);
+        let sliderId;
+        
+        if (input.id === 'ci-initial-investment-a') {
+            sliderId = 'ci-initial-investment-a-slider';
+        } else if (input.id === 'ci-annual-contribution-a') {
+            sliderId = 'ci-annual-contribution-a-slider';
+        } else if (input.id === 'ci-initial-investment-b') {
+            sliderId = 'ci-initial-investment-b-slider';
+        } else if (input.id === 'ci-annual-contribution-b') {
+            sliderId = 'ci-annual-contribution-b-slider';
+        }
+        
+        if (sliderId) {
+            const slider = document.getElementById(sliderId);
+            if (slider && !isNaN(value)) {
+                // Cap value at slider max
+                let maxValue;
+                if (input.id.includes('initial-investment')) {
+                    maxValue = 500000; // $500K
+                } else if (input.id.includes('annual-contribution')) {
+                    maxValue = 100000; // $100K
+                } else {
+                    maxValue = parseFloat(slider.getAttribute('max')) || 500000;
+                }
+                const cappedValue = Math.min(value, maxValue);
+                slider.value = cappedValue;
+            }
+        }
+    }
+
+    hasValidInputs() {
         const requiredFields = [
             'ci-initial-investment-a',
             'ci-annual-contribution-a', 
@@ -243,81 +232,57 @@ class InvestmentComparisonCalculator {
             'ci-years-to-grow'
         ];
 
-        let allFieldsValid = true;
-        
-        requiredFields.forEach(fieldId => {
+        for (const fieldId of requiredFields) {
             const field = document.getElementById(fieldId);
-            if (field) {
-                // Get the raw value and trim whitespace
-                const rawValue = field.value ? field.value.trim() : '';
-                
-                // Check if field is filled
-                if (!rawValue || rawValue === '') {
-                    allFieldsValid = false;
-                    return; // Continue to next field
-                }
-                
-                // Parse value based on field type
-                let numericValue;
-                if (fieldId === 'ci-rate-of-return-a' || fieldId === 'ci-rate-of-return-b') {
-                    // For percentage fields, use parseFloat directly
-                    numericValue = parseFloat(rawValue);
-                } else if (fieldId === 'ci-years-to-grow') {
-                    // For years field, use parseInt
-                    numericValue = parseInt(rawValue, 10);
-                } else {
-                    // For currency fields, use parseCurrencyValue (handles commas)
-                    numericValue = this.parseCurrencyValue(rawValue);
-                }
-                
-                // Check if value is valid number
-                if (isNaN(numericValue) || numericValue < 0) {
-                    allFieldsValid = false;
-                    return; // Continue to next field
-                }
-                
-                // Check specific limits for each field type
-                switch (fieldId) {
-                    case 'ci-initial-investment-a':
-                    case 'ci-initial-investment-b':
-                        if (numericValue > 10000000) allFieldsValid = false;
-                        break;
-                    case 'ci-annual-contribution-a':
-                    case 'ci-annual-contribution-b':
-                        if (numericValue > 1000000) allFieldsValid = false;
-                        break;
-                    case 'ci-years-to-grow':
-                        if (numericValue < 1 || numericValue > 100) allFieldsValid = false;
-                        break;
-                    case 'ci-rate-of-return-a':
-                    case 'ci-rate-of-return-b':
-                        if (numericValue > 100) allFieldsValid = false;
-                        break;
-                }
+            if (!field) continue;
+            
+            const rawValue = field.value ? field.value.trim() : '';
+            if (!rawValue || rawValue === '') {
+                return false;
             }
-        });
-
-        // Enable/disable calculate button based on form validity
-        if (this.calculateBtn) {
-            this.calculateBtn.disabled = !allFieldsValid;
+            
+            let numericValue;
+            if (fieldId === 'ci-rate-of-return-a' || fieldId === 'ci-rate-of-return-b') {
+                numericValue = parseFloat(rawValue);
+            } else if (fieldId === 'ci-years-to-grow') {
+                numericValue = parseInt(rawValue, 10);
+            } else {
+                numericValue = this.parseCurrencyValue(rawValue);
+            }
+            
+            if (isNaN(numericValue) || numericValue < 0) {
+                return false;
+            }
         }
 
-        return allFieldsValid;
+        return true;
     }
 
-    handleCalculate(event) {
-        event.preventDefault();
+    calculateOnLoad() {
+        // Format initial currency values with commas
+        const currencyInputs = ['ci-initial-investment-a', 'ci-annual-contribution-a', 'ci-initial-investment-b', 'ci-annual-contribution-b'];
+        currencyInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input && input.value) {
+                const value = this.parseCurrencyValue(input.value);
+                input.value = this.formatCurrency(value);
+            }
+        });
         
-        // Double-check form validity before proceeding
-        if (!this.checkFormValidity()) {
+        // Trigger calculation if inputs are valid
+        if (this.hasValidInputs()) {
+            this.calculateAndDisplay();
+        }
+    }
+
+    calculateAndDisplay() {
+        if (!this.hasValidInputs()) {
             return;
         }
         
-        if (this.validateForm()) {
-            const formData = this.getFormData();
-            const results = this.calculateComparison(formData);
-            this.displayResults(results, formData);
-        }
+        const formData = this.getFormData();
+        const results = this.calculateComparison(formData);
+        this.displayResults(results, formData);
     }
 
     getFormData() {
@@ -411,36 +376,17 @@ class InvestmentComparisonCalculator {
         // Generate and display chart
         this.generateChart(formData, results);
         
-        // Hide placeholder content and show chart
-        if (this.placeholderContent) {
-            this.placeholderContent.style.display = 'none';
-        }
+        // Ensure chart container is visible
         if (this.chartContainer) {
             this.chartContainer.style.display = 'block';
         }
-        if (this.chartHeading) {
-            // Remove inline style to show the heading
-            this.chartHeading.removeAttribute('style');
-        }
         
-        // Generate explanation text
-        const explanationText = this.generateExplanationText(results, formData);
-        const explanationElement = document.getElementById('ci-explanation-text');
-        if (explanationElement) {
-            explanationElement.innerHTML = explanationText;
-        }
-        
+        // Show main result section (breakdown is nested inside, so it will be visible automatically)
         if (this.mainResultSection) {
             this.mainResultSection.style.display = 'block';
         }
-        if (this.breakdownSection) {
-            this.breakdownSection.style.display = 'block';
-        }
         if (this.downloadBtn) {
             this.downloadBtn.style.display = 'block';
-        }
-        if (this.mainResultSection) {
-            this.mainResultSection.scrollIntoView({ behavior: 'smooth' });
         }
     }
 
@@ -454,16 +400,7 @@ class InvestmentComparisonCalculator {
         
         return `
             <p><strong>Investment Option ${betterOption} is projected to perform better over ${formData.yearsToGrow} years.</strong></p>
-            <p>With an expected annual return of ${betterRate.toFixed(1)}%, Option ${betterOption} is projected to grow to ${this.formatCurrency(betterResult.futureValue)}, 
-            while Option ${worseOption} with ${worseRate.toFixed(1)}% return is projected to reach ${this.formatCurrency(worseResult.futureValue)}.</p>
-            <p><strong>Key insights:</strong></p>
-            <ul>
-                <li>Option ${betterOption} provides ${this.formatCurrency(results.difference)} more in total value</li>
-                <li>Option ${betterOption} generates ${this.formatCurrency(betterResult.totalGain)} in gains vs ${this.formatCurrency(worseResult.totalGain)} for Option ${worseOption}</li>
-                <li>The ${(betterRate - worseRate).toFixed(1)} percentage point difference in returns compounds significantly over time</li>
-                <li>Both options require the same total contributions of ${this.formatCurrency(betterResult.totalContributed)}</li>
-            </ul>
-            <p><em>Remember: These projections are based on assumed rates of return. Actual investment performance may vary, and past performance doesn't guarantee future results.</em></p>
+            <p>With an expected annual return of ${betterRate.toFixed(1)}%, Option ${betterOption} is projected to grow to ${this.formatCurrency(betterResult.futureValue)}, while Option ${worseOption} with ${worseRate.toFixed(1)}% return is projected to reach ${this.formatCurrency(worseResult.futureValue)}.</p>
         `;
     }
 
@@ -697,11 +634,11 @@ class InvestmentComparisonCalculator {
         switch (input.id) {
             case 'ci-initial-investment-a':
             case 'ci-initial-investment-b':
-                maxValue = 10000000; // $10 million
+                maxValue = 500000; // $500K
                 break;
             case 'ci-annual-contribution-a':
             case 'ci-annual-contribution-b':
-                maxValue = 1000000; // $1 million
+                maxValue = 100000; // $100K
                 break;
             case 'ci-years-to-grow':
                 maxValue = 100;
@@ -880,35 +817,46 @@ class InvestmentComparisonCalculator {
     }
 
     resetForm() {
-        // Reset all input fields
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            if (input.type === 'number' || input.type === 'text') {
-                input.value = '';
+        // Reset all inputs to default values
+        Object.keys(this.defaultValues).forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                const defaultValue = this.defaultValues[id];
+                input.value = defaultValue;
+                
+                // Format currency inputs with commas
+                if (id.includes('initial-investment') || id.includes('annual-contribution')) {
+                    const value = this.parseCurrencyValue(defaultValue);
+                    input.value = this.formatCurrency(value);
+                }
             }
         });
         
-        if (this.mainResultSection) {
-            this.mainResultSection.style.display = 'none';
-        }
-        if (this.breakdownSection) {
-            this.breakdownSection.style.display = 'none';
-        }
-        if (this.downloadBtn) {
-            this.downloadBtn.style.display = 'none';
-        }
+        // Reset sliders
+        const sliderPairs = [
+            { slider: 'ci-initial-investment-a-slider', input: 'ci-initial-investment-a' },
+            { slider: 'ci-annual-contribution-a-slider', input: 'ci-annual-contribution-a' },
+            { slider: 'ci-initial-investment-b-slider', input: 'ci-initial-investment-b' },
+            { slider: 'ci-annual-contribution-b-slider', input: 'ci-annual-contribution-b' }
+        ];
         
-        // Show placeholder content and hide chart
-        if (this.placeholderContent) {
-            this.placeholderContent.style.display = 'block';
-        }
-        if (this.chartContainer) {
-            this.chartContainer.style.display = 'none';
-        }
-        if (this.chartHeading) {
-            // Hide the heading with inline style
-            this.chartHeading.style.display = 'none';
-        }
+        sliderPairs.forEach(pair => {
+            const slider = document.getElementById(pair.slider);
+            const input = document.getElementById(pair.input);
+            if (slider && input) {
+                const value = this.parseCurrencyValue(input.value);
+                slider.value = value;
+            }
+        });
+        
+        // Clear any error messages
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            this.clearError(input);
+        });
+        
+        // Recalculate with default values
+        this.calculateAndDisplay();
         
         // Reset chart to empty state instead of destroying it
         if (this.chartInstance) {
@@ -962,6 +910,15 @@ class InvestmentComparisonCalculator {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
+            // Add PDF metadata
+            doc.setProperties({
+                title: 'Investment Comparison Results',
+                subject: 'Financial Calculator Results',
+                author: 'FMG Financial Calculators',
+                keywords: 'investment, comparison, financial calculator, investment options',
+                creator: 'FMG Financial Calculators'
+            });
+            
             // Set up fonts and colors
             const primaryColor = [51, 51, 51]; // #333333
             const accentColor = [79, 70, 229]; // #4f46e5
@@ -988,51 +945,49 @@ class InvestmentComparisonCalculator {
             doc.setTextColor(...accentColor);
             doc.setFont('helvetica', 'bold');
             doc.text('INPUT VALUES', 20, yPosition);
-            yPosition += 10;
+            yPosition += 8;
             
-            // Investment Option A
+            // Side-by-side layout for Investment Options
+            const leftColumnX = 20;
+            const rightColumnX = 110; // Approximately halfway across the page
+            
+            // Investment Option A (left column)
             doc.setFontSize(10);
             doc.setTextColor(...primaryColor);
             doc.setFont('helvetica', 'bold');
-            doc.text('Investment Option A:', 20, yPosition);
-            yPosition += 6;
+            doc.text('Investment Option A:', leftColumnX, yPosition);
             
+            // Investment Option B (right column)
+            doc.text('Investment Option B:', rightColumnX, yPosition);
+            yPosition += 5;
+            
+            // Option A details (left column)
             doc.setFontSize(9);
             doc.setFont('helvetica', 'normal');
-            doc.text(`• Initial Investment: ${this.formatCurrency(formData.optionA.initialInvestment)}`, 25, yPosition);
-            yPosition += 5;
-            doc.text(`• Annual Contribution: ${this.formatCurrency(formData.optionA.annualContribution)}`, 25, yPosition);
-            yPosition += 5;
-            doc.text(`• Expected Annual Return: ${(formData.optionA.rateOfReturn * 100).toFixed(1)}%`, 25, yPosition);
-            yPosition += 8;
+            doc.text(`• Initial Investment: ${this.formatCurrency(formData.optionA.initialInvestment)}`, leftColumnX + 5, yPosition);
+            doc.text(`• Initial Investment: ${this.formatCurrency(formData.optionB.initialInvestment)}`, rightColumnX + 5, yPosition);
+            yPosition += 4;
             
-            // Investment Option B
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Investment Option B:', 20, yPosition);
+            doc.text(`• Annual Contribution: ${this.formatCurrency(formData.optionA.annualContribution)}`, leftColumnX + 5, yPosition);
+            doc.text(`• Annual Contribution: ${this.formatCurrency(formData.optionB.annualContribution)}`, rightColumnX + 5, yPosition);
+            yPosition += 4;
+            
+            doc.text(`• Expected Annual Return: ${(formData.optionA.rateOfReturn * 100).toFixed(1)}%`, leftColumnX + 5, yPosition);
+            doc.text(`• Expected Annual Return: ${(formData.optionB.rateOfReturn * 100).toFixed(1)}%`, rightColumnX + 5, yPosition);
             yPosition += 6;
-            
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`• Initial Investment: ${this.formatCurrency(formData.optionB.initialInvestment)}`, 25, yPosition);
-            yPosition += 5;
-            doc.text(`• Annual Contribution: ${this.formatCurrency(formData.optionB.annualContribution)}`, 25, yPosition);
-            yPosition += 5;
-            doc.text(`• Expected Annual Return: ${(formData.optionB.rateOfReturn * 100).toFixed(1)}%`, 25, yPosition);
-            yPosition += 8;
             
             // Investment Timeline
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
             doc.text(`Investment Timeline: ${formData.yearsToGrow} years`, 20, yPosition);
-            yPosition += 12;
+            yPosition += 8;
             
             // Results Section
             doc.setFontSize(12);
             doc.setTextColor(...accentColor);
             doc.setFont('helvetica', 'bold');
             doc.text('COMPARISON RESULTS', 20, yPosition);
-            yPosition += 10;
+            yPosition += 8;
             
             // Get result values
             const projectedValueA = document.getElementById('ci-projected-value-a').textContent;
@@ -1049,27 +1004,47 @@ class InvestmentComparisonCalculator {
             doc.setTextColor(...primaryColor);
             doc.setFont('helvetica', 'bold');
             doc.text('Final Values:', 20, yPosition);
-            yPosition += 7;
+            yPosition += 5;
             
             doc.setFontSize(9);
             doc.setFont('helvetica', 'normal');
             doc.text(`• Investment Option A: ${projectedValueA}`, 25, yPosition);
-            yPosition += 5;
+            yPosition += 4;
             doc.text(`• Investment Option B: ${projectedValueB}`, 25, yPosition);
-            yPosition += 8;
+            yPosition += 6;
             
             doc.setFont('helvetica', 'bold');
             doc.text(`Better Option: ${betterOption}`, 25, yPosition);
-            yPosition += 5;
+            yPosition += 4;
             doc.text(`Advantage: ${this.formatCurrency(difference)}`, 25, yPosition);
             yPosition += 10;
+            
+            // Add chart to PDF
+            if (this.chartInstance && this.chartInstance.canvas) {
+                try {
+                    const chartImage = this.chartInstance.canvas.toDataURL('image/png');
+                    doc.setFontSize(12);
+                    doc.setTextColor(...primaryColor);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Investment Growth Comparison', 20, yPosition);
+                    yPosition += 6;
+                    // Chart with proper aspect ratio - make it slightly smaller to fit better
+                    const chartWidth = 160; // Reduced from 170
+                    doc.addImage(chartImage, 'PNG', 20, yPosition, chartWidth, 0);
+                    // Get the actual height of the image after scaling
+                    const imgHeight = (this.chartInstance.canvas.height / this.chartInstance.canvas.width) * chartWidth;
+                    yPosition += imgHeight + 8;
+                } catch (chartError) {
+                    console.warn('Could not add chart to PDF:', chartError);
+                }
+            }
             
             // Add summary section
             doc.setFontSize(12);
             doc.setTextColor(...accentColor);
             doc.setFont('helvetica', 'bold');
             doc.text('SUMMARY', 20, yPosition);
-            yPosition += 8;
+            yPosition += 6;
             
             doc.setFontSize(9);
             doc.setTextColor(...primaryColor);
@@ -1078,15 +1053,17 @@ class InvestmentComparisonCalculator {
             const summaryText = this.generateSummaryText(formData, valueA, valueB, betterOption);
             const splitText = doc.splitTextToSize(summaryText, 170);
             doc.text(splitText, 20, yPosition);
-            yPosition += splitText.length * 4 + 10;
+            yPosition += splitText.length * 3.5 + 8;
             
-            // Add disclaimer (no page break check - force single page)
+            // Add disclaimer at bottom of page
+            const pageHeight = doc.internal.pageSize.height;
+            const disclaimerY = pageHeight - 15; // 15px from bottom
             doc.setFontSize(7);
             doc.setTextColor(...mutedColor);
             doc.setFont('helvetica', 'italic');
             const disclaimer = 'This calculation is for educational purposes only and should not be considered as financial advice. Actual investment returns may vary due to market conditions, fees, taxes, and other factors. Please consult with a financial advisor for personalized investment guidance.';
             const disclaimerText = doc.splitTextToSize(disclaimer, 170);
-            doc.text(disclaimerText, 20, yPosition);
+            doc.text(disclaimerText, 20, disclaimerY);
             
             // Save the PDF
             doc.save('investment-comparison-results.pdf');
@@ -1182,14 +1159,11 @@ This analysis is based on the assumed rates of return provided and should be rev
 
 // Initialize the calculator when the DOM is loaded
 function initializeCalculator() {
-    // Check if essential elements exist
-    const calculateBtn = document.getElementById('ci-calculateBtn');
-    if (!calculateBtn) {
-        console.error('Calculator initialization failed: ci-calculateBtn not found');
-        return;
+    try {
+        new InvestmentComparisonCalculator();
+    } catch (error) {
+        console.error('Error initializing calculator:', error);
     }
-    
-    new InvestmentComparisonCalculator();
 }
 
 // Try multiple initialization methods for CMS compatibility

@@ -358,6 +358,16 @@ class WhatIsMyNetWorthCalculator {
         const results = this.calculateResults(formData);
         
         const doc = new jsPDF();
+        
+        // Add PDF metadata
+        doc.setProperties({
+            title: 'Net Worth Analysis',
+            subject: 'Financial Calculator Results',
+            author: 'FMG Financial Calculators',
+            keywords: 'net worth, assets, liabilities, financial calculator, personal finance',
+            creator: 'FMG Financial Calculators'
+        });
+        
         let yPosition = 20;
         
         // Title
