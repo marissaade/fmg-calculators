@@ -2,52 +2,63 @@
 
 class CollegeSavingsCalculator {
     constructor() {
-        this.calculateBtn = document.getElementById('sfc-calculateBtn');
         this.resultsSection = document.getElementById('sfc-results-section');
         this.resetBtn = document.getElementById('sfc-reset-btn');
-        this.printBtn = document.getElementById('sfc-print-btn');
         this.downloadBtn = document.getElementById('sfc-downloadBtn');
         this.placeholderContent = document.querySelector('.sfc-placeholder-content');
         this.chartContainer = document.querySelector('.sfc-chart-container');
-        this.chartHeading = document.querySelector('.sfc-chart-section h2');
+        this.chartHeading = document.querySelector('.sfc-chart-heading');
         this.chartInstance = null; // Store chart instance for updates
+        this.calculationTimeout = null;
         
-        // Check if essential elements exist
-        if (!this.calculateBtn) {
-            console.error('Calculate button not found. Expected ID: sfc-calculateBtn');
-            return;
-        }
+        // Store default values for reset
+        this.defaultValues = {
+            'sfc-current-savings': '5000',
+            'sfc-years-until-college': '15',
+            'sfc-annual-contribution': '2400',
+            'sfc-rate-of-return': '7',
+            'sfc-current-college-cost': '25000',
+            'sfc-college-inflation-rate': '5'
+        };
         
-        this.initializeEventListeners();
         this.initializeInputFormatting();
-        this.initializeCustomTooltip();
+        this.initializeSliders();
+        this.initializeTooltips();
+        this.initializeEventListeners();
+        // Calculate and display results on page load
+        this.calculateOnLoad();
     }
 
     initializeEventListeners() {
-        if (this.calculateBtn) {
-            this.calculateBtn.addEventListener('click', (e) => this.handleCalculate(e));
-        }
         if (this.resetBtn) {
         this.resetBtn.addEventListener('click', () => this.resetForm());
-        }
-        if (this.printBtn) {
-        this.printBtn.addEventListener('click', () => this.printResults());
         }
         if (this.downloadBtn) {
         this.downloadBtn.addEventListener('click', () => this.downloadResults());
         }
         
-        // Add input validation listeners
+        // Add real-time calculation listeners to all inputs
         const inputs = document.querySelectorAll('input');
         inputs.forEach(input => {
-            input.addEventListener('blur', () => this.validateAndCapInput(input));
+            // Real-time calculation on input change
             input.addEventListener('input', () => {
                 this.clearError(input);
-                this.checkFormValidity();
+                this.validateAndCapInput(input);
+                // Debounce calculation to avoid too many calculations
+                clearTimeout(this.calculationTimeout);
+                this.calculationTimeout = setTimeout(() => {
+                    this.calculateAndDisplay();
+                }, 300);
+            });
+            
+            // Also calculate on blur for immediate feedback
+            input.addEventListener('blur', () => {
+                this.validateAndCapInput(input);
+                this.calculateAndDisplay();
             });
         });
         
-        // Add real-time validation for years input (like age validation in retirement calculator)
+        // Add real-time validation for years input
         const yearsInput = document.getElementById('sfc-years-until-college');
         if (yearsInput) {
             yearsInput.addEventListener('input', function(e) {
@@ -74,9 +85,6 @@ class CollegeSavingsCalculator {
                 }
             });
         });
-        
-        // Initial form validity check
-        this.checkFormValidity();
     }
 
     initializeInputFormatting() {
@@ -99,10 +107,37 @@ class CollegeSavingsCalculator {
         let value = input.value.replace(/[^\d]/g, '');
         
         if (value) {
-            // Add commas for display
-            const formattedValue = parseInt(value).toLocaleString();
-            input.value = formattedValue;
+            const numValue = parseInt(value);
+            let maxValue;
+            
+            if (input.id === 'sfc-current-savings') {
+                maxValue = 500000; // $500K cap
+            } else if (input.id === 'sfc-annual-contribution') {
+                maxValue = 100000; // $100K cap
+            } else if (input.id === 'sfc-current-college-cost') {
+                maxValue = 200000; // $200K cap
+            }
+            
+            if (maxValue && numValue > maxValue) {
+                value = maxValue.toString();
+            }
+            
+            // Add comma formatting for display
+            if (value && value !== '0') {
+                const formattedValue = parseInt(value).toLocaleString();
+                input.value = formattedValue;
+            } else if (value === '0') {
+                input.value = '0';
+            }
+        } else {
+            input.value = '';
         }
+        
+        // Update corresponding slider
+        this.updateSliderFromInput(input);
+        
+        // Re-check form validity after formatting
+        this.checkFormValidity();
     }
 
     handleCurrencyFocus(event) {
@@ -115,92 +150,133 @@ class CollegeSavingsCalculator {
         return parseFloat(value.replace(/[^\d.]/g, '')) || 0;
     }
 
-    initializeCustomTooltip() {
-        // Create custom tooltip for the calculate button
-        if (!this.calculateBtn) return;
-        
-        // Remove the title attribute to prevent native tooltip
-        const tooltipText = this.calculateBtn.getAttribute('title') || 'Please complete all fields above to calculate your college savings projection';
-        this.calculateBtn.removeAttribute('title');
-        
-        // Create tooltip element
-        const tooltip = document.createElement('div');
-        tooltip.className = 'sfc-custom-tooltip';
-        tooltip.textContent = tooltipText;
-        tooltip.style.cssText = `
-            position: fixed !important;
-            background: #333 !important;
-            color: white !important;
-            padding: 8px 12px !important;
-            border-radius: 4px !important;
-            font-size: 14px !important;
-            white-space: nowrap !important;
-            z-index: 999999 !important;
-            pointer-events: none !important;
-            opacity: 0 !important;
-            transition: opacity 0.2s ease !important;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
-            display: block !important;
-            visibility: visible !important;
-        `;
-        
-        // Add tooltip to document body
-        document.body.appendChild(tooltip);
-        
-        // Show tooltip on mouseenter
-        this.calculateBtn.addEventListener('mouseenter', (e) => {
-            if (this.calculateBtn.disabled) {
-                // Get button position and size
-                const rect = this.calculateBtn.getBoundingClientRect();
-                const viewportWidth = window.innerWidth;
-                const viewportHeight = window.innerHeight;
-                
-                // Temporarily show tooltip to measure its size
-                tooltip.style.opacity = '0';
-                tooltip.style.display = 'block';
-                tooltip.style.visibility = 'visible';
-                const tooltipRect = tooltip.getBoundingClientRect();
-                const tooltipWidth = tooltipRect.width;
-                const tooltipHeight = tooltipRect.height;
-                
-                // Calculate ideal position (centered above button)
-                let left = rect.left + (rect.width / 2);
-                let top = rect.top - tooltipHeight - 8; // 8px gap above button
-                
-                // Adjust horizontal position if tooltip would go off-screen
-                const tooltipHalfWidth = tooltipWidth / 2;
-                if (left - tooltipHalfWidth < 10) {
-                    // Too far left - align to left edge with padding
-                    left = tooltipHalfWidth + 10;
-                } else if (left + tooltipHalfWidth > viewportWidth - 10) {
-                    // Too far right - align to right edge with padding
-                    left = viewportWidth - tooltipHalfWidth - 10;
+    calculateOnLoad() {
+        // Format initial currency values with commas
+        const currencyInputs = ['sfc-current-savings', 'sfc-annual-contribution', 'sfc-current-college-cost'];
+        currencyInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input && input.value) {
+                const numericValue = parseFloat(input.value.replace(/[^\d]/g, '')) || 0;
+                if (numericValue > 0) {
+                    input.value = numericValue.toLocaleString();
                 }
-                
-                // Adjust vertical position if tooltip would go off-screen
-                if (top < 10) {
-                    // Not enough space above - show below button instead
-                    top = rect.bottom + 8;
-                }
-                
-                // Apply final positioning
-                tooltip.style.position = 'fixed';
-                tooltip.style.left = left + 'px';
-                tooltip.style.top = top + 'px';
-                tooltip.style.transform = 'translateX(-50%)';
-                tooltip.style.zIndex = '999999';
-                tooltip.style.opacity = '1';
             }
         });
         
-        // Hide tooltip on mouseleave
-        this.calculateBtn.addEventListener('mouseleave', () => {
-            tooltip.style.opacity = '0';
+        // Update sliders to match initial values
+        const currentSavingsInput = document.getElementById('sfc-current-savings');
+        const annualContributionInput = document.getElementById('sfc-annual-contribution');
+        if (currentSavingsInput) {
+            this.updateSliderFromInput(currentSavingsInput);
+        }
+        if (annualContributionInput) {
+            this.updateSliderFromInput(annualContributionInput);
+        }
+        
+        // Trigger initial calculation
+        this.calculateAndDisplay();
+    }
+
+    calculateAndDisplay() {
+        // Check if inputs are valid
+        if (!this.hasValidInputs()) {
+            return;
+        }
+        
+            const formData = this.getFormData();
+            const results = this.calculateResults(formData);
+            this.displayResults(results, formData);
+        }
+
+    hasValidInputs() {
+        const currentSavings = this.parseCurrencyValue(document.getElementById('sfc-current-savings').value);
+        const yearsUntilCollege = parseInt(document.getElementById('sfc-years-until-college').value);
+        const annualContribution = this.parseCurrencyValue(document.getElementById('sfc-annual-contribution').value);
+        const rateOfReturn = parseFloat(document.getElementById('sfc-rate-of-return').value);
+        const currentCollegeCost = this.parseCurrencyValue(document.getElementById('sfc-current-college-cost').value);
+        const collegeInflationRate = parseFloat(document.getElementById('sfc-college-inflation-rate').value);
+        
+        return !isNaN(currentSavings) && currentSavings >= 0 &&
+               !isNaN(yearsUntilCollege) && yearsUntilCollege >= 1 && yearsUntilCollege <= 50 &&
+               !isNaN(annualContribution) && annualContribution >= 0 &&
+               !isNaN(rateOfReturn) && rateOfReturn >= 0 && rateOfReturn <= 100 &&
+               !isNaN(currentCollegeCost) && currentCollegeCost >= 0 &&
+               !isNaN(collegeInflationRate) && collegeInflationRate >= 0 && collegeInflationRate <= 50;
+    }
+
+    initializeSliders() {
+        // Sync sliders with currency text inputs
+        const sliderPairs = [
+            { slider: 'sfc-current-savings-slider', input: 'sfc-current-savings', max: 500000 },
+            { slider: 'sfc-annual-contribution-slider', input: 'sfc-annual-contribution', max: 100000 }
+        ];
+        
+        sliderPairs.forEach(pair => {
+            const slider = document.getElementById(pair.slider);
+            const input = document.getElementById(pair.input);
+            
+            if (slider && input) {
+                // Update input when slider changes
+                slider.addEventListener('input', (e) => {
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value)) {
+                        // Format with commas
+                        input.value = value.toLocaleString();
+                        // Trigger calculation
+                        clearTimeout(this.calculationTimeout);
+                        this.calculationTimeout = setTimeout(() => {
+                            this.calculateAndDisplay();
+                        }, 300);
+                    }
+                });
+            }
+        });
+    }
+
+    updateSliderFromInput(input) {
+        const value = this.parseCurrencyValue(input.value);
+        let sliderId;
+        
+        if (input.id === 'sfc-current-savings') {
+            sliderId = 'sfc-current-savings-slider';
+        } else if (input.id === 'sfc-annual-contribution') {
+            sliderId = 'sfc-annual-contribution-slider';
+        }
+        
+        if (sliderId) {
+            const slider = document.getElementById(sliderId);
+            if (slider && !isNaN(value)) {
+                slider.value = value;
+            }
+        }
+    }
+
+    initializeTooltips() {
+        // Make tooltips clickable for mobile compatibility
+        const tooltips = document.querySelectorAll('.sfc-tooltip');
+        tooltips.forEach(tooltip => {
+            tooltip.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Toggle active class
+                const isActive = tooltip.classList.contains('active');
+                // Close all tooltips first
+                document.querySelectorAll('.sfc-tooltip').forEach(t => t.classList.remove('active'));
+                // Toggle this tooltip
+                if (!isActive) {
+                    tooltip.classList.add('active');
+                }
+            });
         });
         
-        // Store reference for cleanup
-        this.customTooltip = tooltip;
+        // Close tooltips when clicking outside (single global listener)
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.sfc-tooltip')) {
+                document.querySelectorAll('.sfc-tooltip').forEach(t => t.classList.remove('active'));
+            }
+        });
     }
+
 
     initializeEmptyChart() {
         const ctx = document.getElementById('sfc-savings-chart');
@@ -213,8 +289,6 @@ class CollegeSavingsCalculator {
             console.error('Chart.js library not loaded');
             return;
         }
-        
-        console.log('Initializing empty chart...');
         
         // Get CSS variables from :root for dynamic colors
         const rootStyles = getComputedStyle(document.documentElement);
@@ -340,24 +414,9 @@ class CollegeSavingsCalculator {
                 }
             }
         });
-        console.log('Empty chart initialized successfully');
     }
 
 
-    handleCalculate(event) {
-        event.preventDefault();
-        console.log('Calculate button clicked');
-        
-        if (this.validateForm()) {
-            console.log('Form is valid, proceeding with calculation');
-            const formData = this.getFormData();
-            const results = this.calculateResults(formData);
-            console.log('Calculation results:', results);
-            this.displayResults(results, formData);
-        } else {
-            console.log('Form validation failed');
-        }
-    }
 
     getFormData() {
         return {
@@ -458,11 +517,9 @@ class CollegeSavingsCalculator {
         }
         
         // Show results section
+        if (this.resultsSection) {
         this.resultsSection.style.display = 'block';
-        this.resultsSection.scrollIntoView({ behavior: 'smooth' });
-        
-        // Change button text to "Recalculate"
-        this.calculateBtn.textContent = 'Recalculate';
+        }
     }
 
     generateExplanationText(results, formData) {
@@ -507,8 +564,6 @@ class CollegeSavingsCalculator {
     }
 
     generateChart(formData, results) {
-        console.log('generateChart called with:', formData, results);
-        
         // Get CSS variables from :root for dynamic colors
         const rootStyles = getComputedStyle(document.documentElement);
         const savingsColor = rootStyles.getPropertyValue("--paletteColor1").trim() || "#1a1a1a"; // Fallback color
@@ -518,11 +573,9 @@ class CollegeSavingsCalculator {
         
         // Generate data points for each year
         const chartData = this.generateChartData(formData);
-        console.log('Generated chart data:', chartData);
         
         // Update existing chart with new data
         if (this.chartInstance) {
-            console.log('Updating existing chart...');
             this.chartInstance.data.labels = chartData.years;
             this.chartInstance.data.datasets[0].data = chartData.savingsData;
             this.chartInstance.data.datasets[1].data = chartData.collegeCostData;
@@ -538,9 +591,7 @@ class CollegeSavingsCalculator {
                 this.chartInstance.data.datasets[1].pointBackgroundColor = collegeCostColor;
             }
             
-            console.log('Calling chart.update()...');
             this.chartInstance.update();
-            console.log('Chart update completed');
         } else {
             // Fallback: create new chart if none exists
             const ctx = document.getElementById('sfc-savings-chart').getContext('2d');
@@ -744,18 +795,26 @@ class CollegeSavingsCalculator {
                 if (!field.value || field.value.trim() === '') {
                     allFieldsValid = false;
                 } else {
-                    // Simple validation - just check if the value is a valid number within reasonable bounds
-                    const numericValue = this.parseCurrencyValue(field.value);
+                    // Use parseCurrencyValue for currency inputs, parseFloat/parseInt for others
+                    const isCurrencyField = fieldId === 'sfc-current-savings' || 
+                                          fieldId === 'sfc-annual-contribution' || 
+                                          fieldId === 'sfc-current-college-cost';
+                    const numericValue = isCurrencyField 
+                        ? this.parseCurrencyValue(field.value)
+                        : (fieldId === 'sfc-years-until-college' 
+                            ? parseInt(field.value) 
+                            : parseFloat(field.value));
+                    
                     if (isNaN(numericValue) || numericValue < 0) {
                         allFieldsValid = false;
                     } else {
                         // Check specific limits for each field type
                         switch (fieldId) {
                             case 'sfc-current-savings':
-                                if (numericValue > 10000000) allFieldsValid = false;
+                                if (numericValue > 500000) allFieldsValid = false;
                                 break;
                             case 'sfc-annual-contribution':
-                                if (numericValue > 1000000) allFieldsValid = false;
+                                if (numericValue > 100000) allFieldsValid = false;
                                 break;
                             case 'sfc-current-college-cost':
                                 if (numericValue > 200000) allFieldsValid = false;
@@ -774,11 +833,6 @@ class CollegeSavingsCalculator {
                 }
             }
         });
-
-        // Enable/disable calculate button based on form validity
-        if (this.calculateBtn) {
-            this.calculateBtn.disabled = !allFieldsValid;
-        }
 
         return allFieldsValid;
     }
@@ -1010,36 +1064,28 @@ class CollegeSavingsCalculator {
     }
 
     resetForm() {
-        // Clear all input fields
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.value = '';
-            input.classList.remove('error');
+        // Reset all inputs to default values
+        Object.keys(this.defaultValues).forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                const defaultValue = this.defaultValues[id];
+                input.value = defaultValue;
+                
+                // Format currency inputs with commas
+                if (id === 'sfc-current-savings' || id === 'sfc-annual-contribution' || id === 'sfc-current-college-cost') {
+                    const numericValue = parseFloat(defaultValue) || 0;
+                    if (numericValue > 0) {
+                        input.value = numericValue.toLocaleString();
+                    }
+                }
+            }
         });
         
-        // Hide results section
-        if (this.resultsSection) {
-        this.resultsSection.style.display = 'none';
-        }
-        
-        // Show placeholder content and hide chart
-        if (this.placeholderContent) {
-            this.placeholderContent.style.display = 'block';
-        }
-        if (this.chartContainer) {
-            this.chartContainer.style.display = 'none';
-        }
-        if (this.chartHeading) {
-            this.chartHeading.style.display = 'none !important';
-        }
-        
-        // Clear chart data and reset to empty state
-        if (this.chartInstance) {
-            this.chartInstance.data.labels = [];
-            this.chartInstance.data.datasets[0].data = [];
-            this.chartInstance.data.datasets[1].data = [];
-            this.chartInstance.update();
-        }
+        // Reset sliders to match default values
+        const currentSavingsSlider = document.getElementById('sfc-current-savings-slider');
+        const annualContributionSlider = document.getElementById('sfc-annual-contribution-slider');
+        if (currentSavingsSlider) currentSavingsSlider.value = this.defaultValues['sfc-current-savings'];
+        if (annualContributionSlider) annualContributionSlider.value = this.defaultValues['sfc-annual-contribution'];
         
         // Clear all error states
         const inputGroups = document.querySelectorAll('.sfc-input-group');
@@ -1052,16 +1098,15 @@ class CollegeSavingsCalculator {
             }
         });
         
-        // Reset button state
-        if (this.calculateBtn) {
-            this.calculateBtn.disabled = true;
-            this.calculateBtn.textContent = 'Calculate';
-        }
+        // Recalculate and display results
+        this.calculateAndDisplay();
         
-        // Scroll back to top of calculator
-        const calculator = document.querySelector('.sfc-calculator-layout');
-        if (calculator) {
-            calculator.scrollIntoView({ behavior: 'smooth' });
+        // Scroll back to top of calculator (mobile behavior)
+        if (window.innerWidth <= 750) {
+            const calculator = document.querySelector('.sfc-calculator-layout');
+            if (calculator) {
+                calculator.scrollIntoView({ behavior: 'smooth' });
+            }
         }
     }
 
@@ -1070,12 +1115,9 @@ class CollegeSavingsCalculator {
     }
 
     downloadResults() {
-        console.log('Download button clicked');
-        
         // Show notification before download
         const userConfirmed = confirm('Your college savings projection will be downloaded as a PDF file. This may take a moment to generate. Continue?');
         if (!userConfirmed) {
-            console.log('Download cancelled by user');
             return;
         }
         
@@ -1215,7 +1257,6 @@ class CollegeSavingsCalculator {
             
             // Save the PDF
             doc.save('college-savings-results.pdf');
-            console.log('PDF download completed successfully');
             
         } catch (error) {
             console.error('Error generating PDF:', error);
@@ -1251,7 +1292,6 @@ class CollegeSavingsCalculator {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        console.log('Text download completed successfully');
     }
 
     getResultsForDownload() {
@@ -1287,20 +1327,8 @@ This analysis is based on the assumptions provided and should be reviewed regula
 
 // Initialize the calculator when the DOM is loaded
 function initializeCalculator() {
-    console.log('Attempting to initialize College Savings Calculator...');
-    
-    // Check if essential elements exist
-    const calculateBtn = document.getElementById('sfc-calculateBtn');
-    if (!calculateBtn) {
-        console.error('Calculator initialization failed: sfc-calculateBtn not found');
-        console.log('Available elements with sfc- prefix:', 
-            Array.from(document.querySelectorAll('[id^="sfc-"]')).map(el => el.id));
-        return;
-    }
-    
-    console.log('Essential elements found, initializing calculator...');
+    // Initialize calculator (no calculate button required for auto-calculation)
     const calculator = new CollegeSavingsCalculator();
-    console.log('Calculator initialized:', calculator);
 }
 
 // Try multiple initialization methods for CMS compatibility
@@ -1315,12 +1343,10 @@ if (document.readyState === 'loading') {
 
 // Test function for the provided scenarios (for development/debugging)
 function runTestScenarios() {
-    console.log('Running test scenarios...');
-    
     const calculator = new CollegeSavingsCalculator();
     
     // Test Scenario 1 (Expected Surplus)
-    const test1 = calculator.calculateResults({
+    calculator.calculateResults({
         currentSavings: 5000,
         yearsUntilCollege: 10,
         annualContribution: 2400,
@@ -1328,11 +1354,9 @@ function runTestScenarios() {
         currentCollegeCost: 25000,
         collegeInflationRate: 0.04
     });
-    console.log('Test 1 - Expected: Future Cost: $37,006, Projected Savings: $42,994, Surplus: $5,988');
-    console.log('Test 1 - Actual:', test1);
     
     // Test Scenario 2 (Expected Shortfall)
-    const test2 = calculator.calculateResults({
+    calculator.calculateResults({
         currentSavings: 1000,
         yearsUntilCollege: 15,
         annualContribution: 1200,
@@ -1340,11 +1364,9 @@ function runTestScenarios() {
         currentCollegeCost: 40000,
         collegeInflationRate: 0.06
     });
-    console.log('Test 2 - Expected: Future Cost: $95,862, Projected Savings: $27,974, Shortfall: $67,888');
-    console.log('Test 2 - Actual:', test2);
     
     // Test Scenario 3 (No Current Savings)
-    const test3 = calculator.calculateResults({
+    calculator.calculateResults({
         currentSavings: 0,
         yearsUntilCollege: 18,
         annualContribution: 3000,
@@ -1352,8 +1374,6 @@ function runTestScenarios() {
         currentCollegeCost: 30000,
         collegeInflationRate: 0.05
     });
-    console.log('Test 3 - Expected: Future Cost: $72,199, Projected Savings: $92,717, Surplus: $20,518');
-    console.log('Test 3 - Actual:', test3);
 }
 
 // Uncomment the line below to run test scenarios in the browser console
