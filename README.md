@@ -11,17 +11,12 @@ This project contains financial calculators redesigned for consistency, accessib
 - **Contributing to an IRA** (`contributing-to-ira/`) - Prefix: `ira-`
 - **What Is My Monthly Budget** (`what-is-my-monthly-budget/`) - Prefix: `wimb-`
 - **Debt or Invest** (`debt-or-invest/`) - Prefix: `doi-`
+- **Saving for College** (`saving-for-college/`) - Prefix: `sfc-`
 
 ### Legacy Calculators (Pending Update)
 These calculators have not yet been updated to match the new design patterns and will be updated in the future:
 
 - **Comparing Investments** (`comparing-investments/`) - Prefix: `ci-`
-  - Still uses "Calculate" button pattern
-  - Forms are not pre-filled
-  - Does not auto-calculate on page load
-  - Missing slider implementations where applicable
-  
-- **Saving for College** (`saving-for-college/`) - Prefix: `sfc-`
   - Still uses "Calculate" button pattern
   - Forms are not pre-filled
   - Does not auto-calculate on page load
@@ -69,8 +64,8 @@ Each calculator uses a unique prefix for all classes and IDs:
 - `ira-`: Contributing to an IRA
 - `wimb-`: What Is My Monthly Budget
 - `doi-`: Debt or Invest
+- `sfc-`: Saving for College
 - `ci-`: Comparing Investments (legacy)
-- `sfc-`: Saving for College (legacy)
 
 ### Code Patterns
 All calculators follow patterns documented in `.cursorrules`:
@@ -113,11 +108,11 @@ Calculator Redesign Project/
 │   ├── index.html
 │   ├── styles.css
 │   └── script.js
-├── comparing-investments/          # Legacy
+├── saving-for-college/
 │   ├── index.html
 │   ├── styles.css
 │   └── script.js
-└── saving-for-college/             # Legacy
+└── comparing-investments/          # Legacy
     ├── index.html
     ├── styles.css
     └── script.js
@@ -173,8 +168,8 @@ Files are deployed to AWS S3 buckets:
 - `contributingToIra`
 - `whatIsMyMonthlyBudget`
 - `debtOrInvest`
+- `savingForCollege`
 - `comparingInvestments` (legacy)
-- `savingForCollege` (legacy)
 
 ## UX Guidelines
 
