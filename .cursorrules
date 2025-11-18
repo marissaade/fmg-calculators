@@ -3,12 +3,14 @@
 ## Overview
 All calculators must follow consistent patterns for HTML structure, CSS styling, JavaScript logic, and naming conventions to ensure maintainability and user experience consistency.
 
+**These rules strictly adhere to the Global Financial Calculator UI/UX Standards v3.0.**
+
 ---
 
 ## HTML Structure
 
 ### Format Requirements
-1. **Single-line HTML**: All HTML must be on a single line with no line breaks (required for CMS compatibility)
+1. **Single-line HTML**: All HTML must be on a single line with no line breaks (Strict requirement for CMS compatibility).
 2. **Structure Order**:
    - `<head>` with CSS link: `<link rel="stylesheet" href="https://fmg-websites-custom.s3.amazonaws.com/calculators/{calculatorName}/styles.css" />`
    - Main wrapper div with body class: `<div class="{prefix}-body ci-body">`
@@ -20,12 +22,12 @@ All calculators must follow consistent patterns for HTML structure, CSS styling,
    - Scripts at end: Chart.js, jsPDF, and calculator script
 
 ### Required Elements
-- **Inputs**: Use `type="number"` with `value` attributes for pre-filled data, or `type="text"` with `placeholder` attributes for empty fields
-- **Placeholder format**: Use format like `placeholder="i.e., $10,000"` (not just numbers)
+- **Inputs**: Use `type="text"` with `inputmode="numeric"` (for integers/currency) or `inputmode="decimal"` (for percentages).
+- **Placeholder format**: Use format like `placeholder="i.e., 10,000"` with 55-60% opacity.
 - **Canvas**: Self-closing format: `<canvas id="{prefix}-{name}-chart" />`
-- **Comments**: Use HTML comments like `<!-- Input Section -->` and `<!-- Results Section -->` for organization
-- **No form tags**: Use direct button click handlers, not form submissions
-- **Layout**: Form on left, results on right (natural visual hierarchy)
+- **Chart Toggle**: Include a "Hide Chart" toggle button/link above the chart container.
+- **No <form> tags**: Use direct button click handlers and event listeners.
+- **Layout**: Form on left (desktop) / top (mobile). Results on right (desktop) / bottom (mobile).
 
 ### Scripts (Required)
 ```html
@@ -39,11 +41,11 @@ All calculators must follow consistent patterns for HTML structure, CSS styling,
 ## Naming Conventions
 
 ### Prefix System
-Each calculator must have a unique prefix (e.g., `hlywml-`, `winw-`, `ira-`, `wimb-`). All classes and IDs must use this prefix consistently.
+Each calculator must have a unique prefix (e.g., `hlywml-`, `winw-`, `ira-`). All classes and IDs must use this prefix consistently.
 
 ### Required Class Names
-- Body: `{prefix}-body ci-body` (note: CMS automatically adds `.dev-calculator`, do NOT include it)
-- Container: `{prefix}-container`
+- Body: `{prefix}-body ci-body` (CMS automatically adds `.dev-calculator`, do NOT include it manually)
+- Container: `{prefix}-container` (Max-width: 1100–1170px)
 - Header: `{prefix}-header`
 - Input section: `{prefix}-input-section`
 - Input group: `{prefix}-input-group`
@@ -51,10 +53,9 @@ Each calculator must have a unique prefix (e.g., `hlywml-`, `winw-`, `ira-`, `wi
 - Currency symbol: `{prefix}-currency`
 - Unit symbol: `{prefix}-unit`
 - Button group: `{prefix}-button-group`
-- Reset button: `{prefix}-reset-btn` (also include `c-btn` class)
 - Results section: `{prefix}-results-section`
 - Chart section: `{prefix}-chart-section`
-- Chart heading: `{prefix}-chart-heading`
+- Chart toggle: `{prefix}-chart-toggle`
 - Chart container: `{prefix}-chart-container`
 - Main result: `{prefix}-main-result`
 - Main value: `{prefix}-main-value`
@@ -67,9 +68,8 @@ Each calculator must have a unique prefix (e.g., `hlywml-`, `winw-`, `ira-`, `wi
 - Explanation text: `{prefix}-explanation-text`
 - Download section: `{prefix}-download-section`
 - Download button: `{prefix}-download-btn` (also include `c-btn` class)
+- Start Over button: `{prefix}-start-over-btn` (also include `c-btn` class)
 - Tooltip icon: `{prefix}-tooltip` (for '?' icons)
-- Calculate button: `{prefix}-calculate-btn` (only for empty forms)
-- Start Over button: `{prefix}-start-over-btn` (alternative to reset)
 
 ### Slider Classes (when applicable)
 - Input group with slider: `{prefix}-input-group {prefix}-has-slider`
@@ -84,481 +84,401 @@ Each calculator must have a unique prefix (e.g., `hlywml-`, `winw-`, `ira-`, `wi
 
 ---
 
-## Tooltips vs Helper Text
+## Input Configuration & Formatting
 
-### UX Recommendation: Tooltips (Preferred)
-- **Use clickable tooltips**: Use '?' icons with clickable tooltips (better mobile experience)
-- **Reasoning**: Reduces visual clutter and performs better on mobile
-- **Avoid**: Persistent helper text under fields (makes forms too long)
-
-### Implementation
-1. **HTML Structure**:
-   ```html
-   <label for="{prefix}-field">
-       <span>
-           Field Label
-           <span class="{prefix}-tooltip" data-tooltip="Tooltip explanation text">?</span>
-       </span>
-   </label>
-   ```
-
-2. **JavaScript**:
-   - Make tooltips clickable (not just hover)
-   - Show/hide on click for mobile compatibility
-   - Position tooltips appropriately
-
-3. **CSS**:
-   - Style '?' icon consistently
-   - Ensure tooltips are readable on mobile
-   - Position tooltips to avoid overlapping content
-
----
-
-## Dropdowns vs Text Fields
-
-### When to Use Dropdowns
-- **Precise selections**: Use for options with limited choices
-- **Limit**: No more than 10 values to limit scrolling
-- **Examples**: Tax filing status, yes/no questions, predefined categories
-
-### When to Use Text Fields
-- **Precise values**: Any value that needs to be precise (dollar amounts, percentages, years)
-- **Flexibility**: When users need to enter custom values
-- **Examples**: Income amounts, contribution amounts, years
-
-### Implementation
-- **Dropdowns**: Use `<select>` elements with `<option>` values
-- **Text fields**: Use `<input type="text">` or `<input type="number">` based on formatting needs
-
----
-
-## Input Formatting
+### Global Input Rules
+1. **Type**: ALWAYS use `type="text"`. Do not use `type="number"` as it fights formatting logic.
+2. **Input Mode**:
+   - Currency/Integers: `inputmode="numeric"`
+   - Decimals/Percentages: `inputmode="decimal"`
+3. **Steppers**: Enable steppers (spinner arrows) on **hover/focus only** for fields where fine-tuning is useful.
+4. **Focus Behavior**: Auto-select entire value on focus to allow quick overwriting.
 
 ### Currency Inputs
-1. **Type**: Change to `type="text"` (not `type="number"`) to allow comma formatting
-2. **Formatting**: Add commas on `input` and `blur` events
-3. **Focus**: Remove commas on `focus` for easier editing
-4. **Parsing**: Use `parseCurrencyValue()` method to strip commas before calculations
-5. **Default values**: Format with commas on page load
-6. **Steppers**: Currently no steppers. Per UX: hover-only steppers will be added for fields specified by Kyle (pending)
+1. **Formatting**: Add commas on `input` and `blur` events (e.g., 10,000).
+2. **Parsing**: Use `parseCurrencyValue()` to strip commas/symbols before math.
+3. **Validation**: Validate on blur or meaningful edit. Show errors inline.
 
-### Percentage/Number Inputs with Sliders
-1. **Type**: Keep as `type="number"`
-2. **CSS**: Add `appearance: textfield` to remove spinner arrows (currently no steppers)
-3. **Positioning**: Unit symbol positioned at `right: 12px`
-4. **Steppers**: Currently no steppers. Per UX: hover-only steppers will be added for fields specified by Kyle (pending)
+### Sliders
+1. **Requirement**: If a field allows range selection (years, %), pair a text input with a slider.
+2. **Syncing**: Bidirectional syncing (Slider updates Input, Input updates Slider).
+3. **Mobile**: Sliders must be visible and touch-friendly on mobile.
 
-### Currency Symbol Positioning
-- Currency symbol (`$`): Positioned inside input wrapper
-- Unit symbol (`%`, `years`, etc.): Positioned at `right: 12px` (not `45px`)
+#### Slider Implementation
+**HTML Structure**:
+```html
+<div class="{prefix}-input-group {prefix}-has-slider">
+    <label>
+        <div class="{prefix}-input-wrapper">
+            <input type="text" id="{prefix}-field" inputmode="decimal" />
+            <span class="{prefix}-unit">%</span>
+        </div>
+    </label>
+    <div class="{prefix}-slider-wrapper">
+        <input type="range" id="{prefix}-field-slider" class="{prefix}-slider" min="0" max="20" step="0.1" />
+        <div class="{prefix}-slider-labels">
+            <span>0%</span>
+            <span>20%</span>
+        </div>
+    </div>
+</div>
+```
 
-### Flexible Inputs ($ vs %)
-- **When applicable**: Offer flexibility to enter either dollar amount or percentage for the same field
-- **Example**: Mortgage down payment can be entered as $20,000 or 20%
-- **Implementation**: Provide toggle or dual input fields when this flexibility adds value
+**JavaScript**: Sync slider with text input bidirectionally, update on input/change events.
 
 ---
 
 ## Calculation Pattern
 
-### Pre-filled Forms (Preferred)
-- **Auto-calculate**: When forms are pre-filled with data, results should auto-calculate on page load
-- **Real-time updates**: Auto-calculate on every input change (debounced)
-- **No calculate button**: Remove calculate buttons for pre-filled forms
-- **Results display**: Show calculated results immediately on page load
+### Pre-filled & Auto-Calculate (Mandatory)
+**There is NO "Calculate" button.**
 
-### Empty Forms (Alternative)
-- **Calculate button required**: When forms start empty, use a "Calculate" button to prevent showing errors while user is still inputting
-- **Button behavior**: 
-  - Desktop: Calculate button triggers calculation
-  - Mobile: Calculate button auto-scrolls to results section after calculation
-- **Validation**: Only show results after user clicks calculate and all required fields are valid
+1. **Load State**: Calculator must load with pre-filled example values (defined in PRD/Spreadsheet).
+2. **Initial Result**: Results must be visible and calculated immediately on page load.
+3. **Disclaimer**: Display "These are example values. Update them to reflect your own situation." near the form.
+4. **Re-calculation**: Trigger `calculateAndDisplay()` on every input change.
+5. **Debounce**: Use a 250ms–400ms debounce delay on input events to prevent jitter.
 
 ### Required Methods
 1. **`calculateOnLoad()`**: 
-   - Format initial currency values with commas (if pre-filled)
-   - Trigger `calculateAndDisplay()` (if pre-filled)
-   - Called in constructor after initialization
+   - Set default values in inputs.
+   - Format currency fields with commas.
+   - Call `calculateAndDisplay()` immediately.
 
 2. **`calculateAndDisplay()`**:
-   - Check if inputs are valid
-   - Get form data
-   - Calculate results
-   - Display results and update chart
-   - Debounced with 300ms timeout for input events (pre-filled forms)
+   - Validate inputs (if invalid, do not update results or show error state).
+   - Calculate math.
+   - Update HTML DOM elements.
+   - Update Chart.
 
-3. **Event Listeners** (Pre-filled forms):
-   - All inputs: `input` event with debounced `calculateAndDisplay()`
-   - All inputs: `blur` event with immediate `calculateAndDisplay()`
-   - Selects/dropdowns: `change` event with `calculateAndDisplay()`
-
-4. **Calculate Button** (Empty forms):
-   - Validate all inputs before calculating
-   - Show errors for invalid/empty required fields
-   - On mobile: Auto-scroll to results section after calculation
+3. **`resetForm()`**:
+   - Restores **default example values** (not empty/blank).
+   - Re-runs calculation.
+   - Scrolls user to top of form (mobile).
 
 ---
 
-## Default Values & Placeholders
+## Tooltips
 
-### Pre-filled Data (Preferred)
-1. **Store defaults**: Create `defaultValues` object in constructor
-2. **Pre-fill inputs**: All inputs should have `value` attributes with defaults
-3. **Format on load**: Currency defaults formatted with commas in `calculateOnLoad()`
-4. **Auto-calculate**: Results display automatically when form is pre-filled
-5. **Disclaimers**: If using national averages, add disclaimer that these are hypothetical averages
-
-Example:
-```javascript
-this.defaultValues = {
-    '{prefix}-input-1': '10000',
-    '{prefix}-input-2': '5000'
-};
-```
-
-### Empty Fields with Placeholders (Alternative)
-1. **Use placeholders**: When pre-filling isn't possible, use `placeholder` attributes
-2. **Placeholder format**: Use format like `placeholder="i.e., $10,000"` (not just numbers)
-3. **No zeros**: UX does NOT recommend using zeros as default values
-4. **Calculate button**: Empty forms require a "Calculate" button
-
-### Handling Averages
-- **Disclaimers**: Must add disclaimer when using national/regional averages
-  - **Webpage disclaimer**: Add visible disclaimer on webpage (not just PDF) noting pre-filled values are hypothetical averages
-  - **Copy**: Kyle/Mike will provide exact disclaimer text (pending)
-  - **PDF disclaimer**: Continue including disclaimers in PDF downloads
-- **Advanced option**: Consider allowing users to enter data manually OR provide zip code for local average
-
----
-
-## Reset / Start Over Button
-
-### Requirements
-1. **Class**: `c-btn {prefix}-reset-btn` or `c-btn {prefix}-start-over-btn`
-2. **ID**: `{prefix}-reset-btn` or `{prefix}-start-over-btn`
-3. **Label**: Use "Start Over" after calculation (preferred) or "Reset"
-4. **Functionality**:
-   - Reset all inputs to `defaultValues` (or show placeholders with original data in format "i.e. $10,000")
-   - Format currency values with commas
-   - Clear any error messages
-   - Zero out results panel (show $0 or empty state)
-   - On mobile: Auto-scroll users up to the form
-5. **Styling**: `min-width: 200px`, positioned with `justify-content: flex-start` in button group
-
-### Mobile Behavior
-- **Start Over button**: Auto-scrolls users up to the form
-- **View Results button** (if used): Auto-scrolls users down to the results
-- **Sticky container**: If there's one/two central outputs, show sticky container at bottom that auto-completes when users edit data
-
----
-
-## Sliders
-
-### When to Use
-- Percentage fields (rate of return, inflation rate, etc.)
-- Year/number fields where range selection is helpful
-- **Always pair with text input**: Users need both precision (typing) and tactile (sliding) options
+### UX Pattern
+- **Icon**: Use a '?' icon next to the label.
+- **Interaction**: **Click/Tap** to toggle (Not hover). Better for mobile.
+- **Content**: Short, plain language. No jargon.
 
 ### Implementation
-1. **HTML Structure**:
-   ```html
-   <div class="{prefix}-input-group {prefix}-has-slider">
-       <label>
-           <div class="{prefix}-input-wrapper">
-               <input type="number" id="{prefix}-field" />
-               <span class="{prefix}-unit">%</span>
-           </div>
-       </label>
-       <div class="{prefix}-slider-wrapper">
-           <input type="range" id="{prefix}-field-slider" class="{prefix}-slider" min="0" max="20" step="0.1" />
-           <div class="{prefix}-slider-labels">
-               <span>0%</span>
-               <span>20%</span>
-           </div>
-       </div>
-   </div>
-   ```
+**HTML Structure**:
+```html
+<label for="{prefix}-field">
+    <span>
+        Field Label
+        <span class="{prefix}-tooltip" data-tooltip="Tooltip explanation text">?</span>
+    </span>
+</label>
+```
 
-2. **JavaScript**:
-   - Sync slider with text input bidirectionally
-   - Update text input when slider changes
-   - Update slider when text input changes
-   - Validate and cap values appropriately
-
-3. **CSS**:
-   - Remove spinner arrows: `appearance: textfield` on number inputs
-   - Style slider thumb and track consistently
-   - Position unit symbol at `right: 12px`
-
-4. **Platform Support**:
-   - Use sliders for both desktop and mobile
-   - Ensure sliders are easily usable on touch devices
+**JavaScript**: Make tooltips clickable (not just hover), show/hide on click for mobile compatibility.
 
 ---
 
 ## Chart Integration
 
 ### Chart.js Setup
-1. **Include CDN**: Chart.js script must be included
-2. **Canvas**: Self-closing `<canvas id="{prefix}-{name}-chart" />`
-3. **Container**: `<div class="{prefix}-chart-container">` wrapping canvas
-4. **Heading**: `<h2 class="{prefix}-chart-heading">{Chart Title}</h2>`
+1. **Expandable Card**: Chart should be in an expandable/collapsible card that starts expanded.
+2. **Toggle**: Include a caret/arrow toggle button in the chart header that allows users to collapse/expand the entire chart card.
+3. **Header**: Chart heading and toggle should always be visible; only the chart content collapses.
+4. **Styling**: Use soft, professional colors (blues, greens). Avoid "alarmist" colors (bright red) unless necessary.
+5. **Responsive**: Chart must resize correctly within its container.
 
-### Chart Styling
-- **Colors**: Use soft, muted colors (avoid black/red)
-- **Examples**: Soft blues, greens, corals
-- **Hardcode colors**: If CSS variables don't work, hardcode colors in JavaScript (e.g., `'#10b981'` for green)
+### Expandable Chart Card Implementation
+**HTML Structure**:
+```html
+<div class="{prefix}-chart-section">
+    <div class="{prefix}-chart-header">
+        <h2>Chart Title</h2>
+        <button id="{prefix}-chart-toggle" class="{prefix}-chart-toggle" aria-expanded="true">
+            <span class="{prefix}-caret"></span>
+        </button>
+    </div>
+    <div class="{prefix}-chart-content">
+        <div class="{prefix}-chart-container">
+            <canvas id="{prefix}-chart" />
+        </div>
+    </div>
+</div>
+```
 
-### Chart Methods
-- **`initializeChart()`**: Create chart instance on page load
-- **`updateChart()`**: Update chart data when inputs change
-- **`generateChart()`**: Generate chart with results data
+**CSS for Expandable Card**:
+```css
+/* Chart header with toggle */
+.{prefix}-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.{prefix}-chart-header h2 {
+    margin-bottom: 0;
+    flex: 1;
+}
+
+/* Toggle button */
+.{prefix}-chart-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    flex-shrink: 0;
+}
+
+.{prefix}-chart-toggle:hover {
+    background: #f1f5f9;
+}
+
+/* CSS caret/arrow (empty triangle) */
+.{prefix}-caret {
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 8px solid #64748b;
+    transition: transform 0.3s ease;
+    display: block;
+}
+
+.{prefix}-chart-section.collapsed .{prefix}-caret {
+    transform: rotate(180deg);
+}
+
+.{prefix}-chart-toggle:hover .{prefix}-caret {
+    border-bottom-color: #475569;
+}
+
+/* Chart content (collapsible) */
+.{prefix}-chart-content {
+    margin-top: 20px;
+    overflow: hidden;
+    max-height: 1000px;
+    opacity: 1;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+}
+
+.{prefix}-chart-section.collapsed .{prefix}-chart-content {
+    max-height: 0;
+    margin-top: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+```
+
+**JavaScript Implementation**:
+```javascript
+toggleChart() {
+    if (!this.chartSection || !this.chartToggle) return;
+    
+    const isCollapsed = this.chartSection.classList.contains('collapsed');
+    
+    if (isCollapsed) {
+        // Expand
+        this.chartSection.classList.remove('collapsed');
+        this.chartToggle.setAttribute('aria-expanded', 'true');
+    } else {
+        // Collapse
+        this.chartSection.classList.add('collapsed');
+        this.chartToggle.setAttribute('aria-expanded', 'false');
+    }
+}
+```
+
+**Behavior**:
+- **Initial state**: Chart card starts expanded with caret pointing up (▲)
+- **Caret rotation**: Rotates 180° when collapsed (points down ▼)
+- **Smooth transitions**: CSS transitions for rotation and content collapse/expand
+- **Hover effects**: Caret color changes on hover
+- **Clickable header**: Entire header is clickable to toggle, not just the button
+- **Accessibility**: Uses `aria-expanded` attribute for screen readers
 
 ---
 
 ## Result Display
 
-### Main Result Card
-- **Class**: `{prefix}-main-result`
-- **Structure**:
-  ```html
-  <div class="{prefix}-main-result">
-      <h2>{Result Title}</h2>
-      <div class="{prefix}-main-value" id="{prefix}-result-value">$0</div>
-      <div class="{prefix}-breakdown">
-          <!-- Breakdown content -->
-      </div>
-  </div>
-  ```
+### Hierarchy
+1. **Headline**: Main result (e.g., "You will save $4,000").
+2. **Interpretation**: One sentence explaining the headline.
+3. **Chart**: Visual representation (with toggle).
+4. **Breakdown**: Detailed numbers (nested below).
 
 ### Breakdown Section
-- **Nested in main result**: Breakdown should be inside main result card (not separate card)
-- **Divider**: Use `border-top: 1px solid #e2e8f0` instead of separate card border
-- **Spacing**: `margin-top: 24px`, `padding-top: 24px`
-- **Structure**:
-  ```html
-  <div class="{prefix}-breakdown">
-      <div class="{prefix}-breakdown-header">
-          <h3>Breakdown</h3>
-      </div>
-      <div class="{prefix}-breakdown-items">
-          <div class="{prefix}-breakdown-item">
-              <div class="{prefix}-breakdown-label">Label</div>
-              <div class="{prefix}-breakdown-value">$0</div>
-          </div>
-      </div>
-  </div>
-  ```
-
-### Typography
-- **Breakdown values**: `font-size: 1rem` (match paragraph size), `font-weight: 600` (bold)
-- **Main value**: Larger, prominent display
+- **Divider**: Use `border-top: 1px solid #e2e8f0` (no separate cards).
+- **Spacing**: `margin-top: 24px`, `padding-top: 24px`.
 
 ---
 
 ## CSS Patterns
 
-### Required Styles
+### Typography
+- **Inheritance**: Do NOT set global `font-family` or base `font-size`. Inherit from host site.
+- **Overrides**: Only use specific sizes/weights for Headlines, Breakdown Values, and Chart Titles for hierarchy.
 
-#### Reset Button
+### Layout
 ```css
-.{prefix}-reset-btn {
-    min-width: 200px;
-    /* Additional button styles */
+/* Ensure container is not constrained to article width */
+.{prefix}-container {
+    max-width: 1150px; /* 1100-1170px range */
+    margin: 0 auto;
+    width: 100%;
 }
 ```
 
-#### Button Group
+### Card Spacing (Consistent Rules)
+All content cards (form columns, result cards, breakdown sections, chart sections, etc.) must follow consistent spacing:
+
 ```css
-.{prefix}-button-group {
-    justify-content: flex-start;
-    align-items: flex-start;
+.{prefix}-card {
+    padding: 26px;
+    margin-bottom: 24px;
+    /* Do NOT declare margin-top - it should be 0 by default */
 }
 ```
 
-#### Unit/Currency Positioning
-```css
-.{prefix}-unit {
-    right: 12px; /* Not 45px */
-}
+**Rules:**
+- **Padding**: Always `26px` for all cards
+- **Margin-bottom**: `24px` for all cards
+- **Margin-top**: Do NOT declare (should be 0 by default)
+- **Last card exception**: The card immediately above the download button should have `margin-bottom: 32px;` to create extra space before the download button
 
-.{prefix}-currency {
-    /* Positioned inside input wrapper */
-}
-```
-
-#### Chart Heading
+**Example:**
 ```css
-.{prefix}-chart-heading {
-    text-align: center;
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-    letter-spacing: -0.02em;
-    color: #1a202c;
-}
-```
-
-#### Breakdown Styling
-```css
+.{prefix}-form-column,
+.{prefix}-main-result,
 .{prefix}-breakdown {
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 1px solid #e2e8f0;
+    padding: 26px;
+    margin-bottom: 24px;
 }
 
-.{prefix}-breakdown-value {
-    font-size: 1rem;
-    font-weight: 600;
+.{prefix}-chart-section {
+    /* Last card before download button */
+    padding: 26px;
+    margin-bottom: 32px;
 }
 ```
 
-#### Slider Input Styling
+### Steppers (Hover Only)
 ```css
-.{prefix}-input-group.{prefix}-has-slider input[type="number"] {
-    appearance: textfield; /* Remove spinner arrows */
-}
-
-.{prefix}-input-group.{prefix}-has-slider input[type="number"]::-webkit-inner-spin-button,
-.{prefix}-input-group.{prefix}-has-slider input[type="number"]::-webkit-outer-spin-button {
+/* Hide by default */
+.{prefix}-input-wrapper input::-webkit-outer-spin-button,
+.{prefix}-input-wrapper input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
+
+/* Show on hover/focus */
+.{prefix}-input-wrapper input:hover::-webkit-outer-spin-button,
+.{prefix}-input-wrapper input:hover::-webkit-inner-spin-button,
+.{prefix}-input-wrapper input:focus::-webkit-outer-spin-button,
+.{prefix}-input-wrapper input:focus::-webkit-inner-spin-button {
+    -webkit-appearance: auto;
+}
 ```
 
-### Disabled Button Hover States
-For calculate buttons (if needed in future), use this pattern:
-```css
-.{prefix}-calculate-btn:hover {
-    /* Override CMS hover styles when disabled */
-    background: #cccccc !important;
-    color: #666666 !important;
-    border-color: #cccccc !important;
-    box-shadow: none !important;
-    transform: none !important;
-    opacity: 0.5 !important;
-    cursor: not-allowed !important;
+### Buttons
+- **Download Button**: Only for PDF. No Print. No CSV.
+- **Start Over Button**: Must reset to defaults.
+
+---
+
+## JavaScript Class Structure
+
+```javascript
+class {CalculatorName}Calculator {
+    constructor() {
+        // Default values (Required)
+        this.defaultValues = {
+            '{prefix}-input-1': '10000',
+            '{prefix}-input-2': '5.5'
+        };
+        
+        this.init();
+    }
+    
+    init() {
+        this.cacheDOM();
+        this.initializeInputFormatting();
+        this.initializeSliders();
+        this.initializeEventListeners();
+        this.initializeChart();
+        this.calculateOnLoad(); // Immediate calculation
+    }
+    
+    initializeEventListeners() {
+        // Real-time calculation with debounce
+        this.inputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                this.handleInput(e); // Formatting + Debounced Calculation
+            });
+            
+            input.addEventListener('blur', (e) => {
+                this.formatOnBlur(e);
+                this.calculateAndDisplay(); // Immediate update on blur
+            });
+        });
+        
+        // Start Over
+        this.resetBtn.addEventListener('click', () => this.resetForm());
+        
+        // Chart Toggle
+        this.chartToggle.addEventListener('click', () => this.toggleChart());
+    }
+    
+    // ... calculation methods
 }
 ```
 
 ---
 
-## JavaScript Patterns
+## Required JavaScript Methods
 
-### Class Structure
-```javascript
-class {CalculatorName}Calculator {
-    constructor() {
-        // Cache DOM elements
-        this.resultsSection = document.getElementById('{prefix}-results-section');
-        this.resetBtn = document.getElementById('{prefix}-reset-btn');
-        this.chartContainer = document.querySelector('.{prefix}-chart-container');
-        this.chartInstance = null;
-        
-        // Default values
-        this.defaultValues = {
-            '{prefix}-input-1': 'value1',
-            '{prefix}-input-2': 'value2'
-        };
-        
-        // Calculation timeout for debouncing
-        this.calculationTimeout = null;
-        
-        // Initialize
-        this.initializeInputFormatting();
-        this.initializeSliders(); // If applicable
-        this.initializeEventListeners();
-        this.calculateOnLoad();
-    }
-}
-```
-
-### Required Methods
-
-#### `initializeInputFormatting()`
-- Change currency inputs to `type="text"`
+### `initializeInputFormatting()`
+- Change currency inputs to `type="text"` (if not already)
 - Add event listeners: `input`, `blur`, `focus`
 - Format with commas on input/blur
-- Remove commas on focus
+- Remove commas on focus for easier editing
 
-#### `formatCurrencyInput(event)`
+### `formatCurrencyInput(event)`
 - Strip non-numeric characters
 - Add comma formatting
 - Update input value
 
-#### `handleCurrencyFocus(event)`
-- Remove commas when input is focused
-- Allow easier editing
+### `handleCurrencyFocus(event)`
+- Auto-select entire value on focus
+- Remove commas when input is focused for easier editing
 
-#### `parseCurrencyValue(value)`
+### `parseCurrencyValue(value)`
 - Strip all non-numeric characters (commas, dollar signs, etc.)
 - Return numeric value for calculations
 
-#### `calculateOnLoad()`
-- Format initial currency values with commas
-- Trigger `calculateAndDisplay()`
+### `initializeSliders()`
+- Set up bidirectional sync between sliders and text inputs
+- Update text input when slider changes
+- Update slider when text input changes
+- Validate and cap values appropriately
 
-#### `calculateAndDisplay()`
-- Check `hasValidInputs()`
-- Get form data with `getFormData()`
-- Calculate results with `calculateResults()`
-- Display results with `displayResults()`
-- Update chart
-
-#### `getFormData()`
+### `getFormData()`
 - Use `parseCurrencyValue()` for currency inputs
 - Return object with all form values
 
-#### `resetForm()`
-- Reset all inputs to `defaultValues`
-- Format currency values with commas
-- Clear errors
-- Call `calculateAndDisplay()`
-
-### Event Listener Pattern
-```javascript
-initializeEventListeners() {
-    // Reset button
-    if (this.resetBtn) {
-        this.resetBtn.addEventListener('click', () => this.resetForm());
-    }
-    
-    // Real-time calculation on all inputs
-    const inputs = document.querySelectorAll('input');
-    inputs.forEach(input => {
-        input.addEventListener('input', () => {
-            this.clearError(input);
-            this.validateAndCapInput(input);
-            clearTimeout(this.calculationTimeout);
-            this.calculationTimeout = setTimeout(() => {
-                this.calculateAndDisplay();
-            }, 300);
-        });
-        
-        input.addEventListener('blur', () => {
-            this.validateAndCapInput(input);
-            this.calculateAndDisplay();
-        });
-    });
-    
-    // Dropdowns/selects
-    const selects = document.querySelectorAll('select');
-    selects.forEach(select => {
-        select.addEventListener('change', () => this.calculateAndDisplay());
-    });
-}
-```
-
----
-
-## CMS Compatibility
-
-### Critical Rules
-1. **Do NOT include `.dev-calculator` class**: CMS automatically adds it
-2. **Single-line HTML**: Required for CMS parsing
-3. **No line breaks in HTML**: All HTML must be on one line
-4. **CDN links**: Use full CDN URLs for scripts and stylesheets
-5. **Self-closing tags**: Use self-closing format for canvas and similar elements
+### `toggleChart()`
+- Show/hide chart container
+- Update toggle button text ("Hide Chart" / "Show Chart")
 
 ---
 
@@ -572,56 +492,55 @@ initializeEventListeners() {
 ### Common Patterns
 - Stack form and results columns on mobile
 - Adjust font sizes for readability
-- Ensure buttons are easily tappable on mobile
+- Ensure buttons are easily tappable on mobile (44px minimum touch target)
 
 ### Mobile Scrolling Behavior
-- **Calculate button** (empty forms): Auto-scroll to results section after calculation
 - **Start Over button**: Auto-scroll users up to the form
 - **View Results button** (if used): Auto-scroll users down to the results
 - **Sticky container**: For one/two central outputs, show sticky container at bottom that auto-completes when users edit data
 
 ---
 
-## Code Quality
+## CMS Compatibility
 
-### CSS
-- Remove unused rulesets and empty selectors
-- Consolidate duplicate rules
-- Use consistent spacing and formatting
-- Comment complex or non-obvious styles
+### Critical Rules
+1. **Do NOT include `.dev-calculator` class**: CMS automatically adds it
+2. **Single-line HTML**: Required for CMS parsing
+3. **No line breaks in HTML**: All HTML must be on one line
+4. **CDN links**: Use full CDN URLs for scripts and stylesheets
+5. **Self-closing tags**: Use self-closing format for canvas and similar elements
 
-### JavaScript
-- Use consistent method naming
-- Add comments for complex calculations
-- Handle edge cases (empty inputs, invalid values, etc.)
-- Validate and cap inputs appropriately
-
-### HTML
-- Keep structure consistent across calculators
-- Use semantic HTML where possible
-- Ensure accessibility (labels, ARIA attributes if needed)
+### Checklist
+1. **Single Line**: Is the HTML minified to one line?
+2. **No .dev-calculator**: Did you omit the `.dev-calculator` class?
+3. **Prefix**: Are all classes unique to this calculator?
+4. **Assets**: Are CSS/JS links pointing to the correct S3/CDN URLs?
 
 ---
 
 ## Testing Checklist
 
 Before considering a calculator complete:
-- [ ] All inputs pre-filled with default values (or placeholders if pre-fill not possible)
-- [ ] Results display on page load (if pre-filled) OR calculate button works (if empty)
-- [ ] Real-time calculation works on input changes (pre-filled forms)
+- [ ] All inputs pre-filled with default values
+- [ ] Results display on page load (auto-calculated)
+- [ ] Real-time calculation works on input changes (debounced 250-400ms)
 - [ ] Currency inputs format with commas
-- [ ] Start Over/Reset button restores defaults and zeroes results
+- [ ] Steppers appear on hover/focus only (if applicable)
+- [ ] Sliders sync bidirectionally with text inputs
+- [ ] Start Over button restores defaults and scrolls to form (mobile)
 - [ ] Chart displays correctly with appropriate colors
+- [ ] Chart toggle works ("Hide Chart" / "Show Chart")
 - [ ] Chart updates when inputs change
+- [ ] Tooltips work on click/tap (mobile-friendly)
 - [ ] Responsive design works on mobile/tablet/desktop
-- [ ] Mobile scrolling behavior works (auto-scroll to results/form)
 - [ ] All classes use consistent prefix
 - [ ] HTML is single-line format
-- [ ] Tooltips implemented (if needed) instead of persistent helper text
-- [ ] No steppers (spinner arrows) on inputs
 - [ ] Breakdown section styled correctly (nested in main result, divider instead of border)
 - [ ] Download Results button works (PDF only, no print)
-- [ ] Disclaimers added if using national/regional averages
+- [ ] Disclaimer displayed: "These are example values. Update them to reflect your own situation."
+- [ ] Typography inherits from host site (no global font-family/font-size)
+- [ ] Container max-width: 1100-1170px
+- [ ] Focus behavior: Auto-select entire value on focus
 
 ---
 
@@ -632,6 +551,9 @@ Before considering a calculator complete:
 - `winw-`: What Is My Net Worth
 - `ira-`: Contributing to an IRA
 - `wimb-`: What Is My Monthly Budget
+- `doi-`: Debt or Invest
+- `sfc-`: Saving for College
+- `ci-`: Comparing Investments
 
 ### File Structure
 ```
@@ -648,6 +570,7 @@ Before considering a calculator complete:
 ### PDF Download Only
 - **Download button**: Only include "Download Results" button (PDF download)
 - **No print option**: Do not include print functionality
+- **No CSV export**: Do not include CSV export functionality
 - **Implementation**: Use jsPDF library to generate PDF from results
 
 ---
@@ -659,6 +582,6 @@ Before considering a calculator complete:
 - Ensure calculations are accurate and match expected financial formulas
 - Maintain consistency with existing calculators for user experience
 - Document any deviations from these rules with clear reasoning
-- **Pre-filled forms are preferred**: Always try to pre-fill forms with realistic default values
+- **Pre-filled forms are mandatory**: All calculators must load with pre-filled example values
 - **Mobile-first considerations**: Ensure all interactions work well on mobile devices
-
+- **Follow UI/UX Standards v3.0**: These rules align with the Global Financial Calculator UI/UX Standards

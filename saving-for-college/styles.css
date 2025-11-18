@@ -20,16 +20,23 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ensure body doesn't constrain width */
 .sfc-body {
     width: 100%;
     box-sizing: border-box;
 }
 
-/* Copy exact body styling from Comparing Investments calculator */
+/* CMS compatibility */
 .c-matter--article .c-matter__body {
     max-width: 1170px;
 }
+
+@media(min-width: 992px) {
+    .c-matter--article .c-matter__body:has(.ci-body) {
+        max-width: 1170px;
+        width: auto;
+    }
+}
+
 @media (max-width: 950px) {
     .c-matter--article .c-matter__body {
         max-width: 750px;
@@ -46,15 +53,6 @@ body {
     }
 }
 
-/* Apply CMS calculator styling - use ci-body class for consistency */
-/* TODO: Update class name to something more universal (e.g., .calculator-body) when dev team refactors */
-@media(min-width: 992px) {
-  .c-matter--article .c-matter__body:has(.ci-body) {
-    max-width: 1170px;
-    width: auto;
-  }
-}
-
 /* Container and layout */
 .sfc-container {
     max-width: 1170px;
@@ -64,7 +62,6 @@ body {
     box-sizing: border-box;
 }
 
-/* Two-column layout for desktop */
 .sfc-calculator-layout {
     display: grid;
     grid-template-columns: 48% 52%;
@@ -76,18 +73,17 @@ body {
 }
 
 .sfc-form-column {
-    /* Form takes up left column */
     background: #f7fafc;
     border: 2px solid #f3f4f6;
     border-radius: var(--radius-lg);
-    padding: 24px;
+    padding: 26px;
+    margin-bottom: 24px;
     min-width: 0;
     max-width: 100%;
     overflow: visible;
 }
 
 .sfc-results-column {
-    /* Results take up right column */
     position: -webkit-sticky !important;
     position: sticky !important;
     top: 0 !important;
@@ -104,113 +100,12 @@ body {
     box-sizing: border-box;
 }
 
-/* Placeholder content styles - removed old styling */
-
-/* Chart placeholder styles */
-.sfc-chart-placeholder {
-    background: #f7fafc;
-    border: 2px solid #f3f4f6;
-    border-radius: var(--radius-lg);
-    padding: 24px;
-    box-shadow: none;
-    text-align: center;
-    min-height: 400px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.sfc-chart-placeholder-content h3 {
-    margin-bottom: 1rem;
-}
-
-.sfc-chart-placeholder-content p {
-    margin-bottom: 2rem;
-    line-height: 1.6;
-}
-
-.sfc-chart-placeholder-icon {
-    font-size: 4rem;
-    opacity: 0.3;
-}
-
-.sfc-placeholder-header {
-    margin-bottom: 2rem;
-    padding-top: 24px;
-    text-align: center;
-}
-
-.sfc-placeholder-header h3 {
-    margin-bottom: 0.5rem;
-}
-
-.sfc-placeholder-header p {
-    line-height: 1.6;
-}
-
-.sfc-placeholder-features {
-    margin-bottom: 2rem;
-}
-
-.sfc-feature-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    border-radius: var(--radius-md);
-    background: #f3f4f6;
-    transition: all 0.2s ease;
-}
-
-.sfc-feature-item:hover {
-    background: #e5e7eb;
-}
-
-.sfc-feature-icon {
-    flex-shrink: 0;
-    width: 2.5rem;
-    height: 2.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #ffffff;
-    border-radius: var(--radius-sm);
-    border: 1px solid #e5e7eb;
-}
-
-.sfc-feature-text h4 {
-    margin-bottom: 0.25rem;
-}
-
-.sfc-feature-text p {
-    line-height: 1.5;
-    margin: 0;
-}
-
-.sfc-placeholder-cta {
-    text-align: center;
-    padding: 1.5rem;
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.02), rgba(16, 185, 129, 0.05));
-    border: 1px solid rgba(16, 185, 129, 0.1);
-    border-radius: var(--radius-md);
-}
-
-.sfc-placeholder-cta p {
-    line-height: 1.6;
-    margin: 0;
-}
-
-.sfc-placeholder-cta strong {
-}
-
 /* Header */
 .sfc-header {
     text-align: center;
     margin-bottom: 48px;
     padding-bottom: 0;
 }
-
 
 .sfc-header p {
     max-width: none;
@@ -227,9 +122,11 @@ body {
     border: none;
 }
 
-.sfc-input-section h2 {
+.sfc-input-section h2,
+.sfc-chart-section h2 {
     font-weight: 500;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
+    margin-top: 0px;
     letter-spacing: -0.01em;
     text-align: center;
 }
@@ -273,39 +170,7 @@ body {
     transform: scale(1.1);
 }
 
-.sfc-tooltip:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: #1e293b;
-    color: white;
-    padding: 10px 14px;
-    border-radius: var(--radius-md);
-    font-size: 13px;
-    font-weight: 400;
-    white-space: normal;
-    width: 280px;
-    text-align: left;
-    z-index: 10000;
-    box-shadow: var(--shadow-lg);
-    line-height: 1.5;
-    pointer-events: none;
-}
-
-.sfc-tooltip:hover::before {
-    content: '';
-    position: absolute;
-    bottom: calc(100% + 2px);
-    left: 50%;
-    transform: translateX(-50%);
-    border: 6px solid transparent;
-    border-top-color: #1e293b;
-    z-index: 10001;
-    pointer-events: none;
-}
-
+.sfc-tooltip:hover::after,
 .sfc-tooltip.active::after {
     content: attr(data-tooltip);
     position: absolute;
@@ -327,6 +192,7 @@ body {
     pointer-events: none;
 }
 
+.sfc-tooltip:hover::before,
 .sfc-tooltip.active::before {
     content: '';
     position: absolute;
@@ -379,27 +245,23 @@ input[type="number"] {
     font-weight: 400;
 }
 
-/* Remove spinner arrows from number inputs */
-input[type="number"] {
-    -moz-appearance: textfield;
-    appearance: textfield;
-}
-
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
+/* Steppers (Hover Only) */
+.sfc-input-wrapper input::-webkit-outer-spin-button,
+.sfc-input-wrapper input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
-/* Placeholder text styling */
-input[type="text"]::placeholder,
-input[type="number"]::placeholder {
-    color: #d1d5db;
+.sfc-input-wrapper input:hover::-webkit-outer-spin-button,
+.sfc-input-wrapper input:hover::-webkit-inner-spin-button,
+.sfc-input-wrapper input:focus::-webkit-outer-spin-button,
+.sfc-input-wrapper input:focus::-webkit-inner-spin-button {
+    -webkit-appearance: auto;
 }
 
-/* Currency inputs need extra left padding */
-.sfc-input-wrapper:has(.sfc-currency) input {
-    padding-left: 32px !important;
+input[type="text"]::placeholder {
+    color: rgba(0, 0, 0, 0.55);
+    opacity: 1;
 }
 
 
@@ -407,10 +269,6 @@ input[type="text"]:focus,
 input[type="number"]:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgb(16 185 129 / 0.08);
-}
-
-input[type="text"]:hover,
-input[type="number"]:hover {
 }
 
 /* Slider styles */
@@ -487,19 +345,6 @@ input[type="number"]:hover {
     margin-top: 4px;
 }
 
-/* Currency inputs need left padding for $ symbol */
-#current-savings,
-#annual-contribution,
-#current-college-cost {
-    padding-left: 32px;
-}
-
-/* Percentage inputs need right padding for % symbol */
-#rate-of-return,
-#college-inflation-rate {
-    padding-right: 32px;
-}
-
 /* Error messages */
 .sfc-error-message {
     margin-top: 4px;
@@ -530,6 +375,23 @@ input[type="number"]:hover {
     box-shadow: 0 0 0 3px rgb(239 68 68 / 0.1);
 }
 
+/* Disclaimer */
+.sfc-disclaimer {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: #f3f3f3;
+    border-left: 3px solid #cbd5e1;
+    border-radius: var(--radius-md);
+}
+
+.sfc-disclaimer p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #475569;
+    line-height: 1.5;
+}
+
 /* Button styles */
 .sfc-button-group {
     display: flex;
@@ -541,37 +403,6 @@ input[type="number"]:hover {
 
 .sfc-reset-btn {
     min-width: 200px;
-}
-
-
-/* Enabled state - only when not disabled */
-.c-btn.sfc-calculate-btn:not(:disabled) {
-    opacity: 1 !important;
-    cursor: pointer !important;
-}
-
-/* Disabled state - prevent all hover effects including background changes */
-.c-btn.sfc-calculate-btn:disabled,
-.c-btn.sfc-calculate-btn:disabled:hover,
-.c-btn.sfc-calculate-btn:disabled:focus,
-.c-btn.sfc-calculate-btn:disabled:active {
-    opacity: 0.5 !important;
-    cursor: not-allowed !important;
-    transform: none !important;
-    box-shadow: none !important;
-    background: #cccccc !important;
-    background-color: #cccccc !important;
-    background-image: none !important;
-    color: #666666 !important;
-    border-color: #cccccc !important;
-}
-
-.sfc-calculate-btn:active {
-    transform: translateY(0);
-}
-
-
-.sfc-reset-btn:hover {
 }
 
 /* Results section */
@@ -588,9 +419,16 @@ input[type="number"]:hover {
     letter-spacing: -0.025em;
 }
 
+.sfc-results-heading {
+    text-align: center;
+    margin-bottom: 16px;
+    margin-top: 0;
+    letter-spacing: -0.01em;
+}
+
 .sfc-main-result {
     background: #f8fafc;
-    padding: 32px 24px;
+    padding: 26px;
     border-radius: 12px;
     text-align: center;
     margin-bottom: 24px;
@@ -598,23 +436,30 @@ input[type="number"]:hover {
 }
 
 .sfc-main-result h2 {
+    font-weight: 500;
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+}
+
+.sfc-main-result h2:last-of-type {
     font-size: 1.1rem;
     font-weight: 600;
-    margin-bottom: 16px;
+    margin-bottom: 5px;
 }
 
 .sfc-main-value {
     font-size: 2.5rem;
     font-weight: 700;
     letter-spacing: -0.02em;
+    color: var(--paletteColor3);
 }
 
 .sfc-breakdown {
     background: #f8fafc;
-    padding: 24px;
+    padding: 26px;
     border-radius: 12px;
     border: 1px solid #e2e8f0;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
 }
 
 .sfc-breakdown-header {
@@ -665,46 +510,80 @@ input[type="number"]:hover {
     color: #059669;
 }
 
-/* Status card colors */
-.sfc-status-card.surplus {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.02), rgba(16, 185, 129, 0.05));
-}
-
-.sfc-status-card.surplus .sfc-result-value {
-    color: var(--color-accent);
-}
-
-.sfc-status-card.shortfall {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.02), rgba(239, 68, 68, 0.05));
-}
-
-.sfc-status-card.shortfall .sfc-result-value {
-}
-
 /* Chart section */
 .sfc-chart-section {
     background: #f7fafc;
     border: 2px solid #f3f4f6;
     border-radius: var(--radius-lg);
-    padding: 24px;
-    margin: 0 0 48px 0;
+    padding: 26px;
+    margin-bottom: 32px;
     box-shadow: none;
 }
 
-.sfc-chart-section h2 {
-    text-align: center;
-    font-weight: 500;
-    margin-bottom: 32px;
-    letter-spacing: -0.01em;
+.sfc-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
+    cursor: pointer;
 }
 
-.sfc-chart-heading {
-    text-align: center;
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-    letter-spacing: -0.02em;
-    color: #1a202c;
+.sfc-chart-header h2 {
+    margin-bottom: 0;
+    flex: 1;
+}
+
+.sfc-chart-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    flex-shrink: 0;
+}
+
+.sfc-chart-toggle:hover {
+    background: #f1f5f9;
+}
+
+.sfc-caret {
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 8px solid #64748b;
+    transition: transform 0.3s ease;
+    display: block;
+}
+
+.sfc-chart-section.collapsed .sfc-caret {
+    transform: rotate(180deg);
+}
+
+.sfc-chart-toggle:hover .sfc-caret {
+    border-bottom-color: #475569;
+}
+
+.sfc-chart-content {
+    margin-top: 20px;
+    overflow: hidden;
+    max-height: 1000px;
+    opacity: 1;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+}
+
+.sfc-chart-section.collapsed .sfc-chart-content {
+    max-height: 0;
+    margin-top: 0;
+    opacity: 0;
+    overflow: hidden;
 }
 
 .sfc-chart-container {
@@ -729,26 +608,12 @@ input[type="number"]:hover {
     width: 100% !important;
 }
 
-/* Explanation text */
-.sfc-explanation-text {
-    background: #ffffff;
-    padding: 28px;
-    border-radius: var(--radius-lg);
-    margin: 32px 0;
-    line-height: 1.6;
-    box-shadow: var(--shadow-sm);
+.sfc-download-section {
+    width: 100%;
 }
 
-/* Action buttons */
-.sfc-action-buttons {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    margin-top: 32px;
-}
-
-.sfc-print-btn,
 .sfc-download-btn {
+    width: 100%;
     cursor: pointer;
     transition: all 0.2s ease;
     text-decoration: none;
@@ -756,39 +621,7 @@ input[type="number"]:hover {
     font-family: inherit;
 }
 
-.sfc-print-btn:hover,
-.sfc-download-btn:hover {
-}
-
-/* CMS Testing Styles */
-/* 
-
-.c-matter__meta {
-    display: none;
-} */
-
-
-.c-matter--article .c-matter__body {
-    max-width: 1170px;
-}
-
-@media (max-width: 950px) {
-    .c-matter--article .c-matter__body {
-        max-width: 750px;
-        padding: 1.5rem;
-    }
-}
-
-@media (max-width: 750px) {
-    .c-matter--article .c-matter__body {
-        max-width: 100%;
-        margin: 10px;
-        padding: 1rem;
-        border-radius: 8px;
-    }
-}
-
-/* Standard Breakpoints */
+/* Responsive */
 @media (max-width: 950px) {
     .sfc-container {
         max-width: 750px;
@@ -804,7 +637,6 @@ input[type="number"]:hover {
         padding: 0;
     }
     
-    /* Stack vertically on mobile */
     .sfc-calculator-layout {
         grid-template-columns: 1fr;
         gap: 1rem;
@@ -814,7 +646,6 @@ input[type="number"]:hover {
         position: static;
     }
     
-    /* Left align all text on mobile */
     .sfc-header {
         text-align: left;
         margin-bottom: 24px;
@@ -841,10 +672,6 @@ input[type="number"]:hover {
         padding: 16px;
     }
     
-    .sfc-placeholder-content {
-        padding: 0;
-    }
-    
     .sfc-results-section {
         padding: 0;
     }
@@ -868,7 +695,6 @@ input[type="number"]:hover {
         gap: 12px;
     }
     
-    .sfc-calculate-btn,
     .sfc-reset-btn {
         width: 100%;
     }
