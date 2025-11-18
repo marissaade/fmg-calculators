@@ -98,6 +98,7 @@ Each calculator must have a unique prefix (e.g., `hlywml-`, `winw-`, `ira-`). Al
 1. **Formatting**: Add commas on `input` and `blur` events (e.g., 10,000).
 2. **Parsing**: Use `parseCurrencyValue()` to strip commas/symbols before math.
 3. **Validation**: Validate on blur or meaningful edit. Show errors inline.
+4. **No Dollar Sign in Input**: Do NOT include dollar signs (`$`) inside the input boxes. The label text is sufficient to indicate currency. Use `toLocaleString()` for formatting (commas only), not `formatCurrency()` which adds dollar signs.
 
 ### Sliders
 1. **Requirement**: If a field allows range selection (years, %), pair a text input with a slider.
