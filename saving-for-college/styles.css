@@ -608,12 +608,7 @@ input[type="number"]:focus {
     width: 100% !important;
 }
 
-.sfc-download-section {
-    width: 100%;
-}
-
 .sfc-download-btn {
-    width: 100%;
     cursor: pointer;
     transition: all 0.2s ease;
     text-decoration: none;
@@ -699,13 +694,6 @@ input[type="number"]:focus {
         width: 100%;
     }
     
-    .sfc-download-section {
-        width: 100%;
-    }
-    
-    .sfc-download-btn {
-        width: 100%;
-    }
     
     .sfc-chart-container {
         height: auto;

@@ -41,7 +41,8 @@ body {
     background: #f7fafc;
     border: 2px solid #f3f4f6;
     border-radius: var(--radius-lg);
-    padding: 24px;
+    padding: 26px;
+    margin-bottom: 24px;
     min-width: 0;
     max-width: 100%;
     overflow: visible;
@@ -62,16 +63,6 @@ body {
 .ci-results-column * {
     max-width: 100%;
     box-sizing: border-box;
-}
-/* Placeholder content styles */
-.ci-chart-section .ci-placeholder-content {
-    padding: 0;
-    text-align: left;
-}
-
-.ci-chart-section .ci-placeholder-content p {
-    line-height: 1.6;
-    margin: 0;
 }
 /* Header */
 .ci-header {
@@ -117,8 +108,7 @@ body {
 .ci-input-section h2 {
     margin-top: 0;
     margin-bottom: 28px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 0;
     text-align: center;
     letter-spacing: -0.01em;
 }
@@ -139,17 +129,6 @@ body {
     display: flex;
     align-items: center;
 }
-.ci-currency {
-    position: absolute !important;
-    left: 12px !important;
-    transform: translateY(-10%) !important;
-    font-weight: 400 !important;
-    z-index: 1 !important;
-    font-size: 1rem !important;
-    line-height: 1 !important;
-    font-family: inherit !important;
-    pointer-events: none !important;
-}
 .ci-unit {
     position: absolute;
     right: 12px;
@@ -164,7 +143,7 @@ body {
 input[type="text"],
 input[type="number"] {
     width: 100%;
-    padding: 14px 12px;
+    padding: 14px 16px;
     border: 1px solid #e5e7eb;
     border-radius: var(--radius-md);
     font-size: 1rem;
@@ -172,24 +151,6 @@ input[type="number"] {
     background: #ffffff;
     font-family: inherit;
     font-weight: 400;
-}
-/* Currency inputs need extra left padding */
-.ci-input-wrapper .ci-currency + input {
-    padding-left: 32px !important;
-}
-/* Specific inputs with currency symbols */
-input#ci-initial-investment-a,
-input#ci-annual-contribution-a,
-input#ci-initial-investment-b,
-input#ci-annual-contribution-b {
-    padding-left: 32px !important;
-}
-/* Additional specificity for currency inputs */
-.ci-input-wrapper input#ci-initial-investment-a,
-.ci-input-wrapper input#ci-annual-contribution-a,
-.ci-input-wrapper input#ci-initial-investment-b,
-.ci-input-wrapper input#ci-annual-contribution-b {
-    padding-left: 40px !important;
 }
 
 input[type="text"]:focus,
@@ -205,7 +166,7 @@ input[type="number"]:hover {
 /* Placeholder text styling */
 input[type="text"]::placeholder,
 input[type="number"]::placeholder {
-    color: #d1d5db;
+    color: rgba(0, 0, 0, 0.55);
 }
 
 /* Error messages */
@@ -324,6 +285,23 @@ input[type="number"]::-webkit-outer-spin-button {
     margin: 0;
 }
 
+/* Disclaimer */
+.ci-disclaimer {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: #f3f3f3;
+    border-left: 3px solid #cbd5e1;
+    border-radius: var(--radius-md);
+}
+
+.ci-disclaimer p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #475569;
+    line-height: 1.5;
+}
+
 /* Button styles */
 .ci-button-group {
     display: flex;
@@ -333,53 +311,26 @@ input[type="number"]::-webkit-outer-spin-button {
     align-items: flex-start;
 }
 
-.ci-calculate-btn {
-    flex: 1;
-}
-
 .ci-reset-btn {
     flex: 0 0 auto;
     min-width: 200px;
 }
 
-
-/* Enabled state - only when not disabled */
-.c-btn.ci-calculate-btn:not(:disabled) {
-    opacity: 1 !important;
-    cursor: pointer !important;
-}
-
-/* Disabled state - prevent all hover effects including background changes */
-.c-btn.ci-calculate-btn:disabled,
-.c-btn.ci-calculate-btn:disabled:hover,
-.c-btn.ci-calculate-btn:disabled:focus,
-.c-btn.ci-calculate-btn:disabled:active {
-    opacity: 0.5 !important;
-    cursor: not-allowed !important;
-    transform: none !important;
-    box-shadow: none !important;
-    background: #cccccc !important;
-    background-color: #cccccc !important;
-    background-image: none !important;
-    color: #666666 !important;
-    border-color: #cccccc !important;
-}
-
 .ci-main-result {
     background: #f8fafc;
-    padding: 32px 24px;
+    padding: 26px;
     border-radius: 12px;
     text-align: center;
-    margin-bottom: 16px;
+    margin-bottom: 24px;
     border: 1px solid #e2e8f0;
-    display: none;
 }
 
 .ci-main-result h2 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 16px;
+    margin-top: 0;
+    margin-bottom: 28px;
+    padding-bottom: 0;
     text-align: center;
+    letter-spacing: -0.01em;
 }
 
 .ci-main-value {
@@ -387,6 +338,7 @@ input[type="number"]::-webkit-outer-spin-button {
     font-weight: 700;
     letter-spacing: -0.02em;
     margin-bottom: 24px;
+    color: var(--paletteColor3);
 }
 
 .ci-breakdown {
@@ -523,63 +475,84 @@ input[type="number"]::-webkit-outer-spin-button {
     pointer-events: none;
 }
 
-/* Explanation text */
-.ci-explanation-text {
-    background: #f7fafc;
-    padding: 28px;
-    border-radius: var(--radius-lg);
-    margin: 32px 0;
-    line-height: 1.6;
-    box-shadow: var(--shadow-sm);
-    border: 2px solid #f3f4f6;
-}
-
-.ci-explanation-text p {
-    margin-bottom: 16px;
-    color: #1a202c;
-}
-
-.ci-explanation-text p:last-child {
-    margin-bottom: 0;
-}
-
-.ci-explanation-text strong {
-    color: #1a202c;
-    font-weight: 600;
-}
-
-.ci-explanation-text ul {
-    margin: 16px 0;
-    padding-left: 24px;
-    color: #4a5568;
-}
-
-.ci-explanation-text li {
-    margin-bottom: 8px;
-}
-
-.ci-explanation-text em {
-    color: #718096;
-    font-style: italic;
-}
-
 /* Chart section */
 .ci-chart-section {
     background: #f7fafc;
-    padding: 16px 12px;
+    border: 2px solid #f3f4f6;
     border-radius: var(--radius-lg);
-    margin: 0 0 16px 0;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid #f3f4f6;
-    max-width: 100%;
-    width: 100%;
-    box-sizing: border-box;
+    padding: 26px;
+    margin-bottom: 32px;
+    box-shadow: none;
 }
-.ci-chart-heading {
-    text-align: center;
+
+.ci-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.ci-chart-header h2 {
+    margin-bottom: 0;
+    flex: 1;
+    font-weight: 500;
     margin-top: 0;
-    margin-bottom: 1.5rem;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
+    text-align: center;
+}
+
+.ci-chart-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    flex-shrink: 0;
+}
+
+.ci-chart-toggle:hover {
+    background: #f1f5f9;
+}
+
+.ci-caret {
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 8px solid #64748b;
+    transition: transform 0.3s ease;
+    display: block;
+}
+
+.ci-chart-section.collapsed .ci-caret {
+    transform: rotate(180deg);
+}
+
+.ci-chart-toggle:hover .ci-caret {
+    border-bottom-color: #475569;
+}
+
+.ci-chart-content {
+    margin-top: 20px;
+    overflow: hidden;
+    max-height: 1000px;
+    opacity: 1;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+}
+
+.ci-chart-section.collapsed .ci-chart-content {
+    max-height: 0;
+    margin-top: 0;
+    opacity: 0;
+    overflow: hidden;
 }
 .ci-chart-container {
     position: relative;
@@ -593,31 +566,6 @@ input[type="number"]::-webkit-outer-spin-button {
     height: 380px !important;
     width: 100% !important;
 }
-/* CMS Testing Styles */
-
-.c-matter__meta {
-    display: none;
-}
-
-.c-matter--article .c-matter__body {
-    max-width: 1170px;
-}
-@media (max-width: 950px) {
-    .c-matter--article .c-matter__body {
-        max-width: 750px;
-        padding: 1.5rem;
-    }
-}
-
-@media (max-width: 750px) {
-    .c-matter--article .c-matter__body {
-        max-width: 100%;
-        margin: 10px;
-        padding: 1rem;
-        border-radius: 8px;
-    }
-}
-
 /* Standard Breakpoints */
 @media (max-width: 950px) {
     .ci-container {
@@ -667,7 +615,6 @@ input[type="number"]::-webkit-outer-spin-button {
         gap: 12px;
     }
     
-    .ci-calculate-btn,
     .ci-reset-btn {
         width: 100%;
     }
@@ -680,19 +627,7 @@ input[type="number"]::-webkit-outer-spin-button {
         padding: 16px;
     }
     
-    .ci-placeholder-content {
-        padding: 0;
-    }
-    
-    .ci-results-section {
-        padding: 0;
-    }
-    
     .ci-main-result {
-        padding: 24px 16px;
-    }
-    
-    .ci-breakdown {
         padding: 24px 16px;
     }
     
@@ -734,10 +669,6 @@ input[type="number"]::-webkit-outer-spin-button {
         padding: 20px 12px;
     }
     
-    .ci-breakdown {
-        padding: 20px 12px;
-    }
-    
     .ci-main-value {
         font-size: 2rem;
     }
@@ -750,20 +681,5 @@ input[type="number"]::-webkit-outer-spin-button {
     
     .ci-chart-container {
         height: auto;
-    }
-}
-
-/* Print styles */
-@media print {
-    body {
-        background: white;
-    }
-    .ci-container {
-        box-shadow: none;
-        margin: 0;
-        padding: 0;
-    }
-    .calculator-form {
-        display: none;
     }
 }
