@@ -64,8 +64,8 @@ body {
 
 .sfc-calculator-layout {
     display: grid;
-    grid-template-columns: 48% 52%;
-    gap: 1.5rem;
+    grid-template-columns: 0.48fr 0.52fr;
+    gap: 24px;
     width: 100%;
     max-width: 100%;
     overflow: visible !important;
@@ -73,6 +73,10 @@ body {
 }
 
 .sfc-form-column {
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 0 !important;
+    align-self: start !important;
     background: #f7fafc;
     border: 2px solid #f3f4f6;
     border-radius: var(--radius-lg);
@@ -81,13 +85,10 @@ body {
     min-width: 0;
     max-width: 100%;
     overflow: visible;
+    height: fit-content;
 }
 
 .sfc-results-column {
-    position: -webkit-sticky !important;
-    position: sticky !important;
-    top: 0 !important;
-    align-self: start !important;
     min-width: 0;
     max-width: 100%;
     overflow: visible;
@@ -393,16 +394,21 @@ input[type="number"]:focus {
 }
 
 /* Button styles */
-.sfc-button-group {
+.sfc-download-section {
     display: flex;
     gap: 12px;
-    justify-content: flex-start;
-    align-items: flex-start;
+    width: 100%;
     margin-top: 32px;
+    margin-bottom: 0;
 }
 
-.sfc-reset-btn {
-    min-width: 200px;
+.sfc-download-section .sfc-reset-btn,
+.sfc-download-section .sfc-download-btn {
+    flex: 1;
+}
+
+.sfc-button-mobile {
+    display: none;
 }
 
 /* Results section */
@@ -625,6 +631,17 @@ input[type="number"]:focus {
     }
 }
 
+@media (max-width: 900px) {
+    .sfc-download-section {
+        flex-direction: column;
+    }
+    
+    .sfc-download-section .sfc-reset-btn,
+    .sfc-download-section .sfc-download-btn {
+        width: 100%;
+    }
+}
+
 @media (max-width: 750px) {
     .sfc-container {
         max-width: 100%;
@@ -637,8 +654,12 @@ input[type="number"]:focus {
         gap: 1rem;
     }
     
+    .sfc-form-column {
+        position: static !important;
+    }
+    
     .sfc-results-column {
-        position: static;
+        position: static !important;
     }
     
     .sfc-header {
@@ -684,13 +705,19 @@ input[type="number"]:focus {
         padding: 0;
     }
     
-    .sfc-button-group {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
+    .sfc-download-desktop {
+        display: none;
     }
     
-    .sfc-reset-btn {
+    .sfc-button-mobile {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 24px;
+        width: 100%;
+    }
+    
+    .sfc-button-mobile .c-btn {
         width: 100%;
     }
     

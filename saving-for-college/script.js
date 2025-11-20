@@ -8,6 +8,7 @@ class CollegeSavingsCalculator {
         this.chartSection = document.querySelector('.sfc-chart-section');
         this.chartInstance = null;
         this.calculationTimeout = null;
+        this.resizeTimeout = null;
         
         this.defaultValues = {
             'sfc-current-savings': '5000',
@@ -18,6 +19,7 @@ class CollegeSavingsCalculator {
             'sfc-college-inflation-rate': '5'
         };
         
+        this.diagnoseStickyPositioning();
         this.initializeInputFormatting();
         this.initializeSliders();
         this.initializeTooltips();
@@ -26,13 +28,59 @@ class CollegeSavingsCalculator {
         this.calculateOnLoad();
     }
 
+    diagnoseStickyPositioning() {
+        // Only apply on desktop (viewport width > 750px)
+        if (window.innerWidth <= 750) {
+            const resultsColumn = document.querySelector('.sfc-results-column');
+            if (resultsColumn) {
+                resultsColumn.style.minHeight = '0';
+            }
+            return;
+        }
+        
+        const formColumn = document.querySelector('.sfc-form-column');
+        const resultsColumn = document.querySelector('.sfc-results-column');
+        const layoutContainer = document.querySelector('.sfc-calculator-layout');
+        
+        if (!formColumn || !resultsColumn || !layoutContainer) return;
+        
+        const formHeight = formColumn.getBoundingClientRect().height;
+        const resultsHeight = resultsColumn.getBoundingClientRect().height;
+        
+        // If form column is taller than results column
+        if (formHeight >= resultsHeight) {
+            const viewportHeight = window.innerHeight;
+            // Add min-height to results column to create scrollable space
+            resultsColumn.style.minHeight = (formHeight + viewportHeight * 0.5) + 'px';
+        }
+    }
+
     initializeEventListeners() {
+        // Window resize handler for sticky positioning
+        window.addEventListener('resize', () => {
+            clearTimeout(this.resizeTimeout);
+            this.resizeTimeout = setTimeout(() => {
+                this.diagnoseStickyPositioning();
+            }, 250);
+        });
+        
         if (this.resetBtn) {
         this.resetBtn.addEventListener('click', () => this.resetForm());
         }
         if (this.downloadBtn) {
         this.downloadBtn.addEventListener('click', () => this.downloadResults());
         }
+        
+        // Mobile button event listeners
+        const resetBtnMobile = document.getElementById('sfc-reset-btn-mobile');
+        const downloadBtnMobile = document.getElementById('sfc-downloadBtn-mobile');
+        if (resetBtnMobile) {
+            resetBtnMobile.addEventListener('click', () => this.resetForm());
+        }
+        if (downloadBtnMobile) {
+            downloadBtnMobile.addEventListener('click', () => this.downloadResults());
+        }
+        
         if (this.chartToggle) {
             this.chartToggle.addEventListener('click', (e) => {
                 e.stopPropagation();
