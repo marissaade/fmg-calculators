@@ -2,14 +2,8 @@
 
 class WhatIsMyNetWorthCalculator {
     constructor() {
-        this.resultsSection = document.getElementById('winw-results-section');
-        this.resetBtn = document.getElementById('winw-reset-btn');
-        this.downloadBtn = document.getElementById('winw-downloadBtn');
-        this.placeholderContent = document.querySelector('.winw-placeholder-content');
-        this.chartContainer = document.querySelector('.winw-chart-container');
-        this.chartHeading = document.querySelector('.winw-chart-section h2');
-        this.chartInstance = null;
         this.calculationTimeout = null;
+        this.chartInstance = null;
         
         // Store default values for reset
         this.defaultValues = {
@@ -25,10 +19,49 @@ class WhatIsMyNetWorthCalculator {
             'winw-other-debt': '500'
         };
         
+        this.init();
+    }
+    
+    init() {
+        this.cacheElements();
+        this.diagnoseStickyPositioning();
         this.initializeInputFormatting();
+        this.initializeTooltips();
         this.initializeEventListeners();
         // Calculate and display results on page load
         this.calculateOnLoad();
+    }
+    
+    cacheElements() {
+        this.resultsSection = document.getElementById('winw-results-section');
+        this.resetBtn = document.getElementById('winw-reset-btn');
+        this.downloadBtn = document.getElementById('winw-downloadBtn');
+        this.placeholderContent = document.querySelector('.winw-placeholder-content');
+        this.chartContainer = document.querySelector('.winw-chart-container');
+        this.chartSection = document.querySelector('.winw-chart-section');
+        this.chartToggle = document.getElementById('winw-chart-toggle');
+        this.chartHeader = document.querySelector('.winw-chart-header');
+    }
+    
+    diagnoseStickyPositioning() {
+        // Only apply on desktop (viewport width > 750px)
+        if (window.innerWidth <= 750) return;
+        
+        const formColumn = document.querySelector('.winw-form-column');
+        const resultsColumn = document.querySelector('.winw-results-column');
+        const layoutContainer = document.querySelector('.winw-calculator-layout');
+        
+        if (!formColumn || !resultsColumn || !layoutContainer) return;
+        
+        const formHeight = formColumn.getBoundingClientRect().height;
+        const resultsHeight = resultsColumn.getBoundingClientRect().height;
+        
+        // If form column is taller than results column
+        if (formHeight >= resultsHeight) {
+            const viewportHeight = window.innerHeight;
+            // Add min-height to results column to create scrollable space
+            resultsColumn.style.minHeight = (formHeight + viewportHeight * 0.5) + 'px';
+        }
     }
 
     initializeEventListeners() {
@@ -38,6 +71,40 @@ class WhatIsMyNetWorthCalculator {
         if (this.downloadBtn) {
             this.downloadBtn.addEventListener('click', () => this.downloadResults());
         }
+        
+        // Reset button (mobile)
+        const resetBtnMobile = document.getElementById('winw-reset-btn-mobile');
+        if (resetBtnMobile) {
+            resetBtnMobile.addEventListener('click', () => this.resetForm());
+        }
+        
+        // Download button (mobile)
+        const downloadBtnMobile = document.getElementById('winw-downloadBtn-mobile');
+        if (downloadBtnMobile) {
+            downloadBtnMobile.addEventListener('click', () => this.downloadResults());
+        }
+        
+        // Chart toggle button
+        if (this.chartToggle) {
+            this.chartToggle.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent header click from also firing
+                this.toggleChart();
+            });
+        }
+        
+        // Make chart header clickable
+        if (this.chartHeader) {
+            this.chartHeader.addEventListener('click', () => this.toggleChart());
+        }
+        
+        // Window resize listener for sticky positioning
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                this.diagnoseStickyPositioning();
+            }, 250);
+        });
         
         // Add real-time calculation listeners to all inputs
         const inputs = document.querySelectorAll('input');
@@ -62,7 +129,7 @@ class WhatIsMyNetWorthCalculator {
     }
 
     initializeInputFormatting() {
-        // Format all currency inputs with commas
+        // Format all currency inputs with commas and numeric-only filtering
         const currencyInputs = [
             'winw-cash', 'winw-investments', 'winw-real-estate', 'winw-vehicles', 
             'winw-other-valuables',
@@ -73,9 +140,66 @@ class WhatIsMyNetWorthCalculator {
             if (input) {
                 // Change to text type to allow commas
                 input.type = 'text';
-                input.addEventListener('input', (e) => this.formatCurrencyInput(e));
+                input.inputMode = 'numeric';
+                
+                input.addEventListener('input', (e) => {
+                    // Filter to only allow digits (strip all non-numeric characters)
+                    const cursorPosition = e.target.selectionStart;
+                    const oldValue = e.target.value;
+                    const newValue = oldValue.replace(/[^\d]/g, '');
+                    
+                    if (oldValue !== newValue) {
+                        e.target.value = newValue;
+                        // Adjust cursor position based on removed characters
+                        const removedChars = oldValue.substring(0, cursorPosition).replace(/[^\d]/g, '').length;
+                        const newCursorPos = Math.min(removedChars, newValue.length);
+                        e.target.setSelectionRange(newCursorPos, newCursorPos);
+                    }
+                    
+                    // Format currency input
+                    this.formatCurrencyInput(e);
+                    
+                    // Clear errors
+                    this.clearError(e.target);
+                    
+                    // Trigger calculation
+                    clearTimeout(this.calculationTimeout);
+                    this.calculationTimeout = setTimeout(() => {
+                        this.calculateAndDisplay();
+                    }, 300);
+                });
+                
                 input.addEventListener('blur', (e) => this.formatCurrencyInput(e));
-                input.addEventListener('focus', (e) => this.handleCurrencyFocus(e));
+                input.addEventListener('focus', (e) => {
+                    // Auto-select entire value on focus
+                    e.target.select();
+                    // Remove commas when focusing for easier editing
+                    e.target.value = e.target.value.replace(/,/g, '');
+                });
+            }
+        });
+    }
+    
+    initializeTooltips() {
+        const tooltips = document.querySelectorAll('.winw-tooltip');
+        tooltips.forEach(tooltip => {
+            tooltip.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const isActive = tooltip.classList.contains('active');
+                // Close all other tooltips
+                document.querySelectorAll('.winw-tooltip').forEach(t => t.classList.remove('active'));
+                // Toggle this tooltip
+                if (!isActive) {
+                    tooltip.classList.add('active');
+                }
+            });
+        });
+        
+        // Close tooltips when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.winw-tooltip')) {
+                document.querySelectorAll('.winw-tooltip').forEach(t => t.classList.remove('active'));
             }
         });
     }
@@ -345,6 +469,32 @@ class WhatIsMyNetWorthCalculator {
         
         // Recalculate and display results with default values
         this.calculateAndDisplay();
+        
+        // Move focus to first input field
+        const firstInput = document.getElementById('winw-cash');
+        if (firstInput) {
+            firstInput.focus();
+            // On mobile, scroll to first field
+            if (window.innerWidth <= 750) {
+                firstInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+    
+    toggleChart() {
+        if (!this.chartSection || !this.chartToggle) return;
+        
+        const isCollapsed = this.chartSection.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+            // Expand
+            this.chartSection.classList.remove('collapsed');
+            this.chartToggle.setAttribute('aria-expanded', 'true');
+        } else {
+            // Collapse
+            this.chartSection.classList.add('collapsed');
+            this.chartToggle.setAttribute('aria-expanded', 'false');
+        }
     }
 
     downloadResults() {
@@ -382,55 +532,98 @@ class WhatIsMyNetWorthCalculator {
         doc.text(`Net Worth: ${this.formatCurrency(results.netWorth)}`, 20, yPosition);
         yPosition += 15;
         
-        // Assets Section
+        // Two-column layout for Assets and Liabilities
+        const leftColumn = 20;
+        const rightColumn = 110;
+        let leftY = yPosition;
+        let rightY = yPosition;
+        
+        // Assets Section (Left Column)
         doc.setFontSize(14);
         doc.setFont(undefined, 'bold');
-        doc.text('Assets', 20, yPosition);
-        yPosition += 8;
+        doc.text('Assets', leftColumn, leftY);
+        leftY += 8;
         
         doc.setFontSize(11);
         doc.setFont(undefined, 'normal');
-        doc.text(`Cash: ${this.formatCurrency(results.assets.cash)}`, 20, yPosition);
-        yPosition += 7;
-        doc.text(`Investments: ${this.formatCurrency(results.assets.investments)}`, 20, yPosition);
-        yPosition += 7;
-        doc.text(`Real Estate: ${this.formatCurrency(results.assets.realEstate)}`, 20, yPosition);
-        yPosition += 7;
-        doc.text(`Vehicles: ${this.formatCurrency(results.assets.vehicles)}`, 20, yPosition);
-        yPosition += 7;
-        doc.text(`Other Valuables: ${this.formatCurrency(results.assets.otherValuables)}`, 20, yPosition);
-        yPosition += 7;
+        doc.text(`Cash: ${this.formatCurrency(results.assets.cash)}`, leftColumn, leftY);
+        leftY += 7;
+        doc.text(`Investments: ${this.formatCurrency(results.assets.investments)}`, leftColumn, leftY);
+        leftY += 7;
+        doc.text(`Real Estate: ${this.formatCurrency(results.assets.realEstate)}`, leftColumn, leftY);
+        leftY += 7;
+        doc.text(`Vehicles: ${this.formatCurrency(results.assets.vehicles)}`, leftColumn, leftY);
+        leftY += 7;
+        doc.text(`Other Valuables: ${this.formatCurrency(results.assets.otherValuables)}`, leftColumn, leftY);
+        leftY += 7;
         doc.setFont(undefined, 'bold');
-        doc.text(`Total Assets: ${this.formatCurrency(results.totalAssets)}`, 20, yPosition);
-        yPosition += 15;
+        doc.text(`Total Assets: ${this.formatCurrency(results.totalAssets)}`, leftColumn, leftY);
+        leftY += 10;
         
-        // Liabilities Section
+        // Liabilities Section (Right Column)
         doc.setFontSize(14);
         doc.setFont(undefined, 'bold');
-        doc.text('Liabilities', 20, yPosition);
-        yPosition += 8;
+        doc.text('Liabilities', rightColumn, rightY);
+        rightY += 8;
         
         doc.setFontSize(11);
         doc.setFont(undefined, 'normal');
-        doc.text(`Mortgage: ${this.formatCurrency(results.liabilities.mortgage)}`, 20, yPosition);
-        yPosition += 7;
-        doc.text(`Student Loans: ${this.formatCurrency(results.liabilities.studentLoans)}`, 20, yPosition);
-        yPosition += 7;
-        doc.text(`Credit Card Debt: ${this.formatCurrency(results.liabilities.creditCardDebt)}`, 20, yPosition);
-        yPosition += 7;
-        doc.text(`Car Loans: ${this.formatCurrency(results.liabilities.carLoans)}`, 20, yPosition);
-        yPosition += 7;
-        doc.text(`Other Debt: ${this.formatCurrency(results.liabilities.otherDebt)}`, 20, yPosition);
-        yPosition += 7;
+        doc.text(`Mortgage: ${this.formatCurrency(results.liabilities.mortgage)}`, rightColumn, rightY);
+        rightY += 7;
+        doc.text(`Student Loans: ${this.formatCurrency(results.liabilities.studentLoans)}`, rightColumn, rightY);
+        rightY += 7;
+        doc.text(`Credit Card Debt: ${this.formatCurrency(results.liabilities.creditCardDebt)}`, rightColumn, rightY);
+        rightY += 7;
+        doc.text(`Car Loans: ${this.formatCurrency(results.liabilities.carLoans)}`, rightColumn, rightY);
+        rightY += 7;
+        doc.text(`Other Debt: ${this.formatCurrency(results.liabilities.otherDebt)}`, rightColumn, rightY);
+        rightY += 7;
         doc.setFont(undefined, 'bold');
-        doc.text(`Total Liabilities: ${this.formatCurrency(results.totalLiabilities)}`, 20, yPosition);
-        yPosition += 15;
+        doc.text(`Total Liabilities: ${this.formatCurrency(results.totalLiabilities)}`, rightColumn, rightY);
+        rightY += 10;
+        
+        // Use the taller of the two columns for yPosition
+        yPosition = Math.max(leftY, rightY) + 10;
+        
+        // Add chart to PDF
+        const chartCanvas = document.getElementById('winw-net-worth-chart');
+        if (chartCanvas) {
+            // Add chart heading
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('Net Worth Breakdown', 20, yPosition);
+            yPosition += 10;
+            
+            // Get chart as image
+            const chartImage = chartCanvas.toDataURL('image/png');
+            const imgWidth = 100;
+            const imgHeight = 100;
+            
+            // Center the chart
+            const xOffset = (210 - imgWidth) / 2; // A4 width is 210mm
+            
+            // Check if we need a new page
+            if (yPosition + imgHeight > 270) {
+                doc.addPage();
+                yPosition = 20;
+            }
+            
+            doc.addImage(chartImage, 'PNG', xOffset, yPosition, imgWidth, imgHeight);
+            yPosition += imgHeight + 15;
+        }
         
         // Disclaimer
         doc.setFontSize(9);
         doc.setFont(undefined, 'italic');
         const disclaimer = 'This analysis is based on the values provided. Actual net worth may vary based on market conditions and valuation methods. Consult with a financial professional for personalized advice.';
         const disclaimerText = doc.splitTextToSize(disclaimer, 170);
+        
+        // Check if we need a new page for disclaimer
+        if (yPosition + 20 > 280) {
+            doc.addPage();
+            yPosition = 20;
+        }
+        
         doc.text(disclaimerText, 20, yPosition);
         
         // Save PDF
