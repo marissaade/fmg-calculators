@@ -303,17 +303,21 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 /* Button styles */
-.ci-button-group {
+.ci-download-section {
     display: flex;
     gap: 12px;
-    margin-top: 1rem;
-    justify-content: flex-start;
-    align-items: flex-start;
+    width: 100%;
+    margin-top: 32px;
+    margin-bottom: 0;
 }
 
-.ci-reset-btn {
-    flex: 0 0 auto;
-    min-width: 200px;
+.ci-download-section .ci-reset-btn,
+.ci-download-section .ci-download-btn {
+    flex: 1;
+}
+
+.ci-button-mobile {
+    display: none;
 }
 
 .ci-main-result {
@@ -575,6 +579,17 @@ input[type="number"]::-webkit-outer-spin-button {
     }
 }
 
+@media (max-width: 900px) {
+    .ci-download-section {
+        flex-direction: column;
+    }
+    
+    .ci-download-section .ci-reset-btn,
+    .ci-download-section .ci-download-btn {
+        width: 100%;
+    }
+}
+
 @media (max-width: 750px) {
     .ci-container {
         max-width: 100%;
@@ -587,7 +602,7 @@ input[type="number"]::-webkit-outer-spin-button {
         gap: 1rem;
     }
     .ci-results-column {
-        position: static;
+        position: static !important;
     }
     
     /* Left align all text on mobile */
@@ -609,10 +624,20 @@ input[type="number"]::-webkit-outer-spin-button {
         text-align: left;
     }
     
-    .ci-button-group {
+    .ci-download-desktop {
+        display: none;
+    }
+    
+    .ci-button-mobile {
+        display: flex;
         flex-direction: column;
-        align-items: stretch;
         gap: 12px;
+        margin-top: 24px;
+        width: 100%;
+    }
+    
+    .ci-button-mobile .c-btn {
+        width: 100%;
     }
     
     .ci-reset-btn {
@@ -642,14 +667,6 @@ input[type="number"]::-webkit-outer-spin-button {
     }
     .ci-input-group {
         margin-bottom: 16px;
-    }
-    
-    .ci-download-section {
-        width: 100%;
-    }
-    
-    .ci-download-btn {
-        width: 100%;
     }
     
     .ci-chart-container {

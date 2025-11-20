@@ -37,6 +37,17 @@ class InvestmentComparisonCalculator {
         if (this.downloadBtn) {
             this.downloadBtn.addEventListener('click', () => this.downloadResults());
         }
+        
+        // Mobile button event listeners
+        const resetBtnMobile = document.getElementById('ci-reset-btn-mobile');
+        const downloadBtnMobile = document.getElementById('ci-downloadBtn-mobile');
+        if (resetBtnMobile) {
+            resetBtnMobile.addEventListener('click', () => this.resetForm());
+        }
+        if (downloadBtnMobile) {
+            downloadBtnMobile.addEventListener('click', () => this.downloadResults());
+        }
+        
         if (this.chartToggle) {
             this.chartToggle.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -863,8 +874,13 @@ class InvestmentComparisonCalculator {
             this.chartInstance.update();
         }
         
-        // Scroll back to top
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Scroll to top of form on mobile
+        if (window.innerWidth <= 750) {
+            const calculator = document.querySelector('.ci-calculator-layout');
+            if (calculator) {
+                calculator.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
     }
 
     downloadResults() {
