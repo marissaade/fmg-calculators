@@ -2,14 +2,8 @@
 
 class WhatIsMyMonthlyBudgetCalculator {
     constructor() {
-        this.resultsSection = document.getElementById('wimb-results-section');
-        this.resetBtn = document.getElementById('wimb-reset-btn');
-        this.downloadBtn = document.getElementById('wimb-downloadBtn');
-        this.placeholderContent = document.querySelector('.wimb-placeholder-content');
-        this.chartContainer = document.querySelector('.wimb-chart-container');
-        this.chartHeading = document.querySelector('.wimb-chart-heading');
-        this.chartInstance = null;
         this.calculationTimeout = null;
+        this.chartInstance = null;
         
         // Store default values for reset
         this.defaultValues = {
@@ -24,10 +18,49 @@ class WhatIsMyMonthlyBudgetCalculator {
             'wimb-other-expenses': '100'
         };
         
+        this.init();
+    }
+    
+    init() {
+        this.cacheElements();
+        this.diagnoseStickyPositioning();
         this.initializeInputFormatting();
+        this.initializeTooltips();
         this.initializeEventListeners();
         // Calculate and display results on page load
         this.calculateOnLoad();
+    }
+    
+    cacheElements() {
+        this.resultsSection = document.getElementById('wimb-results-section');
+        this.resetBtn = document.getElementById('wimb-reset-btn');
+        this.downloadBtn = document.getElementById('wimb-downloadBtn');
+        this.placeholderContent = document.querySelector('.wimb-placeholder-content');
+        this.chartContainer = document.querySelector('.wimb-chart-container');
+        this.chartSection = document.querySelector('.wimb-chart-section');
+        this.chartToggle = document.getElementById('wimb-chart-toggle');
+        this.chartHeader = document.querySelector('.wimb-chart-header');
+    }
+    
+    diagnoseStickyPositioning() {
+        // Only apply on desktop (viewport width > 750px)
+        if (window.innerWidth <= 750) return;
+        
+        const formColumn = document.querySelector('.wimb-form-column');
+        const resultsColumn = document.querySelector('.wimb-results-column');
+        const layoutContainer = document.querySelector('.wimb-calculator-layout');
+        
+        if (!formColumn || !resultsColumn || !layoutContainer) return;
+        
+        const formHeight = formColumn.getBoundingClientRect().height;
+        const resultsHeight = resultsColumn.getBoundingClientRect().height;
+        
+        // If form column is taller than results column
+        if (formHeight >= resultsHeight) {
+            const viewportHeight = window.innerHeight;
+            // Add min-height to results column to create scrollable space
+            resultsColumn.style.minHeight = (formHeight + viewportHeight * 0.5) + 'px';
+        }
     }
 
     initializeEventListeners() {
@@ -37,6 +70,40 @@ class WhatIsMyMonthlyBudgetCalculator {
         if (this.downloadBtn) {
             this.downloadBtn.addEventListener('click', () => this.downloadResults());
         }
+        
+        // Reset button (mobile)
+        const resetBtnMobile = document.getElementById('wimb-reset-btn-mobile');
+        if (resetBtnMobile) {
+            resetBtnMobile.addEventListener('click', () => this.resetForm());
+        }
+        
+        // Download button (mobile)
+        const downloadBtnMobile = document.getElementById('wimb-downloadBtn-mobile');
+        if (downloadBtnMobile) {
+            downloadBtnMobile.addEventListener('click', () => this.downloadResults());
+        }
+        
+        // Chart toggle button
+        if (this.chartToggle) {
+            this.chartToggle.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent header click from also firing
+                this.toggleChart();
+            });
+        }
+        
+        // Make chart header clickable
+        if (this.chartHeader) {
+            this.chartHeader.addEventListener('click', () => this.toggleChart());
+        }
+        
+        // Window resize listener for sticky positioning
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                this.diagnoseStickyPositioning();
+            }, 250);
+        });
         
         // Add real-time calculation listeners to all inputs
         const inputs = document.querySelectorAll('input');
@@ -61,7 +128,7 @@ class WhatIsMyMonthlyBudgetCalculator {
     }
 
     initializeInputFormatting() {
-        // Format all currency inputs with commas
+        // Format all currency inputs with commas and numeric-only filtering
         const currencyInputs = [
             'wimb-take-home-pay', 'wimb-other-income',
             'wimb-housing', 'wimb-utilities', 'wimb-food', 'wimb-transportation',
@@ -72,9 +139,66 @@ class WhatIsMyMonthlyBudgetCalculator {
             if (input) {
                 // Change to text type to allow commas
                 input.type = 'text';
-                input.addEventListener('input', (e) => this.formatCurrencyInput(e));
+                input.inputMode = 'numeric';
+                
+                input.addEventListener('input', (e) => {
+                    // Filter to only allow digits (strip all non-numeric characters)
+                    const cursorPosition = e.target.selectionStart;
+                    const oldValue = e.target.value;
+                    const newValue = oldValue.replace(/[^\d]/g, '');
+                    
+                    if (oldValue !== newValue) {
+                        e.target.value = newValue;
+                        // Adjust cursor position based on removed characters
+                        const removedChars = oldValue.substring(0, cursorPosition).replace(/[^\d]/g, '').length;
+                        const newCursorPos = Math.min(removedChars, newValue.length);
+                        e.target.setSelectionRange(newCursorPos, newCursorPos);
+                    }
+                    
+                    // Format currency input
+                    this.formatCurrencyInput(e);
+                    
+                    // Clear errors
+                    this.clearError(e.target);
+                    
+                    // Trigger calculation
+                    clearTimeout(this.calculationTimeout);
+                    this.calculationTimeout = setTimeout(() => {
+                        this.calculateAndDisplay();
+                    }, 300);
+                });
+                
                 input.addEventListener('blur', (e) => this.formatCurrencyInput(e));
-                input.addEventListener('focus', (e) => this.handleCurrencyFocus(e));
+                input.addEventListener('focus', (e) => {
+                    // Auto-select entire value on focus
+                    e.target.select();
+                    // Remove commas when focusing for easier editing
+                    e.target.value = e.target.value.replace(/,/g, '');
+                });
+            }
+        });
+    }
+    
+    initializeTooltips() {
+        const tooltips = document.querySelectorAll('.wimb-tooltip');
+        tooltips.forEach(tooltip => {
+            tooltip.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const isActive = tooltip.classList.contains('active');
+                // Close all other tooltips
+                document.querySelectorAll('.wimb-tooltip').forEach(t => t.classList.remove('active'));
+                // Toggle this tooltip
+                if (!isActive) {
+                    tooltip.classList.add('active');
+                }
+            });
+        });
+        
+        // Close tooltips when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.wimb-tooltip')) {
+                document.querySelectorAll('.wimb-tooltip').forEach(t => t.classList.remove('active'));
             }
         });
     }
@@ -348,6 +472,32 @@ class WhatIsMyMonthlyBudgetCalculator {
         
         // Recalculate and display results with default values
         this.calculateAndDisplay();
+        
+        // Move focus to first input field
+        const firstInput = document.getElementById('wimb-take-home-pay');
+        if (firstInput) {
+            firstInput.focus();
+            // On mobile, scroll to first field
+            if (window.innerWidth <= 750) {
+                firstInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+    
+    toggleChart() {
+        if (!this.chartSection || !this.chartToggle) return;
+        
+        const isCollapsed = this.chartSection.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+            // Expand
+            this.chartSection.classList.remove('collapsed');
+            this.chartToggle.setAttribute('aria-expanded', 'true');
+        } else {
+            // Collapse
+            this.chartSection.classList.add('collapsed');
+            this.chartToggle.setAttribute('aria-expanded', 'false');
+        }
     }
 
     downloadResults() {
@@ -385,47 +535,56 @@ class WhatIsMyMonthlyBudgetCalculator {
         doc.text(`Net Monthly Cash Flow: ${this.formatCurrency(results.netCashFlow)}`, 20, yPosition);
         yPosition += 15;
         
-        // Income Section
+        // Two-column layout for Income and Expenses
+        const leftColumn = 20;
+        const rightColumn = 110;
+        let leftY = yPosition;
+        let rightY = yPosition;
+        
+        // Income Section (Left Column)
         doc.setFontSize(14);
         doc.setFont(undefined, 'bold');
-        doc.text('Income', 20, yPosition);
-        yPosition += 8;
+        doc.text('Income', leftColumn, leftY);
+        leftY += 8;
         
         doc.setFontSize(11);
         doc.setFont(undefined, 'normal');
-        doc.text(`Monthly Take-Home Pay: ${this.formatCurrency(results.income.takeHomePay)}`, 20, yPosition);
-        yPosition += 7;
-        doc.text(`Other Monthly Income: ${this.formatCurrency(results.income.otherIncome)}`, 20, yPosition);
-        yPosition += 7;
+        doc.text(`Take-Home Pay: ${this.formatCurrency(results.income.takeHomePay)}`, leftColumn, leftY);
+        leftY += 7;
+        doc.text(`Other Income: ${this.formatCurrency(results.income.otherIncome)}`, leftColumn, leftY);
+        leftY += 7;
         doc.setFont(undefined, 'bold');
-        doc.text(`Total Income: ${this.formatCurrency(results.totalIncome)}`, 20, yPosition);
-        yPosition += 15;
+        doc.text(`Total Income: ${this.formatCurrency(results.totalIncome)}`, leftColumn, leftY);
+        leftY += 10;
         
-        // Expenses Section
+        // Expenses Section (Right Column)
         doc.setFontSize(14);
         doc.setFont(undefined, 'bold');
-        doc.text('Expenses', 20, yPosition);
-        yPosition += 8;
+        doc.text('Expenses', rightColumn, rightY);
+        rightY += 8;
         
         doc.setFontSize(11);
         doc.setFont(undefined, 'normal');
-        doc.text(`Housing (Rent/Mortgage): ${this.formatCurrency(results.expenses.housing)}`, 20, yPosition);
-        yPosition += 7;
-        doc.text(`Utilities: ${this.formatCurrency(results.expenses.utilities)}`, 20, yPosition);
-        yPosition += 7;
-        doc.text(`Food/Groceries: ${this.formatCurrency(results.expenses.food)}`, 20, yPosition);
-        yPosition += 7;
-        doc.text(`Transportation: ${this.formatCurrency(results.expenses.transportation)}`, 20, yPosition);
-        yPosition += 7;
-        doc.text(`Debt Payments: ${this.formatCurrency(results.expenses.debtPayments)}`, 20, yPosition);
-        yPosition += 7;
-        doc.text(`Discretionary Spending: ${this.formatCurrency(results.expenses.discretionary)}`, 20, yPosition);
-        yPosition += 7;
-        doc.text(`Other Expenses: ${this.formatCurrency(results.expenses.otherExpenses)}`, 20, yPosition);
-        yPosition += 7;
+        doc.text(`Housing: ${this.formatCurrency(results.expenses.housing)}`, rightColumn, rightY);
+        rightY += 7;
+        doc.text(`Utilities: ${this.formatCurrency(results.expenses.utilities)}`, rightColumn, rightY);
+        rightY += 7;
+        doc.text(`Food: ${this.formatCurrency(results.expenses.food)}`, rightColumn, rightY);
+        rightY += 7;
+        doc.text(`Transportation: ${this.formatCurrency(results.expenses.transportation)}`, rightColumn, rightY);
+        rightY += 7;
+        doc.text(`Debt: ${this.formatCurrency(results.expenses.debtPayments)}`, rightColumn, rightY);
+        rightY += 7;
+        doc.text(`Discretionary: ${this.formatCurrency(results.expenses.discretionary)}`, rightColumn, rightY);
+        rightY += 7;
+        doc.text(`Other: ${this.formatCurrency(results.expenses.otherExpenses)}`, rightColumn, rightY);
+        rightY += 7;
         doc.setFont(undefined, 'bold');
-        doc.text(`Total Expenses: ${this.formatCurrency(results.totalExpenses)}`, 20, yPosition);
-        yPosition += 15;
+        doc.text(`Total: ${this.formatCurrency(results.totalExpenses)}`, rightColumn, rightY);
+        rightY += 10;
+        
+        // Use the taller of the two columns for yPosition
+        yPosition = Math.max(leftY, rightY) + 10;
         
         // Status
         doc.setFontSize(11);
@@ -437,10 +596,31 @@ class WhatIsMyMonthlyBudgetCalculator {
             doc.setTextColor(220, 38, 38); // Red
             doc.text(`Status: Deficit of ${this.formatCurrency(Math.abs(results.netCashFlow))}`, 20, yPosition);
         }
+        doc.setTextColor(0, 0, 0); // Reset to black
         yPosition += 15;
         
+        // Add chart to PDF
+        const chartCanvas = document.getElementById('wimb-budget-chart');
+        if (chartCanvas) {
+            // Add chart heading
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('Monthly Budget Breakdown', 20, yPosition);
+            yPosition += 8;
+            
+            // Get chart as image
+            const chartImage = chartCanvas.toDataURL('image/png');
+            const imgWidth = 80;
+            const imgHeight = 80;
+            
+            // Center the chart
+            const xOffset = (210 - imgWidth) / 2; // A4 width is 210mm
+            
+            doc.addImage(chartImage, 'PNG', xOffset, yPosition, imgWidth, imgHeight);
+            yPosition += imgHeight + 10;
+        }
+        
         // Disclaimer
-        doc.setTextColor(0, 0, 0); // Reset to black
         doc.setFontSize(9);
         doc.setFont(undefined, 'italic');
         const disclaimer = 'This analysis is based on the values provided. Actual monthly cash flow may vary. Consult with a financial professional for personalized advice.';
