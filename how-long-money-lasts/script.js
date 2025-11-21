@@ -17,8 +17,8 @@ class HowLongWillYourMoneyLastCalculator {
         this.defaultValues = {
             'hlywml-initial-balance': '2000000',
             'hlywml-annual-withdrawal': '65000',
-            'hlywml-rate-of-return': '5',
-            'hlywml-inflation-rate': '2'
+            'hlywml-rate-of-return': '5.0',
+            'hlywml-inflation-rate': '2.0'
         };
         
         this.diagnoseStickyPositioning();
@@ -65,7 +65,7 @@ class HowLongWillYourMoneyLastCalculator {
         }
         
         // Add real-time calculation listeners to all inputs
-        const inputs = document.querySelectorAll('input');
+        const inputs = document.querySelectorAll('input[type="text"]');
         inputs.forEach(input => {
             // Real-time calculation on input change
             input.addEventListener('input', () => {
@@ -84,35 +84,34 @@ class HowLongWillYourMoneyLastCalculator {
                 this.calculateAndDisplay();
             });
         });
-        
-        // Add real-time validation for percentage inputs
-        const percentageInputs = document.querySelectorAll('#hlywml-rate-of-return, #hlywml-inflation-rate');
-        percentageInputs.forEach(input => {
-            input.addEventListener('input', function(e) {
-                const value = parseFloat(e.target.value);
-                if (input.id === 'hlywml-rate-of-return' && value > 20) {
-                    e.target.value = 20;
-                } else if (input.id === 'hlywml-inflation-rate' && value > 10) {
-                    e.target.value = 10;
-                } else if (value < 0 && e.target.value !== '') {
-                    e.target.value = 0;
-                }
-            });
-        });
     }
     
     calculateOnLoad() {
-        // Format initial currency values with commas
-        const currencyInputs = ['hlywml-initial-balance', 'hlywml-annual-withdrawal'];
-        currencyInputs.forEach(id => {
-            const input = document.getElementById(id);
-            if (input && input.value) {
-                const numericValue = parseFloat(input.value.replace(/[^\d]/g, '')) || 0;
-                if (numericValue > 0) {
-                    input.value = numericValue.toLocaleString();
-                }
-            }
-        });
+        // Set default values for all inputs
+        const initialBalance = document.getElementById('hlywml-initial-balance');
+        const annualWithdrawal = document.getElementById('hlywml-annual-withdrawal');
+        const rateOfReturn = document.getElementById('hlywml-rate-of-return');
+        const inflationRate = document.getElementById('hlywml-inflation-rate');
+        
+        // Set and format currency inputs
+        if (initialBalance) {
+            initialBalance.value = '2,000,000';
+            const slider = document.getElementById('hlywml-initial-balance-slider');
+            if (slider) slider.value = '2000000';
+        }
+        if (annualWithdrawal) {
+            annualWithdrawal.value = '65,000';
+            const slider = document.getElementById('hlywml-annual-withdrawal-slider');
+            if (slider) slider.value = '65000';
+        }
+        
+        // Set percentage inputs
+        if (rateOfReturn) {
+            rateOfReturn.value = '5.0';
+        }
+        if (inflationRate) {
+            inflationRate.value = '2.0';
+        }
         
         // Trigger initial calculation
         this.calculateAndDisplay();
@@ -140,10 +139,10 @@ class HowLongWillYourMoneyLastCalculator {
     }
 
     initializeSliders() {
-        // Sync sliders with text inputs
+        // Sync sliders with currency inputs
         const sliderPairs = [
-            { slider: 'hlywml-rate-of-return-slider', input: 'hlywml-rate-of-return' },
-            { slider: 'hlywml-inflation-rate-slider', input: 'hlywml-inflation-rate' }
+            { slider: 'hlywml-initial-balance-slider', input: 'hlywml-initial-balance' },
+            { slider: 'hlywml-annual-withdrawal-slider', input: 'hlywml-annual-withdrawal' }
         ];
         
         sliderPairs.forEach(pair => {
@@ -153,7 +152,8 @@ class HowLongWillYourMoneyLastCalculator {
             if (slider && input) {
                 // Update input when slider changes
                 slider.addEventListener('input', (e) => {
-                    input.value = parseFloat(e.target.value).toFixed(1);
+                    const value = parseInt(e.target.value);
+                    input.value = value.toLocaleString();
                     this.clearError(input);
                     clearTimeout(this.calculationTimeout);
                     this.calculationTimeout = setTimeout(() => {
@@ -163,7 +163,7 @@ class HowLongWillYourMoneyLastCalculator {
                 
                 // Update slider when input changes
                 input.addEventListener('input', (e) => {
-                    const value = parseFloat(e.target.value);
+                    const value = this.parseCurrencyValue(e.target.value);
                     if (!isNaN(value)) {
                         slider.value = value;
                     }
@@ -173,16 +173,64 @@ class HowLongWillYourMoneyLastCalculator {
     }
 
     initializeInputFormatting() {
-        // Format currency inputs with commas
+        // Format currency inputs with commas and numeric-only filtering
         const currencyInputs = ['hlywml-initial-balance', 'hlywml-annual-withdrawal'];
         currencyInputs.forEach(id => {
             const input = document.getElementById(id);
             if (input) {
-                // Change to text type to allow commas
-                input.type = 'text';
-                input.addEventListener('input', (e) => this.formatCurrencyInput(e));
+                input.addEventListener('input', (e) => {
+                    // Filter to only allow digits
+                    const cursorPosition = e.target.selectionStart;
+                    const oldValue = e.target.value;
+                    const newValue = oldValue.replace(/[^\d]/g, '');
+                    
+                    if (oldValue !== newValue) {
+                        e.target.value = newValue;
+                        const removedChars = oldValue.substring(0, cursorPosition).replace(/[^\d]/g, '').length;
+                        const newCursorPos = Math.min(removedChars, newValue.length);
+                        e.target.setSelectionRange(newCursorPos, newCursorPos);
+                    }
+                    
+                    // Format with commas
+                    this.formatCurrencyInput(e);
+                });
                 input.addEventListener('blur', (e) => this.formatCurrencyInput(e));
                 input.addEventListener('focus', (e) => this.handleCurrencyFocus(e));
+            }
+        });
+        
+        // Format percentage inputs with numeric-only filtering
+        const percentageInputs = ['hlywml-rate-of-return', 'hlywml-inflation-rate'];
+        percentageInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('input', (e) => {
+                    // Filter to only allow digits and one decimal point
+                    const cursorPosition = e.target.selectionStart;
+                    const oldValue = e.target.value;
+                    let newValue = oldValue.replace(/[^\d.]/g, '');
+                    
+                    // Ensure only one decimal point
+                    const parts = newValue.split('.');
+                    if (parts.length > 2) {
+                        newValue = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                    
+                    if (oldValue !== newValue) {
+                        e.target.value = newValue;
+                        const removedChars = oldValue.substring(0, cursorPosition).length - oldValue.substring(0, cursorPosition).replace(/[^\d.]/g, '').length;
+                        const newCursorPos = Math.max(0, cursorPosition - removedChars);
+                        e.target.setSelectionRange(newCursorPos, newCursorPos);
+                    }
+                });
+                
+                // Format to one decimal place on blur
+                input.addEventListener('blur', (e) => {
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value)) {
+                        e.target.value = value.toFixed(1);
+                    }
+                });
             }
         });
     }
@@ -811,16 +859,24 @@ class HowLongWillYourMoneyLastCalculator {
                     }
                 }
                 
+                // Format percentage inputs
+                if (id === 'hlywml-rate-of-return' || id === 'hlywml-inflation-rate') {
+                    const numericValue = parseFloat(input.value);
+                    if (!isNaN(numericValue)) {
+                        input.value = numericValue.toFixed(1);
+                    }
+                }
+                
                 // Clear any error states
                 this.clearError(input);
             }
         });
         
         // Also reset sliders to match input values
-        const rateSlider = document.getElementById('hlywml-rate-of-return-slider');
-        const inflationSlider = document.getElementById('hlywml-inflation-rate-slider');
-        if (rateSlider) rateSlider.value = this.defaultValues['hlywml-rate-of-return'];
-        if (inflationSlider) inflationSlider.value = this.defaultValues['hlywml-inflation-rate'];
+        const balanceSlider = document.getElementById('hlywml-initial-balance-slider');
+        const withdrawalSlider = document.getElementById('hlywml-annual-withdrawal-slider');
+        if (balanceSlider) balanceSlider.value = this.defaultValues['hlywml-initial-balance'];
+        if (withdrawalSlider) withdrawalSlider.value = this.defaultValues['hlywml-annual-withdrawal'];
         
         // Recalculate and display results with default values
         this.calculateAndDisplay();
