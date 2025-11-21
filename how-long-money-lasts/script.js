@@ -8,7 +8,10 @@ class HowLongWillYourMoneyLastCalculator {
         this.placeholderContent = document.querySelector('.hlywml-placeholder-content');
         this.chartContainer = document.querySelector('.hlywml-chart-container');
         this.chartHeading = document.querySelector('.hlywml-chart-section h2');
+        this.chartToggle = document.getElementById('hlywml-chart-toggle');
+        this.chartSection = document.querySelector('.hlywml-chart-section');
         this.chartInstance = null;
+        this.resizeTimeout = null;
         
         // Store default values for reset
         this.defaultValues = {
@@ -18,6 +21,7 @@ class HowLongWillYourMoneyLastCalculator {
             'hlywml-inflation-rate': '2'
         };
         
+        this.diagnoseStickyPositioning();
         this.initializeInputFormatting();
         this.initializeSliders();
         this.initializeEventListeners();
@@ -31,6 +35,33 @@ class HowLongWillYourMoneyLastCalculator {
         }
         if (this.resetBtn) {
             this.resetBtn.addEventListener('click', () => this.resetForm());
+        }
+        
+        // Mobile buttons
+        const resetBtnMobile = document.getElementById('hlywml-reset-btn-mobile');
+        const downloadBtnMobile = document.getElementById('hlywml-downloadBtn-mobile');
+        
+        if (resetBtnMobile) {
+            resetBtnMobile.addEventListener('click', () => this.resetForm());
+        }
+        if (downloadBtnMobile) {
+            downloadBtnMobile.addEventListener('click', () => this.downloadResults());
+        }
+        
+        // Chart toggle
+        if (this.chartToggle) {
+            this.chartToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleChart();
+            });
+        }
+        
+        // Make entire chart header clickable
+        const chartHeader = document.querySelector('.hlywml-chart-header');
+        if (chartHeader) {
+            chartHeader.addEventListener('click', () => {
+                this.toggleChart();
+            });
         }
         
         // Add real-time calculation listeners to all inputs
@@ -407,14 +438,6 @@ class HowLongWillYourMoneyLastCalculator {
             contentContainer.appendChild(card);
         }
         
-        // If there are more years, show a note
-        if (yearlyData.length > displayYears) {
-            const note = document.createElement('div');
-            note.className = 'hlywml-breakdown-note';
-            note.textContent = `... and ${yearlyData.length - displayYears} more years`;
-            contentContainer.appendChild(note);
-        }
-        
         // Toggle functionality
         toggleButton.addEventListener('click', () => {
             const isExpanded = contentContainer.style.display !== 'none';
@@ -479,8 +502,7 @@ class HowLongWillYourMoneyLastCalculator {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
-                aspectRatio: 2,
+                maintainAspectRatio: true,
                 plugins: {
                     legend: {
                         display: false
@@ -601,8 +623,7 @@ class HowLongWillYourMoneyLastCalculator {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
-                aspectRatio: 2,
+                maintainAspectRatio: true,
                 plugins: {
                     legend: {
                         display: false
@@ -717,7 +738,7 @@ class HowLongWillYourMoneyLastCalculator {
         doc.setFontSize(14);
         doc.setFont(undefined, 'bold');
         doc.text('Input Values', 20, yPosition);
-        yPosition += 8;
+        yPosition += 10;
         
         doc.setFontSize(11);
         doc.setFont(undefined, 'normal');
@@ -734,7 +755,7 @@ class HowLongWillYourMoneyLastCalculator {
         doc.setFontSize(14);
         doc.setFont(undefined, 'bold');
         doc.text('Results', 20, yPosition);
-        yPosition += 8;
+        yPosition += 10;
         
         doc.setFontSize(11);
         doc.setFont(undefined, 'normal');
@@ -745,26 +766,14 @@ class HowLongWillYourMoneyLastCalculator {
         }
         yPosition += 15;
         
-        // Chart
+        // Chart - wider aspect ratio to match actual chart
         if (this.chartInstance && this.chartInstance.canvas) {
             const chartImage = this.chartInstance.canvas.toDataURL('image/png');
-            doc.addImage(chartImage, 'PNG', 20, yPosition, 170, 0);
-            yPosition += 100;
-        }
-        
-        // Year-by-year breakdown (first 10 years)
-        doc.setFontSize(14);
-        doc.setFont(undefined, 'bold');
-        doc.text('Year-by-Year Breakdown', 20, yPosition);
-        yPosition += 8;
-        
-        doc.setFontSize(9);
-        doc.setFont(undefined, 'normal');
-        const displayYears = Math.min(10, results.yearlyData.length);
-        for (let i = 0; i < displayYears; i++) {
-            const yearData = results.yearlyData[i];
-            doc.text(`Year ${yearData.year}: Start: ${this.formatCurrency(yearData.startingBalance)}, Withdrawal: ${this.formatCurrency(yearData.withdrawal)}, Earnings: ${this.formatCurrency(yearData.earnings)}, End: ${this.formatCurrency(yearData.endingBalance)}`, 20, yPosition);
-            yPosition += 5;
+            const chartWidth = 170;
+            const chartHeight = 85;
+            const chartX = (doc.internal.pageSize.width - chartWidth) / 2; // Center the chart
+            doc.addImage(chartImage, 'PNG', chartX, yPosition, chartWidth, chartHeight);
+            yPosition += chartHeight + 15;
         }
         
         // Disclaimer
@@ -815,6 +824,59 @@ class HowLongWillYourMoneyLastCalculator {
         
         // Recalculate and display results with default values
         this.calculateAndDisplay();
+        
+        // On mobile, scroll to the first input
+        if (window.innerWidth <= 750) {
+            const firstInput = document.getElementById('hlywml-initial-balance');
+            if (firstInput) {
+                firstInput.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    }
+    
+    toggleChart() {
+        if (!this.chartSection || !this.chartToggle) return;
+        
+        const isCollapsed = this.chartSection.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+            // Expand
+            this.chartSection.classList.remove('collapsed');
+            this.chartToggle.setAttribute('aria-expanded', 'true');
+        } else {
+            // Collapse
+            this.chartSection.classList.add('collapsed');
+            this.chartToggle.setAttribute('aria-expanded', 'false');
+        }
+    }
+    
+    diagnoseStickyPositioning() {
+        // Only apply on desktop (viewport width > 750px)
+        if (window.innerWidth <= 750) return;
+        
+        const formColumn = document.querySelector('.hlywml-form-column');
+        const resultsColumn = document.querySelector('.hlywml-results-column');
+        const layoutContainer = document.querySelector('.hlywml-calculator-layout');
+        
+        if (!formColumn || !resultsColumn || !layoutContainer) return;
+        
+        const formHeight = formColumn.getBoundingClientRect().height;
+        const resultsHeight = resultsColumn.getBoundingClientRect().height;
+        
+        // If form column is taller than results column
+        if (formHeight >= resultsHeight) {
+            const viewportHeight = window.innerHeight;
+            // Add min-height to results column to create scrollable space
+            resultsColumn.style.minHeight = (formHeight + viewportHeight * 0.5) + 'px';
+        }
+        
+        // Re-run on window resize (debounced)
+        window.addEventListener('resize', () => {
+            clearTimeout(this.resizeTimeout);
+            this.resizeTimeout = setTimeout(() => {
+                this.diagnoseStickyPositioning();
+            }, 250);
+        });
     }
 }
 

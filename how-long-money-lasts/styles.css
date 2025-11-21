@@ -67,8 +67,8 @@ body {
 /* Two-column layout for desktop */
 .hlywml-calculator-layout {
     display: grid;
-    grid-template-columns: 48% 52%;
-    gap: 1.5rem;
+    grid-template-columns: 0.48fr 0.52fr;
+    gap: 24px;
     width: 100%;
     max-width: 100%;
     overflow: visible !important;
@@ -86,12 +86,19 @@ body {
     overflow: visible;
 }
 
+/* Sticky positioning - desktop only (above 750px) */
+@media (min-width: 751px) {
+    .hlywml-form-column {
+        position: -webkit-sticky !important;
+        position: sticky !important;
+        top: 0 !important;
+        align-self: start !important;
+        height: fit-content;
+    }
+}
+
 .hlywml-results-column {
     /* Results take up right column */
-    position: -webkit-sticky !important;
-    position: sticky !important;
-    top: 0 !important;
-    align-self: start !important;
     min-width: 0;
     max-width: 100%;
     overflow: visible;
@@ -201,7 +208,6 @@ body {
 .hlywml-header p {
     max-width: none;
     margin: 0;
-    line-height: 1.7;
     font-weight: 400;
 }
 
@@ -215,6 +221,7 @@ body {
 
 .hlywml-input-section h2 {
     font-weight: 500;
+    margin-top: 0;
     margin-bottom: 28px;
     letter-spacing: -0.01em;
     text-align: center;
@@ -477,51 +484,27 @@ input[type="number"]:focus {
 }
 
 /* Button styles */
-.hlywml-button-group {
+.hlywml-download-section {
     display: flex;
     gap: 12px;
     justify-content: flex-start;
     margin-top: 32px;
-    align-items: flex-start;
+    margin-bottom: 0;
+    width: 100%;
 }
 
-.hlywml-reset-btn {
-    min-width: 200px;
-    flex: 0 0 auto;
+.hlywml-download-section .hlywml-reset-btn,
+.hlywml-download-section .hlywml-download-btn {
+    flex: 1;
 }
 
-
-/* Enabled state - only when not disabled */
-.c-btn.hlywml-calculate-btn:not(:disabled) {
-    opacity: 1 !important;
-    cursor: pointer !important;
+.hlywml-download-mobile {
+    display: none;
 }
-
-/* Disabled state - prevent all hover effects including background changes */
-.c-btn.hlywml-calculate-btn:disabled,
-.c-btn.hlywml-calculate-btn:disabled:hover,
-.c-btn.hlywml-calculate-btn:disabled:focus,
-.c-btn.hlywml-calculate-btn:disabled:active {
-    opacity: 0.5 !important;
-    cursor: not-allowed !important;
-    transform: none !important;
-    box-shadow: none !important;
-    background: #cccccc !important;
-    background-color: #cccccc !important;
-    background-image: none !important;
-    color: #666666 !important;
-    border-color: #cccccc !important;
-}
-
-.hlywml-calculate-btn:active {
-    transform: translateY(0);
-}
-
 
 
 /* Results section */
 .hlywml-results-section {
-    margin-top: 24px;
     padding: 0;
     background: transparent;
     border: none;
@@ -529,6 +512,7 @@ input[type="number"]:focus {
 
 .hlywml-results-section h2 {
     text-align: center;
+    margin-top: 0;
     margin-bottom: 32px;
     letter-spacing: -0.025em;
 }
@@ -545,6 +529,7 @@ input[type="number"]:focus {
 .hlywml-main-result h2 {
     font-size: 1.1rem;
     font-weight: 600;
+    margin-top: 0;
     margin-bottom: 16px;
 }
 
@@ -748,13 +733,84 @@ input[type="number"]:focus {
     box-shadow: none;
 }
 
+/* Chart header with toggle */
+.hlywml-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.hlywml-chart-header h2 {
+    margin-bottom: 0;
+    flex: 1;
+}
+
 .hlywml-chart-heading {
     text-align: center;
     font-size: 1.1rem;
     font-weight: 600;
-    margin-bottom: 20px;
+    margin-top: 0;
+    margin-bottom: 0;
     letter-spacing: -0.01em;
     color: #1e293b;
+}
+
+/* Toggle button */
+.hlywml-chart-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    flex-shrink: 0;
+}
+
+.hlywml-chart-toggle:hover {
+    background: #f1f5f9;
+}
+
+/* CSS caret/arrow (empty triangle) */
+.hlywml-caret {
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 8px solid #64748b;
+    transition: transform 0.3s ease;
+    display: block;
+}
+
+.hlywml-chart-section.collapsed .hlywml-caret {
+    transform: rotate(180deg);
+}
+
+.hlywml-chart-toggle:hover .hlywml-caret {
+    border-bottom-color: #475569;
+}
+
+/* Chart content (collapsible) */
+.hlywml-chart-content {
+    margin-top: 20px;
+    overflow: hidden;
+    max-height: 1000px;
+    opacity: 1;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+}
+
+.hlywml-chart-section.collapsed .hlywml-chart-content {
+    max-height: 0;
+    margin-top: 0;
+    opacity: 0;
+    overflow: hidden;
 }
 
 .hlywml-chart-container {
@@ -772,10 +828,6 @@ input[type="number"]:focus {
     margin: 0;
 }
 
-.hlywml-chart-container canvas {
-    max-width: 100%;
-    width: 100% !important;
-}
 
 /* Explanation text */
 .hlywml-explanation-text {
@@ -785,14 +837,6 @@ input[type="number"]:focus {
     margin: 32px 0;
     line-height: 1.6;
     box-shadow: var(--shadow-sm);
-}
-
-/* Action buttons */
-.hlywml-action-buttons {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    margin-top: 32px;
 }
 
 .hlywml-download-btn {
@@ -832,6 +876,18 @@ input[type="number"]:focus {
     }
 }
 
+/* Button stacking breakpoint */
+@media (max-width: 900px) {
+    .hlywml-download-section {
+        flex-direction: column;
+    }
+    
+    .hlywml-download-section .hlywml-reset-btn,
+    .hlywml-download-section .hlywml-download-btn {
+        width: 100%;
+    }
+}
+
 /* Standard Breakpoints */
 @media (max-width: 950px) {
     .hlywml-container {
@@ -842,6 +898,12 @@ input[type="number"]:focus {
 }
 
 @media (max-width: 750px) {
+    /* Override CMS padding */
+    .c-matter--article .c-matter__body {
+        padding-right: 20px;
+        padding-left: 0;
+    }
+    
     .hlywml-container {
         max-width: 100%;
         margin: 0.5rem auto 1rem auto;
@@ -854,8 +916,28 @@ input[type="number"]:focus {
         gap: 1rem;
     }
     
+    /* Remove any min-height added by JavaScript */
     .hlywml-results-column {
-        position: static;
+        min-height: 0 !important;
+    }
+    
+    /* Hide desktop buttons, show mobile buttons */
+    .hlywml-download-desktop {
+        display: none !important;
+    }
+    
+    .hlywml-download-mobile {
+        display: flex !important;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 16px;
+        margin-bottom: 0;
+        padding: 0;
+    }
+    
+    .hlywml-download-mobile .hlywml-reset-btn,
+    .hlywml-download-mobile .hlywml-download-btn {
+        width: 100%;
     }
     
     /* Left align all text on mobile */
@@ -921,25 +1003,6 @@ input[type="number"]:focus {
     .hlywml-input-section {
         margin-bottom: 20px;
         padding: 0;
-    }
-    
-    .hlywml-button-group {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-    }
-    
-    .hlywml-calculate-btn,
-    .hlywml-reset-btn {
-        width: 100%;
-    }
-    
-    .hlywml-download-section {
-        width: 100%;
-    }
-    
-    .hlywml-download-btn {
-        width: 100%;
     }
     
     .hlywml-chart-container {
