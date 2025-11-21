@@ -21,7 +21,6 @@ class HowLongWillYourMoneyLastCalculator {
             'hlywml-inflation-rate': '2.0'
         };
         
-        this.diagnoseStickyPositioning();
         this.initializeInputFormatting();
         this.initializeSliders();
         this.initializeEventListeners();
@@ -906,34 +905,6 @@ class HowLongWillYourMoneyLastCalculator {
         }
     }
     
-    diagnoseStickyPositioning() {
-        // Only apply on desktop (viewport width > 750px)
-        if (window.innerWidth <= 750) return;
-        
-        const formColumn = document.querySelector('.hlywml-form-column');
-        const resultsColumn = document.querySelector('.hlywml-results-column');
-        const layoutContainer = document.querySelector('.hlywml-calculator-layout');
-        
-        if (!formColumn || !resultsColumn || !layoutContainer) return;
-        
-        const formHeight = formColumn.getBoundingClientRect().height;
-        const resultsHeight = resultsColumn.getBoundingClientRect().height;
-        
-        // If form column is taller than results column
-        if (formHeight >= resultsHeight) {
-            const viewportHeight = window.innerHeight;
-            // Add min-height to results column to create scrollable space
-            resultsColumn.style.minHeight = (formHeight + viewportHeight * 0.5) + 'px';
-        }
-        
-        // Re-run on window resize (debounced)
-        window.addEventListener('resize', () => {
-            clearTimeout(this.resizeTimeout);
-            this.resizeTimeout = setTimeout(() => {
-                this.diagnoseStickyPositioning();
-            }, 250);
-        });
-    }
 }
 
 // Initialize the calculator when the DOM is loaded
