@@ -29,8 +29,8 @@ body {
 /* Two-column layout for desktop */
 .ci-calculator-layout {
     display: grid;
-    grid-template-columns: 48% 52%;
-    gap: 1.5rem;
+    grid-template-columns: 0.48fr 0.52fr;
+    gap: 24px;
     width: 100%;
     max-width: 100%;
     overflow: visible !important;
@@ -126,18 +126,38 @@ body {
 /* Input wrapper for currency and percent symbols */
 .ci-input-wrapper {
     position: relative;
-    display: flex;
-    align-items: center;
 }
-.ci-unit {
+.ci-currency {
     position: absolute;
-    right: 12px;
-    top: 45%;
+    left: 12px;
+    top: 46%;
     transform: translateY(-50%);
     font-weight: 500;
-    font-size: 0.875rem;
+    font-size: 1em;
     pointer-events: none;
     z-index: 2;
+    color: #64748b;
+}
+
+.ci-unit {
+    position: absolute;
+    right: 55px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: 500;
+    font-size: 1em;
+    pointer-events: none;
+    z-index: 10;
+    color: #64748b;
+}
+
+/* Add padding for inputs with symbols */
+.ci-input-wrapper:has(.ci-currency) input {
+    padding-left: 28px;
+}
+
+.ci-input-wrapper:has(.ci-unit) input {
+    padding-right: 20px;
 }
 /* Input styles */
 input[type="text"],
@@ -279,10 +299,29 @@ input[type="number"] {
     appearance: textfield;
 }
 
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+/* Steppers visible on hover/focus only */
+.ci-input-wrapper input[type="number"]::-webkit-inner-spin-button,
+.ci-input-wrapper input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: inner-spin-button;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.ci-input-wrapper:hover input[type="number"]::-webkit-inner-spin-button,
+.ci-input-wrapper:hover input[type="number"]::-webkit-outer-spin-button,
+.ci-input-wrapper input[type="number"]:focus::-webkit-inner-spin-button,
+.ci-input-wrapper input[type="number"]:focus::-webkit-outer-spin-button {
+    opacity: 1;
+}
+
+/* Firefox */
+.ci-input-wrapper input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.ci-input-wrapper:hover input[type="number"],
+.ci-input-wrapper input[type="number"]:focus {
+    -moz-appearance: number-input;
 }
 
 /* Disclaimer */
@@ -297,7 +336,7 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .ci-disclaimer p {
     margin: 0;
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     color: #475569;
     line-height: 1.5;
 }
@@ -335,6 +374,15 @@ input[type="number"]::-webkit-outer-spin-button {
     padding-bottom: 0;
     text-align: center;
     letter-spacing: -0.01em;
+}
+
+.ci-result-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #10b981;
+    margin-bottom: 8px;
 }
 
 .ci-main-value {
@@ -409,40 +457,6 @@ input[type="number"]::-webkit-outer-spin-button {
 .ci-tooltip:hover {
     background: #475569;
     transform: scale(1.1);
-}
-
-.ci-tooltip:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: #1e293b;
-    color: white;
-    padding: 10px 14px;
-    border-radius: var(--radius-md);
-    font-size: 13px;
-    line-height: 1.5;
-    white-space: nowrap;
-    min-width: 200px;
-    max-width: 300px;
-    white-space: normal;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    z-index: 10001;
-    pointer-events: none;
-    font-weight: 400;
-}
-
-.ci-tooltip:hover::before {
-    content: '';
-    position: absolute;
-    bottom: calc(100% + 2px);
-    left: 50%;
-    transform: translateX(-50%);
-    border: 6px solid transparent;
-    border-top-color: #1e293b;
-    z-index: 10001;
-    pointer-events: none;
 }
 
 .ci-tooltip.active::after {

@@ -10,11 +10,11 @@ class InvestmentComparisonCalculator {
         
         // Default values
         this.defaultValues = {
-            'ci-initial-investment-a': '5000',
-            'ci-annual-contribution-a': '2000',
+            'ci-initial-investment-a': '100000',
+            'ci-annual-contribution-a': '12000',
             'ci-rate-of-return-a': '9',
-            'ci-initial-investment-b': '5000',
-            'ci-annual-contribution-b': '2000',
+            'ci-initial-investment-b': '200000',
+            'ci-annual-contribution-b': '5000',
             'ci-rate-of-return-b': '5',
             'ci-years-to-grow': '20'
         };
@@ -136,16 +136,18 @@ class InvestmentComparisonCalculator {
     }
 
     initializeInputFormatting() {
-        // Format currency inputs with commas
+        // Currency inputs are now type="number" for steppers - no comma formatting needed
         const currencyInputs = ['ci-initial-investment-a', 'ci-annual-contribution-a', 'ci-initial-investment-b', 'ci-annual-contribution-b'];
         currencyInputs.forEach(id => {
             const input = document.getElementById(id);
             if (input) {
-                // Change to text type to allow commas
-                input.type = 'text';
-                input.addEventListener('input', (e) => this.formatCurrencyInput(e));
-                input.addEventListener('blur', (e) => this.formatCurrencyInput(e));
-                input.addEventListener('focus', (e) => this.handleCurrencyFocus(e));
+                input.addEventListener('input', (e) => {
+                    this.updateSliderFromInput(input);
+                    clearTimeout(this.calculationTimeout);
+                    this.calculationTimeout = setTimeout(() => {
+                        this.calculateAndDisplay();
+                    }, 300);
+                });
             }
         });
     }
@@ -167,9 +169,9 @@ class InvestmentComparisonCalculator {
             let maxValue;
             
             if (input.id.includes('initial-investment')) {
-                maxValue = 500000; // $500K cap
+                maxValue = 10000000; // $10M cap
             } else if (input.id.includes('annual-contribution')) {
-                maxValue = 100000; // $100K annual cap
+                maxValue = 10000000; // $10M annual cap
             }
             
             if (maxValue && numValue > maxValue) {
@@ -204,10 +206,10 @@ class InvestmentComparisonCalculator {
     initializeSliders() {
         // Sync sliders with currency text inputs
         const sliderPairs = [
-            { slider: 'ci-initial-investment-a-slider', input: 'ci-initial-investment-a', max: 500000 },
-            { slider: 'ci-annual-contribution-a-slider', input: 'ci-annual-contribution-a', max: 100000 },
-            { slider: 'ci-initial-investment-b-slider', input: 'ci-initial-investment-b', max: 500000 },
-            { slider: 'ci-annual-contribution-b-slider', input: 'ci-annual-contribution-b', max: 100000 }
+            { slider: 'ci-initial-investment-a-slider', input: 'ci-initial-investment-a', max: 10000000 },
+            { slider: 'ci-annual-contribution-a-slider', input: 'ci-annual-contribution-a', max: 10000000 },
+            { slider: 'ci-initial-investment-b-slider', input: 'ci-initial-investment-b', max: 10000000 },
+            { slider: 'ci-annual-contribution-b-slider', input: 'ci-annual-contribution-b', max: 10000000 }
         ];
         
         sliderPairs.forEach(pair => {
@@ -219,8 +221,7 @@ class InvestmentComparisonCalculator {
                 slider.addEventListener('input', (e) => {
                     const value = parseFloat(e.target.value);
                     if (!isNaN(value)) {
-                        // Format with commas
-                        input.value = value.toLocaleString();
+                        input.value = value;
                         clearTimeout(this.calculationTimeout);
                         this.calculationTimeout = setTimeout(() => {
                             this.calculateAndDisplay();
@@ -233,7 +234,7 @@ class InvestmentComparisonCalculator {
     }
 
     updateSliderFromInput(input) {
-        const value = this.parseCurrencyValue(input.value);
+        const value = parseFloat(input.value) || 0;
         let sliderId;
         
         if (input.id === 'ci-initial-investment-a') {
@@ -252,11 +253,11 @@ class InvestmentComparisonCalculator {
                 // Cap value at slider max
                 let maxValue;
                 if (input.id.includes('initial-investment')) {
-                    maxValue = 500000; // $500K
+                    maxValue = 10000000; // $10M
                 } else if (input.id.includes('annual-contribution')) {
-                    maxValue = 100000; // $100K
+                    maxValue = 10000000; // $10M
                 } else {
-                    maxValue = parseFloat(slider.getAttribute('max')) || 500000;
+                    maxValue = parseFloat(slider.getAttribute('max')) || 10000000;
                 }
                 const cappedValue = Math.min(value, maxValue);
                 slider.value = cappedValue;
@@ -302,16 +303,6 @@ class InvestmentComparisonCalculator {
     }
 
     calculateOnLoad() {
-        // Format initial currency values with commas
-        const currencyInputs = ['ci-initial-investment-a', 'ci-annual-contribution-a', 'ci-initial-investment-b', 'ci-annual-contribution-b'];
-        currencyInputs.forEach(id => {
-            const input = document.getElementById(id);
-            if (input && input.value) {
-                const value = this.parseCurrencyValue(input.value);
-                input.value = value.toLocaleString();
-            }
-        });
-        
         // Trigger calculation if inputs are valid
         if (this.hasValidInputs()) {
             this.calculateAndDisplay();
@@ -332,13 +323,13 @@ class InvestmentComparisonCalculator {
         return {
             yearsToGrow: parseInt(document.getElementById('ci-years-to-grow').value),
             optionA: {
-                initialInvestment: this.parseCurrencyValue(document.getElementById('ci-initial-investment-a').value),
-                annualContribution: this.parseCurrencyValue(document.getElementById('ci-annual-contribution-a').value),
+                initialInvestment: parseFloat(document.getElementById('ci-initial-investment-a').value) || 0,
+                annualContribution: parseFloat(document.getElementById('ci-annual-contribution-a').value) || 0,
                 rateOfReturn: parseFloat(document.getElementById('ci-rate-of-return-a').value) / 100
             },
             optionB: {
-                initialInvestment: this.parseCurrencyValue(document.getElementById('ci-initial-investment-b').value),
-                annualContribution: this.parseCurrencyValue(document.getElementById('ci-annual-contribution-b').value),
+                initialInvestment: parseFloat(document.getElementById('ci-initial-investment-b').value) || 0,
+                annualContribution: parseFloat(document.getElementById('ci-annual-contribution-b').value) || 0,
                 rateOfReturn: parseFloat(document.getElementById('ci-rate-of-return-b').value) / 100
             }
         };
@@ -399,6 +390,12 @@ class InvestmentComparisonCalculator {
         const betterOption = document.getElementById('ci-better-option');
         if (betterOption) {
             betterOption.textContent = `Option ${results.betterOption}`;
+        }
+        
+        // Update the projected years heading
+        const projectedYearsHeading = document.getElementById('ci-projected-years-heading');
+        if (projectedYearsHeading) {
+            projectedYearsHeading.textContent = `Projected values after ${formData.yearsToGrow} years`;
         }
         
         // Update breakdown values
@@ -656,11 +653,11 @@ class InvestmentComparisonCalculator {
         switch (input.id) {
             case 'ci-initial-investment-a':
             case 'ci-initial-investment-b':
-                maxValue = 500000; // $500K
+                maxValue = 10000000; // $10M
                 break;
             case 'ci-annual-contribution-a':
             case 'ci-annual-contribution-b':
-                maxValue = 100000; // $100K
+                maxValue = 10000000; // $10M
                 break;
             case 'ci-years-to-grow':
                 maxValue = 100;
@@ -829,14 +826,7 @@ class InvestmentComparisonCalculator {
         Object.keys(this.defaultValues).forEach(id => {
             const input = document.getElementById(id);
             if (input) {
-                const defaultValue = this.defaultValues[id];
-                input.value = defaultValue;
-                
-                // Format currency inputs with commas
-                if (id.includes('initial-investment') || id.includes('annual-contribution')) {
-                    const value = this.parseCurrencyValue(defaultValue);
-                    input.value = value.toLocaleString();
-                }
+                input.value = this.defaultValues[id];
             }
         });
         
@@ -852,8 +842,7 @@ class InvestmentComparisonCalculator {
             const slider = document.getElementById(pair.slider);
             const input = document.getElementById(pair.input);
             if (slider && input) {
-                const value = this.parseCurrencyValue(input.value);
-                slider.value = value;
+                slider.value = parseFloat(input.value) || 0;
             }
         });
         
