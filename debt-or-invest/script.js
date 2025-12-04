@@ -8,7 +8,15 @@ class DebtOrInvestCalculator {
     constructor() {
         this.elements = {};
         this.chart = null;
-        this.customTooltip = null;
+        this.calculationTimeout = null;
+        
+        // Default values
+        this.defaultValues = {
+            'doi-total-debt': '10000',
+            'doi-debt-interest-rate': '30',
+            'doi-investment-rate': '2',
+            'doi-monthly-payment': '400'
+        };
         
         // Wait for DOM to be ready
         if (document.readyState === 'loading') {
@@ -20,13 +28,12 @@ class DebtOrInvestCalculator {
 
     init() {
         this.cacheElements();
+        this.diagnoseStickyPositioning();
         this.initializeInputFormatting();
         this.initializeSliders();
         this.initializeTooltips();
-        this.initializeCustomTooltip();
         this.attachEventListeners();
-        // Initial form validity check
-        this.checkFormValidity();
+        this.calculateOnLoad();
     }
 
     cacheElements() {
@@ -37,7 +44,6 @@ class DebtOrInvestCalculator {
         this.elements.monthlyPayment = document.getElementById('doi-monthly-payment');
         
         // Button elements
-        this.calculateBtn = document.getElementById('doi-calculateBtn');
         this.resetBtn = document.getElementById('doi-reset-btn');
         this.downloadBtn = document.getElementById('doi-downloadBtn');
         
@@ -54,21 +60,143 @@ class DebtOrInvestCalculator {
         this.chartCanvas = document.getElementById('doi-comparison-chart');
         this.placeholderContent = document.querySelector('.doi-placeholder-content');
         this.chartContainer = document.querySelector('.doi-chart-container');
-        this.chartHeading = document.querySelector('.doi-chart-section h2');
+        this.chartSection = document.querySelector('.doi-chart-section');
+        this.chartToggle = document.getElementById('doi-chart-toggle');
+        this.chartHeader = document.querySelector('.doi-chart-header');
+    }
+
+    diagnoseStickyPositioning() {
+        const formColumn = document.querySelector('.doi-form-column');
+        const resultsColumn = document.querySelector('.doi-results-column');
+        
+        if (!formColumn || !resultsColumn) return;
+        
+        // Clear min-height on mobile
+        if (window.innerWidth <= 750) {
+            resultsColumn.style.minHeight = '';
+            return;
+        }
+        
+        // Fix overflow issues on parent containers
+        let current = formColumn;
+        let depth = 0;
+        const maxDepth = 20;
+        
+        while (current && depth < maxDepth) {
+            current = current.parentElement;
+            if (!current || current === document.documentElement) break;
+            
+            const parentStyle = window.getComputedStyle(current);
+            const overflow = parentStyle.overflow;
+            const overflowX = parentStyle.overflowX;
+            const overflowY = parentStyle.overflowY;
+            
+            // Fix any overflow constraints
+            if (overflow !== 'visible' || overflowX !== 'visible' || overflowY !== 'visible') {
+                current.style.setProperty('overflow', 'visible', 'important');
+                current.style.setProperty('overflow-x', 'visible', 'important');
+                current.style.setProperty('overflow-y', 'visible', 'important');
+            }
+            
+            depth++;
+        }
+        
+        // Ensure results column is tall enough for sticky to work (desktop only)
+        const formHeight = formColumn.getBoundingClientRect().height;
+        const resultsHeight = resultsColumn.getBoundingClientRect().height;
+        
+        if (formHeight >= resultsHeight) {
+            const viewportHeight = window.innerHeight;
+            resultsColumn.style.minHeight = (formHeight + viewportHeight * 0.5) + 'px';
+        }
     }
 
     initializeInputFormatting() {
-        // Format currency inputs with commas
+        // Format currency inputs with commas and filter to digits only
         const currencyInputs = ['doi-total-debt', 'doi-monthly-payment'];
         currencyInputs.forEach(id => {
             const input = document.getElementById(id);
             if (input) {
-                // Already type="text" for comma formatting
-                input.addEventListener('input', (e) => this.formatCurrencyInput(e));
+                // Real-time numeric filtering
+                input.addEventListener('input', (e) => {
+                    // Filter to only allow digits (strip all non-numeric characters)
+                    const cursorPosition = e.target.selectionStart;
+                    const oldValue = e.target.value;
+                    const newValue = oldValue.replace(/[^\d]/g, '');
+                    
+                    if (oldValue !== newValue) {
+                        e.target.value = newValue;
+                        // Adjust cursor position based on removed characters
+                        const removedChars = oldValue.substring(0, cursorPosition).replace(/[^\d]/g, '').length;
+                        const newCursorPos = Math.min(removedChars, newValue.length);
+                        e.target.setSelectionRange(newCursorPos, newCursorPos);
+                    }
+                    
+                    // Update slider BEFORE formatting (using raw numeric value)
+                    if (input.id === 'doi-total-debt') {
+                        const slider = document.getElementById('doi-total-debt-slider');
+                        if (slider && newValue) {
+                            const numValue = parseInt(newValue);
+                            if (!isNaN(numValue)) {
+                                slider.value = numValue;
+                            }
+                        }
+                    }
+                    
+                    // Then format with commas
+                    this.formatCurrencyInput(e);
+                });
                 input.addEventListener('blur', (e) => this.formatCurrencyInput(e));
                 input.addEventListener('focus', (e) => this.handleCurrencyFocus(e));
             }
         });
+        
+        // Filter percentage inputs to only allow digits and one decimal point
+        const percentageInputs = ['doi-debt-interest-rate', 'doi-investment-rate'];
+        percentageInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('input', (e) => {
+                    // Filter to only allow digits and one decimal point
+                    const cursorPosition = e.target.selectionStart;
+                    const oldValue = e.target.value;
+                    let newValue = oldValue.replace(/[^\d.]/g, '');
+                    
+                    // Ensure only one decimal point
+                    const parts = newValue.split('.');
+                    if (parts.length > 2) {
+                        newValue = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                    
+                    if (oldValue !== newValue) {
+                        e.target.value = newValue;
+                        // Adjust cursor position
+                        const removedChars = oldValue.substring(0, cursorPosition).length - oldValue.substring(0, cursorPosition).replace(/[^\d.]/g, '').length;
+                        const newCursorPos = Math.max(0, cursorPosition - removedChars);
+                        e.target.setSelectionRange(newCursorPos, newCursorPos);
+                    }
+                });
+            }
+        });
+    }
+
+    initializeSliders() {
+        // Sync slider with Total Debt Amount text input
+        const slider = document.getElementById('doi-total-debt-slider');
+        const input = document.getElementById('doi-total-debt');
+        
+        if (slider && input) {
+            // Update input when slider changes
+            slider.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                input.value = value.toLocaleString();
+                this.clearError(input);
+                clearTimeout(this.calculationTimeout);
+                this.calculationTimeout = setTimeout(() => {
+                    this.calculateAndDisplay();
+                }, 300);
+            });
+        }
     }
 
     formatCurrencyInput(event) {
@@ -100,14 +228,15 @@ class DebtOrInvestCalculator {
             input.value = '';
         }
         
-        // Update corresponding slider
-        this.updateSliderFromInput(input);
-        
-        // Re-check form validity after formatting
-        this.checkFormValidity();
+        // Trigger calculation after formatting
+        clearTimeout(this.calculationTimeout);
+        this.calculationTimeout = setTimeout(() => {
+            this.calculateAndDisplay();
+        }, 300);
     }
 
     handleCurrencyFocus(event) {
+        // Remove formatting on focus for easier editing
         const input = event.target;
         const rawValue = input.value.replace(/[^\d]/g, '');
         input.value = rawValue;
@@ -117,45 +246,13 @@ class DebtOrInvestCalculator {
         return parseFloat(value.replace(/[^\d]/g, '')) || 0;
     }
 
-    initializeSliders() {
-        // Sync sliders with currency text inputs
-        const sliderPairs = [
-            { slider: 'doi-total-debt-slider', input: 'doi-total-debt', max: 1000000 },
-            { slider: 'doi-monthly-payment-slider', input: 'doi-monthly-payment', max: 50000 }
-        ];
-        
-        sliderPairs.forEach(pair => {
-            const slider = document.getElementById(pair.slider);
-            const input = document.getElementById(pair.input);
-            
-            if (slider && input) {
-                // Update input when slider changes
-                slider.addEventListener('input', (e) => {
-                    const value = parseFloat(e.target.value);
-                    if (!isNaN(value)) {
-                        // Format with commas
-                        input.value = value.toLocaleString();
-                        this.checkFormValidity();
-                    }
-                });
-            }
-        });
-    }
-
-    updateSliderFromInput(input) {
-        const value = this.parseCurrencyValue(input.value);
-        let sliderId;
-        
-        if (input.id === 'doi-total-debt') {
-            sliderId = 'doi-total-debt-slider';
-        } else if (input.id === 'doi-monthly-payment') {
-            sliderId = 'doi-monthly-payment-slider';
-        }
-        
-        if (sliderId) {
-            const slider = document.getElementById(sliderId);
-            if (slider && !isNaN(value)) {
-                slider.value = value;
+    clearError(input) {
+        const inputGroup = input.closest('.doi-input-group');
+        if (inputGroup) {
+            inputGroup.classList.remove('error');
+            const errorMsg = inputGroup.querySelector('.doi-error-message');
+            if (errorMsg) {
+                errorMsg.remove();
             }
         }
     }
@@ -186,80 +283,44 @@ class DebtOrInvestCalculator {
         });
     }
 
-    initializeCustomTooltip() {
-        if (!this.calculateBtn) return;
-        
-        const tooltipText = this.calculateBtn.getAttribute('title') || 'Please complete all fields above to calculate your best option';
-        this.calculateBtn.removeAttribute('title');
-        
-        const tooltip = document.createElement('div');
-        tooltip.className = 'doi-custom-tooltip';
-        tooltip.textContent = tooltipText;
-        tooltip.style.cssText = `
-            position: fixed !important;
-            background: #333 !important;
-            color: white !important;
-            padding: 8px 12px !important;
-            border-radius: 4px !important;
-            font-size: 14px !important;
-            white-space: nowrap !important;
-            z-index: 999999 !important;
-            pointer-events: none !important;
-            opacity: 0 !important;
-            transition: opacity 0.2s ease !important;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
-            display: block !important;
-            visibility: visible !important;
-        `;
-        
-        document.body.appendChild(tooltip);
-        
-        this.calculateBtn.addEventListener('mouseenter', (e) => {
-            if (this.calculateBtn.disabled) {
-                const rect = this.calculateBtn.getBoundingClientRect();
-                const viewportWidth = window.innerWidth;
-                const viewportHeight = window.innerHeight;
-                
-                tooltip.style.opacity = '0';
-                tooltip.style.display = 'block';
-                tooltip.style.visibility = 'visible';
-                
-                const tooltipRect = tooltip.getBoundingClientRect();
-                const tooltipWidth = tooltipRect.width;
-                const tooltipHeight = tooltipRect.height;
-                const tooltipHalfWidth = tooltipWidth / 2;
-                
-                let left = rect.left + (rect.width / 2);
-                let top = rect.top - tooltipHeight - 8;
-                
-                if (left - tooltipHalfWidth < 10) {
-                    left = tooltipHalfWidth + 10;
-                } else if (left + tooltipHalfWidth > viewportWidth - 10) {
-                    left = viewportWidth - tooltipHalfWidth - 10;
+    calculateOnLoad() {
+        // Format initial currency values with commas
+        const currencyInputs = ['doi-total-debt', 'doi-monthly-payment'];
+        currencyInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input && input.value) {
+                const value = this.parseCurrencyValue(input.value);
+                if (value > 0) {
+                    input.value = value.toLocaleString();
                 }
-                
-                if (top < 10) {
-                    top = rect.bottom + 8;
-                }
-                
-                tooltip.style.position = 'fixed';
-                tooltip.style.left = left + 'px';
-                tooltip.style.top = top + 'px';
-                tooltip.style.transform = 'translateX(-50%)';
-                tooltip.style.zIndex = '999999';
-                tooltip.style.opacity = '1';
             }
         });
         
-        this.calculateBtn.addEventListener('mouseleave', () => {
-            tooltip.style.opacity = '0';
-        });
+        // Set slider value for Total Debt Amount
+        const totalDebtSlider = document.getElementById('doi-total-debt-slider');
+        const totalDebtInput = document.getElementById('doi-total-debt');
+        if (totalDebtSlider && totalDebtInput) {
+            const value = this.parseCurrencyValue(totalDebtInput.value);
+            totalDebtSlider.value = value;
+        }
         
-        this.customTooltip = tooltip;
+        // Calculate and display results on page load
+        this.calculateAndDisplay();
     }
 
-    attachEventListeners() {
-        // Input validation
+    calculateAndDisplay() {
+        if (!this.hasValidInputs()) {
+            return;
+        }
+        
+        const formData = this.getFormData();
+        const results = this.calculateResults(formData);
+        
+        this.displayResults(results);
+        this.updateChart(results);
+    }
+
+    hasValidInputs() {
         const inputs = [
             this.elements.totalDebt,
             this.elements.debtInterestRate,
@@ -267,13 +328,72 @@ class DebtOrInvestCalculator {
             this.elements.monthlyPayment
         ];
         
+        return inputs.every(input => {
+            if (!input) return false;
+            // Use parseCurrencyValue for currency inputs, parseFloat for others
+            const value = (input.id === 'doi-total-debt' || input.id === 'doi-monthly-payment') 
+                ? this.parseCurrencyValue(input.value)
+                : parseFloat(input.value);
+            return !isNaN(value) && value > 0;
+        });
+    }
+
+    attachEventListeners() {
+        // Reset button (desktop)
+        if (this.resetBtn) {
+            this.resetBtn.addEventListener('click', () => this.resetForm());
+        }
+        
+        // Download button (desktop)
+        if (this.downloadBtn) {
+            this.downloadBtn.addEventListener('click', () => this.downloadResults());
+        }
+        
+        // Reset button (mobile)
+        const resetBtnMobile = document.getElementById('doi-reset-btn-mobile');
+        if (resetBtnMobile) {
+            resetBtnMobile.addEventListener('click', () => this.resetForm());
+        }
+        
+        // Download button (mobile)
+        const downloadBtnMobile = document.getElementById('doi-downloadBtn-mobile');
+        if (downloadBtnMobile) {
+            downloadBtnMobile.addEventListener('click', () => this.downloadResults());
+        }
+        
+        // Chart toggle button
+        if (this.chartToggle) {
+            this.chartToggle.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent header click from also firing
+                this.toggleChart();
+            });
+        }
+        
+        // Make chart header clickable
+        if (this.chartHeader) {
+            this.chartHeader.addEventListener('click', () => this.toggleChart());
+        }
+        
+        // Real-time calculation on all inputs (exclude range sliders)
+        const inputs = document.querySelectorAll('input:not([type="range"])');
         inputs.forEach(input => {
-            if (input) {
-                input.addEventListener('input', () => {
-                    this.checkFormValidity();
-                });
-                input.addEventListener('blur', () => this.validateAndCapInput(input));
+            // Skip currency inputs (handled by formatCurrencyInput)
+            if (input.id === 'doi-total-debt' || input.id === 'doi-monthly-payment') {
+                return; // Currency inputs handled separately
             }
+            
+            input.addEventListener('input', () => {
+                this.validateAndCapInput(input);
+                clearTimeout(this.calculationTimeout);
+                this.calculationTimeout = setTimeout(() => {
+                    this.calculateAndDisplay();
+                }, 300);
+            });
+            
+            input.addEventListener('blur', () => {
+                this.validateAndCapInput(input);
+                this.calculateAndDisplay();
+            });
         });
         
         // Add real-time validation for percentage inputs
@@ -286,49 +406,17 @@ class DebtOrInvestCalculator {
                 } else if (value < 0 && e.target.value !== '') {
                     e.target.value = 0;
                 }
-                // Re-check form validity after capping
-                this.checkFormValidity();
             });
         });
         
-        // Currency inputs are handled by formatCurrencyInput method
-        
-        // Calculate button
-        if (this.calculateBtn) {
-            this.calculateBtn.addEventListener('click', () => this.handleCalculate());
-        }
-        
-        // Reset button
-        if (this.resetBtn) {
-            this.resetBtn.addEventListener('click', () => this.resetForm());
-        }
-        
-        // Download button
-        if (this.downloadBtn) {
-            this.downloadBtn.addEventListener('click', () => this.downloadResults());
-        }
-    }
-
-    checkFormValidity() {
-        const inputs = [
-            this.elements.totalDebt,
-            this.elements.debtInterestRate,
-            this.elements.investmentRate,
-            this.elements.monthlyPayment
-        ];
-        
-        const allValid = inputs.every(input => {
-            if (!input) return false;
-            // Use parseCurrencyValue for currency inputs, parseFloat for others
-            const value = (input.id === 'doi-total-debt' || input.id === 'doi-monthly-payment') 
-                ? this.parseCurrencyValue(input.value)
-                : parseFloat(input.value);
-            return !isNaN(value) && value > 0;
+        // Handle window resize to recalculate sticky positioning
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                this.diagnoseStickyPositioning();
+            }, 250);
         });
-        
-        if (this.calculateBtn) {
-            this.calculateBtn.disabled = !allValid;
-        }
     }
 
     validateAndCapInput(input) {
@@ -351,19 +439,6 @@ class DebtOrInvestCalculator {
             
             if (maxValue && value > maxValue) {
                 input.value = maxValue.toLocaleString();
-                this.updateSliderFromInput(input);
-        }
-        
-        // Special validation for monthly payment - must be at least 4% of debt
-        if (input === this.elements.monthlyPayment) {
-                const totalDebt = this.parseCurrencyValue(this.elements.totalDebt.value);
-            if (!isNaN(totalDebt) && totalDebt > 0) {
-                const minPayment = totalDebt * 0.04;
-                if (value < minPayment) {
-                    // Show warning but don't prevent calculation
-                    console.warn(`Monthly payment should be at least ${this.formatCurrency(minPayment)} (4% of debt)`);
-                }
-            }
         }
         } else {
             // Handle percentage inputs
@@ -380,27 +455,13 @@ class DebtOrInvestCalculator {
                 input.value = maxValue.toString();
             }
         }
-        
-        // Re-check form validity after capping
-        this.checkFormValidity();
-    }
-
-
-    handleCalculate() {
-        if (this.calculateBtn.disabled) return;
-        
-        const formData = this.getFormData();
-        const results = this.calculateResults(formData);
-        
-        this.displayResults(results);
-        this.updateChart(results);
     }
 
     getFormData() {
         return {
             totalDebt: this.parseCurrencyValue(this.elements.totalDebt.value),
-            debtInterestRate: parseFloat(this.elements.debtInterestRate.value) / 100,
-            investmentRate: parseFloat(this.elements.investmentRate.value) / 100,
+            debtInterestRate: parseFloat(this.elements.debtInterestRate.value) / 100, // Annual rate
+            investmentRate: parseFloat(this.elements.investmentRate.value) / 100, // Monthly rate (input is per month, not per year)
             monthlyPayment: this.parseCurrencyValue(this.elements.monthlyPayment.value)
         };
     }
@@ -408,7 +469,7 @@ class DebtOrInvestCalculator {
     calculateResults(data) {
         // Calculate debt payoff scenario
         const monthlyDebtRate = data.debtInterestRate / 12;
-        const monthlyInvestmentRate = data.investmentRate / 12;
+        const monthlyInvestmentRate = data.investmentRate; // Input is monthly rate, not annual
         
         // Calculate time to pay off debt and total interest
         let remainingDebt = data.totalDebt;
@@ -416,7 +477,7 @@ class DebtOrInvestCalculator {
         let months = 0;
         const maxMonths = 600; // 50 years maximum
         
-        while (remainingDebt > 0 && months < maxMonths) {
+        while (remainingDebt > 0.01 && months < maxMonths) {
             const interestCharge = remainingDebt * monthlyDebtRate;
             totalInterestPaid += interestCharge;
             const principalPayment = data.monthlyPayment - interestCharge;
@@ -431,36 +492,47 @@ class DebtOrInvestCalculator {
             months++;
         }
         
-        // Calculate what the total interest would be if debt wasn't paid early
-        const standardMonths = months;
-        let standardInterest = 0;
-        let standardRemaining = data.totalDebt;
-        
-        for (let i = 0; i < standardMonths; i++) {
-            const interestCharge = standardRemaining * monthlyDebtRate;
-            standardInterest += interestCharge;
-            standardRemaining -= (data.monthlyPayment - interestCharge);
+        // Calculate precise fractional month for final payment
+        let preciseMonths = months;
+        if (remainingDebt > 0 && remainingDebt < data.monthlyPayment) {
+            // Calculate the fraction of the final month needed
+            const finalInterest = remainingDebt * monthlyDebtRate;
+            const finalPayment = remainingDebt + finalInterest;
+            const fractionOfMonth = finalPayment / data.monthlyPayment;
+            preciseMonths = months - 1 + fractionOfMonth;
+            totalInterestPaid += finalInterest;
         }
         
-        const interestSaved = standardInterest - totalInterestPaid;
+        // Calculate investment scenario over the same time period using precise months
+        // Using future value of ordinary annuity formula for precise calculation
+        const n = preciseMonths;
+        const r = monthlyInvestmentRate;
+        const pmt = data.monthlyPayment;
         
-        // Calculate investment scenario over the same time period
-        let investmentValue = 0;
-        for (let i = 0; i < months; i++) {
-            investmentValue = (investmentValue + data.monthlyPayment) * (1 + monthlyInvestmentRate);
+        // FV = PMT × [((1 + r)^n - 1) / r]
+        let investmentValue;
+        if (r === 0) {
+            investmentValue = pmt * n;
+        } else {
+            investmentValue = pmt * (((Math.pow(1 + r, n) - 1) / r));
         }
         
-        const totalInvested = data.monthlyPayment * months;
+        const totalInvested = data.monthlyPayment * preciseMonths;
         const investmentInterest = investmentValue - totalInvested;
         
-        // Determine recommendation
+        // Calculate net benefit: investment gains minus debt interest paid
+        const netBenefit = investmentInterest - totalInterestPaid;
+        
+        // Determine recommendation based on which option is financially better
         let recommendation = 'Pay Off Debt';
         let recommendationText = '';
         
-        if (investmentInterest > interestSaved) {
+        if (netBenefit > 0) {
+            // Investing yields more than the cost of debt interest
             recommendation = 'Invest';
             recommendationText = 'If your answer suggests investing, you might want to play with your expected interest rates and monthly investments to see what kind of outcomes you get. Often, people have the goal of paying off debt in a steady, timely fashion, but life gets in the way. Experiment to see what could change your mind.';
         } else {
+            // Paying off debt saves more than investing would earn
             recommendation = 'Pay Off Debt';
             recommendationText = 'If your answer suggests debt, you might want to consider adjusting some of your inputs to see if that changes your thinking. Often, when people feel burdened by debt, they delay other financial decisions until they are more comfortable. However, without a strategy, you might struggle thinking there is no way out.';
         }
@@ -468,10 +540,11 @@ class DebtOrInvestCalculator {
         return {
             recommendation,
             recommendationText,
-            timeToPayoff: months,
-            interestSaved: Math.max(0, interestSaved),
+            timeToPayoff: Math.round(preciseMonths), // Display as whole number
+            preciseMonths: preciseMonths, // Keep precise value for reference
+            debtInterestPaid: Math.max(0, totalInterestPaid), // Total interest paid on debt
             investmentValue,
-            investmentInterest: Math.max(0, investmentInterest)
+            investmentInterest: Math.max(0, investmentInterest) // Investment gains
         };
     }
 
@@ -479,7 +552,7 @@ class DebtOrInvestCalculator {
         // Update result values
         this.elements.recommendation.textContent = results.recommendation;
         this.elements.timeToPayoff.textContent = `${results.timeToPayoff} months`;
-        this.elements.interestSaved.textContent = this.formatCurrency(results.interestSaved);
+        this.elements.interestSaved.textContent = this.formatCurrency(results.debtInterestPaid);
         this.elements.investmentValue.textContent = this.formatCurrency(results.investmentValue);
         this.elements.investmentInterest.textContent = this.formatCurrency(results.investmentInterest);
         
@@ -515,16 +588,6 @@ class DebtOrInvestCalculator {
         if (this.recommendationText) {
             this.recommendationText.style.display = 'block';
         }
-        
-        // Scroll to results
-        if (this.resultsSection) {
-            this.resultsSection.scrollIntoView({ behavior: 'smooth' });
-        }
-        
-        // Change button text to "Recalculate"
-        if (this.calculateBtn) {
-            this.calculateBtn.textContent = 'Recalculate';
-        }
     }
 
     updateChart(results) {
@@ -537,7 +600,7 @@ class DebtOrInvestCalculator {
         // Update existing chart or create new one
         if (this.chart) {
         this.chart.data.datasets[0].data = [
-            results.interestSaved,
+            results.debtInterestPaid,
             results.investmentInterest
         ];
             
@@ -549,7 +612,7 @@ class DebtOrInvestCalculator {
             this.chart.data.datasets[0].borderColor = [
                 debtColor,
                 investmentColor
-            ];
+        ];
         
         this.chart.update();
         } else {
@@ -561,11 +624,11 @@ class DebtOrInvestCalculator {
             this.chart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['Interest Saved (Debt)', 'Interest Accrued (Investment)'],
+                    labels: ['Debt Interest Cost', 'Investment Gains'],
                     datasets: [{
                         label: 'Amount',
                         data: [
-                            results.interestSaved,
+                            results.debtInterestPaid,
                             results.investmentInterest
                         ],
                         backgroundColor: [
@@ -635,69 +698,66 @@ class DebtOrInvestCalculator {
     }
 
     resetForm() {
-        // Clear all inputs
-        if (this.elements.totalDebt) this.elements.totalDebt.value = '';
-        if (this.elements.debtInterestRate) this.elements.debtInterestRate.value = '';
-        if (this.elements.investmentRate) this.elements.investmentRate.value = '';
-        if (this.elements.monthlyPayment) this.elements.monthlyPayment.value = '';
+        // Reset all inputs to default values
+        Object.keys(this.defaultValues).forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                const defaultValue = this.defaultValues[id];
+                if (id === 'doi-total-debt' || id === 'doi-monthly-payment') {
+                    // Format currency values with commas
+                    input.value = parseInt(defaultValue).toLocaleString();
+                } else {
+                    input.value = defaultValue;
+                }
+            }
+        });
         
-        // Reset sliders
+        // Reset slider to default value
         const totalDebtSlider = document.getElementById('doi-total-debt-slider');
-        const monthlyPaymentSlider = document.getElementById('doi-monthly-payment-slider');
-        if (totalDebtSlider) totalDebtSlider.value = 0;
-        if (monthlyPaymentSlider) monthlyPaymentSlider.value = 0;
-        
-        // Hide results section
-        if (this.resultsSection) {
-            this.resultsSection.style.display = 'none';
+        if (totalDebtSlider) {
+            totalDebtSlider.value = this.defaultValues['doi-total-debt'];
         }
         
-        // Hide recommendation text
-        if (this.recommendationText) {
-            this.recommendationText.style.display = 'none';
-        }
+        // Recalculate and display results
+        this.calculateAndDisplay();
         
-        // Show placeholder content and hide chart
-        if (this.placeholderContent) {
-            this.placeholderContent.style.display = 'block';
+        // Move focus to first input field
+        const firstInput = document.getElementById('doi-total-debt');
+        if (firstInput) {
+            firstInput.focus();
+            // On mobile, scroll to first field
+            if (window.innerWidth <= 750) {
+                firstInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
-        if (this.chartContainer) {
-            this.chartContainer.style.display = 'none';
-        }
-        if (this.chartHeading) {
-            // Hide the heading with inline style
-            this.chartHeading.style.display = 'none';
-        }
+    }
+
+    toggleChart() {
+        if (!this.chartSection || !this.chartToggle) return;
         
-        // Reset chart
-        if (this.chart) {
-            this.chart.data.datasets[0].data = [0, 0];
-            this.chart.update();
-        }
+        const isCollapsed = this.chartSection.classList.contains('collapsed');
         
-        // Reset button text
-        if (this.calculateBtn) {
-            this.calculateBtn.textContent = 'Calculate';
-            this.calculateBtn.disabled = true;
+        if (isCollapsed) {
+            // Expand
+            this.chartSection.classList.remove('collapsed');
+            this.chartToggle.setAttribute('aria-expanded', 'true');
+        } else {
+            // Collapse
+            this.chartSection.classList.add('collapsed');
+            this.chartToggle.setAttribute('aria-expanded', 'false');
         }
-        
-        this.checkFormValidity();
     }
 
     downloadResults() {
-        console.log('Download button clicked');
-        
         // Show notification before download
         const userConfirmed = confirm('Your debt vs invest analysis will be downloaded as a PDF file. This may take a moment to generate. Continue?');
         if (!userConfirmed) {
-            console.log('Download cancelled by user');
             return;
         }
         
         try {
             // Check if jsPDF is available
             if (typeof window.jspdf === 'undefined') {
-                console.error('jsPDF library not loaded');
                 this.downloadResultsAsText();
                 return;
             }
@@ -767,7 +827,7 @@ class DebtOrInvestCalculator {
         yPosition += PDF_SPACING.CONTENT_LINE_HEIGHT;
         doc.text(`Time to Pay Off: ${results.timeToPayoff} months`, 110, yPosition);
         yPosition += PDF_SPACING.CONTENT_LINE_HEIGHT;
-        doc.text(`Interest Saved (Debt): ${this.formatCurrency(results.interestSaved)}`, 110, yPosition);
+        doc.text(`Debt Interest Cost: ${this.formatCurrency(results.debtInterestPaid)}`, 110, yPosition);
         yPosition += PDF_SPACING.CONTENT_LINE_HEIGHT;
         doc.text(`Investment Value: ${this.formatCurrency(results.investmentValue)}`, 110, yPosition);
         yPosition += PDF_SPACING.CONTENT_LINE_HEIGHT;
@@ -809,10 +869,8 @@ class DebtOrInvestCalculator {
         
         // Save PDF
         doc.save('debt-vs-invest-analysis.pdf');
-        console.log('PDF download completed successfully');
         
         } catch (error) {
-            console.error('Error generating PDF:', error);
             // Fallback to text download if PDF fails
             this.downloadResultsAsText();
         }
@@ -831,9 +889,9 @@ class DebtOrInvestCalculator {
         text += 'Analysis Results:\n';
         text += `Recommendation: ${results.recommendation}\n`;
         text += `Time to Pay Off: ${results.timeToPayoff} months\n`;
-        text += `Interest Saved (Debt): ${this.formatCurrency(results.interestSaved)}\n`;
+        text += `Debt Interest Cost: ${this.formatCurrency(results.debtInterestPaid)}\n`;
         text += `Investment Value: ${this.formatCurrency(results.investmentValue)}\n`;
-        text += `Investment Interest: ${this.formatCurrency(results.investmentInterest)}\n\n`;
+        text += `Investment Gains: ${this.formatCurrency(results.investmentInterest)}\n\n`;
         text += 'Recommendation:\n';
         text += `${results.recommendationText}\n\n`;
         text += 'This analysis is based on the assumptions provided and should be reviewed regularly as circumstances change. Consult with a financial professional for personalized advice.';
@@ -847,7 +905,6 @@ class DebtOrInvestCalculator {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        console.log('Text download completed successfully');
     }
 
     formatCurrency(value) {
@@ -862,4 +919,3 @@ class DebtOrInvestCalculator {
 
 // Initialize calculator when script loads
 new DebtOrInvestCalculator();
-
