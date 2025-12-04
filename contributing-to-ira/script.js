@@ -14,6 +14,10 @@ class IRACalculator {
         this.CONTRIBUTION_LIMIT_2024 = 6500;
         this.CONTRIBUTION_LIMIT_50_PLUS = 7500; // With catch-up
         
+        // Realistic caps for other inputs
+        this.MAX_IRA_BALANCE = 10000000; // $10 million
+        this.MAX_MAGI = 10000000; // $10 million
+        
         // MAGI phase-out ranges for 2024 (Traditional IRA deduction limits when covered by workplace plan)
         this.PHASE_OUT_RANGES = {
             single: { min: 77000, max: 87000 },
@@ -43,6 +47,7 @@ class IRACalculator {
 
     init() {
         this.cacheElements();
+        this.diagnoseStickyPositioning();
         this.initializeInputFormatting();
         this.initializeSliders();
         this.attachEventListeners();
@@ -63,6 +68,8 @@ class IRACalculator {
         // Button elements
         this.resetBtn = document.getElementById('ira-reset-btn');
         this.downloadBtn = document.getElementById('ira-downloadBtn');
+        this.chartToggle = document.getElementById('ira-chart-toggle');
+        this.chartSection = document.querySelector('.ira-chart-section');
         
         // Results elements
         this.elements.resultsSection = document.getElementById('ira-results-section');
@@ -77,19 +84,205 @@ class IRACalculator {
         this.chartCanvas = document.getElementById('ira-growth-chart');
     }
 
+    diagnoseStickyPositioning() {
+        const formColumn = document.querySelector('.ira-form-column');
+        const resultsColumn = document.querySelector('.ira-results-column');
+        const layoutContainer = document.querySelector('.ira-calculator-layout');
+        
+        if (!formColumn || !resultsColumn || !layoutContainer) return;
+        
+        // Clear min-height on mobile
+        if (window.innerWidth <= 750) {
+            resultsColumn.style.minHeight = '';
+            return;
+        }
+        
+        // Fix overflow issues on parent containers
+        let current = formColumn;
+        let depth = 0;
+        const maxDepth = 20;
+        
+        while (current && depth < maxDepth) {
+            current = current.parentElement;
+            if (!current || current === document.documentElement) break;
+            
+            const parentStyle = window.getComputedStyle(current);
+            const overflow = parentStyle.overflow;
+            const overflowX = parentStyle.overflowX;
+            const overflowY = parentStyle.overflowY;
+            
+            // Fix any overflow constraints
+            if (overflow !== 'visible' || overflowX !== 'visible' || overflowY !== 'visible') {
+                current.style.setProperty('overflow', 'visible', 'important');
+                current.style.setProperty('overflow-x', 'visible', 'important');
+                current.style.setProperty('overflow-y', 'visible', 'important');
+            }
+            
+            depth++;
+        }
+        
+        // Ensure results column is tall enough for sticky to work (desktop only)
+        const formHeight = formColumn.getBoundingClientRect().height;
+        const resultsHeight = resultsColumn.getBoundingClientRect().height;
+        
+        if (formHeight >= resultsHeight) {
+            const viewportHeight = window.innerHeight;
+            resultsColumn.style.minHeight = (formHeight + viewportHeight * 0.5) + 'px';
+        }
+    }
+
     initializeInputFormatting() {
         // Format currency inputs with commas
         const currencyInputs = ['ira-magi', 'ira-initial-balance', 'ira-annual-contribution'];
         currencyInputs.forEach(id => {
             const input = document.getElementById(id);
             if (input) {
-                // Change to text type to allow commas
-                input.type = 'text';
-                input.addEventListener('input', (e) => this.formatCurrencyInput(e));
-                input.addEventListener('blur', (e) => this.formatCurrencyInput(e));
-                input.addEventListener('focus', (e) => this.handleCurrencyFocus(e));
+                // Remove commas on focus
+                input.addEventListener('focus', (e) => {
+                    // Remove commas when focusing for easier editing
+                    e.target.value = e.target.value.replace(/,/g, '');
+                    // Auto-select entire value on focus for quick overwrite
+                    e.target.select();
+                });
+                
+                // Keep removing commas while typing AND trigger calculation
+                input.addEventListener('input', (e) => {
+                    // Filter to only allow digits (strip all non-numeric characters)
+                    const cursorPosition = e.target.selectionStart;
+                    const oldValue = e.target.value;
+                    const newValue = oldValue.replace(/[^\d]/g, '');
+                    
+                    if (oldValue !== newValue) {
+                        e.target.value = newValue;
+                        // Adjust cursor position based on removed characters
+                        const removedChars = oldValue.substring(0, cursorPosition).replace(/[^\d]/g, '').length;
+                        const newCursorPos = Math.min(removedChars, newValue.length);
+                        e.target.setSelectionRange(newCursorPos, newCursorPos);
+                    }
+                    
+                    // Clear any validation errors or info messages while typing
+                    this.clearError(e.target);
+                    this.clearInfo(e.target);
+                    
+                    // Trigger debounced calculation
+                    clearTimeout(this.calculationTimeout);
+                    this.calculationTimeout = setTimeout(() => {
+                        this.calculateAndDisplay();
+                    }, 300);
+                });
+                
+                // Format with commas on blur and always trigger calculation
+                input.addEventListener('blur', (e) => {
+                    const value = this.parseCurrencyValue(e.target.value);
+                    
+                    // Cap Annual Contribution at IRA limit (with info message)
+                    if (id === 'ira-annual-contribution') {
+                        if (value > this.CONTRIBUTION_LIMIT_2024) {
+                            e.target.value = this.CONTRIBUTION_LIMIT_2024.toString();
+                            this.showInfo(e.target, `Contribution capped at the 2024 IRA limit of ${this.formatCurrency(this.CONTRIBUTION_LIMIT_2024)}.`);
+                        } else {
+                            this.clearInfo(e.target);
+                        }
+                    }
+                    
+                    // Cap Initial IRA Balance (silent cap, no message)
+                    if (id === 'ira-initial-balance' && value > this.MAX_IRA_BALANCE) {
+                        e.target.value = this.MAX_IRA_BALANCE.toLocaleString();
+                    }
+                    
+                    // Cap MAGI (silent cap, no message)
+                    if (id === 'ira-magi' && value > this.MAX_MAGI) {
+                        e.target.value = this.MAX_MAGI.toLocaleString();
+                    }
+                    
+                    this.formatCurrencyInput(e);
+                    // Always calculate on blur to ensure results update
+                    this.calculateAndDisplay();
+                });
             }
         });
+        
+        // Handle percent input
+        const percentInput = document.getElementById('ira-rate-of-return');
+        if (percentInput) {
+            percentInput.addEventListener('input', (e) => {
+                // Filter to only allow digits and one decimal point
+                const cursorPosition = e.target.selectionStart;
+                const oldValue = e.target.value;
+                let newValue = oldValue.replace(/[^\d.]/g, '');
+                
+                // Ensure only one decimal point
+                const parts = newValue.split('.');
+                if (parts.length > 2) {
+                    newValue = parts[0] + '.' + parts.slice(1).join('');
+                }
+                
+                if (oldValue !== newValue) {
+                    e.target.value = newValue;
+                    // Adjust cursor position
+                    const removedChars = oldValue.substring(0, cursorPosition).length - oldValue.substring(0, cursorPosition).replace(/[^\d.]/g, '').length;
+                    const newCursorPos = Math.max(0, cursorPosition - removedChars);
+                    e.target.setSelectionRange(newCursorPos, newCursorPos);
+                }
+                
+                // Clear any validation errors while typing
+                this.clearError(e.target);
+                // Don't format while typing - just trigger calculation
+                clearTimeout(this.calculationTimeout);
+                this.calculationTimeout = setTimeout(() => {
+                    this.calculateAndDisplay();
+                }, 300);
+            });
+            percentInput.addEventListener('blur', (e) => {
+                this.formatPercentInput(e);
+                this.calculateAndDisplay();
+            });
+            percentInput.addEventListener('focus', (e) => this.handlePercentFocus(e));
+        }
+        
+        // Handle plain number input
+        const numberInput = document.getElementById('ira-years-to-contribute');
+        if (numberInput) {
+            numberInput.addEventListener('input', (e) => {
+                // Filter to only allow digits
+                const cursorPosition = e.target.selectionStart;
+                const oldValue = e.target.value;
+                const newValue = oldValue.replace(/[^\d]/g, '');
+                
+                if (oldValue !== newValue) {
+                    e.target.value = newValue;
+                    // Adjust cursor position
+                    const removedChars = oldValue.substring(0, cursorPosition).replace(/[^\d]/g, '').length;
+                    const newCursorPos = Math.min(removedChars, newValue.length);
+                    e.target.setSelectionRange(newCursorPos, newCursorPos);
+                }
+                
+                // Clear any validation errors while typing
+                this.clearError(e.target);
+                // Trigger debounced calculation on input
+                clearTimeout(this.calculationTimeout);
+                this.calculationTimeout = setTimeout(() => {
+                    this.calculateAndDisplay();
+                }, 300);
+            });
+            numberInput.addEventListener('blur', () => {
+                this.calculateAndDisplay();
+            });
+            numberInput.addEventListener('focus', (e) => this.handleNumberFocus(e));
+        }
+    }
+    
+    formatPercentInput(event) {
+        const input = event.target;
+        let value = input.value.replace(/[^\d.]/g, '');
+        
+        if (value) {
+            const numValue = parseFloat(value);
+            if (!isNaN(numValue)) {
+                // Format to one decimal place on blur
+                input.value = numValue.toFixed(1);
+            }
+        }
     }
 
     formatCurrencyInput(event) {
@@ -103,14 +296,24 @@ class IRACalculator {
         }
     }
 
-    handleCurrencyFocus(event) {
+    // Removed - functionality moved to initializeInputFormatting()
+    
+    handlePercentFocus(event) {
         const input = event.target;
-        // Remove commas when focusing for easier editing
-        input.value = input.value.replace(/,/g, '');
+        // Auto-select entire value on focus for quick overwrite
+        input.select();
+    }
+    
+    handleNumberFocus(event) {
+        const input = event.target;
+        // Auto-select entire value on focus for quick overwrite
+        input.select();
     }
 
     parseCurrencyValue(value) {
-        return parseFloat(value.replace(/[^\d.]/g, '')) || 0;
+        const cleaned = value.replace(/[^\d.]/g, '');
+        const result = parseFloat(cleaned) || 0;
+        return result;
     }
 
     initializeSliders() {
@@ -131,7 +334,7 @@ class IRACalculator {
                     if (pair.input === 'ira-rate-of-return') {
                         input.value = value.toFixed(1);
                     } else {
-                        input.value = Math.round(value);
+                        input.value = Math.round(value).toString();
                     }
                     this.clearError(input);
                     clearTimeout(this.calculationTimeout);
@@ -140,12 +343,19 @@ class IRACalculator {
                     }, 300);
                 });
                 
-                // Update slider when input changes
+                // Update slider when input changes (syncing only, calculation handled by initializeInputFormatting)
                 input.addEventListener('input', (e) => {
-                    const value = parseFloat(e.target.value);
+                    let value = parseFloat(e.target.value.replace(/[^\d.]/g, ''));
                     if (!isNaN(value)) {
+                        // Cap values to slider range
+                        if (pair.input === 'ira-rate-of-return') {
+                            value = Math.max(0, Math.min(20, value));
+                        } else {
+                            value = Math.max(1, Math.min(50, Math.round(value)));
+                        }
                         slider.value = value;
                     }
+                    // Note: Calculation is triggered by the input event listener in initializeInputFormatting()
                 });
             }
         });
@@ -181,47 +391,58 @@ class IRACalculator {
         const magi = this.parseCurrencyValue(document.getElementById('ira-magi').value);
         const initialBalance = this.parseCurrencyValue(document.getElementById('ira-initial-balance').value);
         const annualContribution = this.parseCurrencyValue(document.getElementById('ira-annual-contribution').value);
-        const rateOfReturn = parseFloat(document.getElementById('ira-rate-of-return').value);
-        const yearsToContribute = parseFloat(document.getElementById('ira-years-to-contribute').value);
+        const rateOfReturn = parseFloat(document.getElementById('ira-rate-of-return').value.replace(/[^\d.]/g, ''));
+        const yearsToContribute = parseFloat(document.getElementById('ira-years-to-contribute').value.replace(/[^\d]/g, ''));
         
         return magi >= 0 && 
                initialBalance >= 0 && 
                annualContribution >= 0 && 
-               !isNaN(rateOfReturn) && rateOfReturn >= 0 && 
-               !isNaN(yearsToContribute) && yearsToContribute >= 1;
+               !isNaN(rateOfReturn) && rateOfReturn >= 0 && rateOfReturn <= 20 && 
+               !isNaN(yearsToContribute) && yearsToContribute >= 1 && yearsToContribute <= 50;
     }
 
     attachEventListeners() {
-        // Reset button
+        // Start Over button (desktop)
         if (this.resetBtn) {
             this.resetBtn.addEventListener('click', () => this.resetForm());
         }
         
-        // Download button
+        // Download button (desktop)
         if (this.downloadBtn) {
             this.downloadBtn.addEventListener('click', () => this.downloadResults());
         }
         
-        // Add real-time calculation listeners to all inputs
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            // Real-time calculation on input change
-            input.addEventListener('input', () => {
-                this.clearError(input);
-                this.validateAndCapInput(input);
-                // Debounce calculation to avoid too many calculations
-                clearTimeout(this.calculationTimeout);
-                this.calculationTimeout = setTimeout(() => {
-                    this.calculateAndDisplay();
-                }, 300);
+        // Start Over button (mobile)
+        const resetBtnMobile = document.getElementById('ira-reset-btn-mobile');
+        if (resetBtnMobile) {
+            resetBtnMobile.addEventListener('click', () => this.resetForm());
+        }
+        
+        // Download button (mobile)
+        const downloadBtnMobile = document.getElementById('ira-downloadBtn-mobile');
+        if (downloadBtnMobile) {
+            downloadBtnMobile.addEventListener('click', () => this.downloadResults());
+        }
+        
+        // Chart toggle button
+        if (this.chartToggle) {
+            this.chartToggle.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent header click from also firing
+                this.toggleChart();
             });
-            
-            // Also calculate on blur for immediate feedback
-            input.addEventListener('blur', () => {
-                this.validateAndCapInput(input);
-                this.calculateAndDisplay();
-            });
-        });
+        }
+        
+        // Make chart header clickable
+        const chartHeader = document.querySelector('.ira-chart-header');
+        if (chartHeader) {
+            chartHeader.addEventListener('click', () => this.toggleChart());
+        }
+        
+        // Initialize tooltips (click/tap only, not hover)
+        this.initializeTooltips();
+        
+        // Note: Event listeners for text inputs are already set up in initializeInputFormatting()
+        // and initializeSliders(), so we don't need duplicate listeners here
         
         // Dropdown changes - trigger calculation
         const filingStatus = document.getElementById('ira-filing-status');
@@ -232,6 +453,15 @@ class IRACalculator {
         if (retirementPlan) {
             retirementPlan.addEventListener('change', () => this.calculateAndDisplay());
         }
+        
+        // Handle window resize to recalculate sticky positioning
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                this.diagnoseStickyPositioning();
+            }, 250);
+        });
     }
 
     validateAndCapInput(input) {
@@ -240,40 +470,84 @@ class IRACalculator {
         let maxValue;
         let minValue = 0;
         let isPercentage = false;
+        let errorMessage = '';
         
         // Determine input type based on ID
-        if (input.id === 'ira-magi' || input.id === 'ira-initial-balance' || input.id === 'ira-annual-contribution') {
+        if (input.id === 'ira-magi') {
             numericValue = this.parseCurrencyValue(value);
-            maxValue = 1000000000; // $1 billion
+            maxValue = this.MAX_MAGI;
+            if (numericValue < 0) {
+                errorMessage = 'Value cannot be negative';
+            } else if (numericValue > maxValue) {
+                errorMessage = `Value cannot exceed ${this.formatCurrency(maxValue)}`;
+            }
+        } else if (input.id === 'ira-initial-balance') {
+            numericValue = this.parseCurrencyValue(value);
+            maxValue = this.MAX_IRA_BALANCE;
+            if (numericValue < 0) {
+                errorMessage = 'Value cannot be negative';
+            } else if (numericValue > maxValue) {
+                errorMessage = `Value cannot exceed ${this.formatCurrency(maxValue)}`;
+            }
+        } else if (input.id === 'ira-annual-contribution') {
+            numericValue = this.parseCurrencyValue(value);
+            maxValue = this.CONTRIBUTION_LIMIT_2024;
+            if (numericValue < 0) {
+                errorMessage = 'Value cannot be negative';
+            } else if (numericValue > maxValue) {
+                errorMessage = `Value cannot exceed ${this.formatCurrency(maxValue)}`;
+            }
         } else if (input.id === 'ira-rate-of-return') {
-            numericValue = parseFloat(value);
+            numericValue = parseFloat(value.replace(/[^\d.]/g, ''));
             maxValue = 20; // 20%
             minValue = 0;
             isPercentage = true;
+            if (isNaN(numericValue) && value) {
+                errorMessage = 'Please enter a valid number';
+            } else if (!isNaN(numericValue)) {
+                if (numericValue < minValue) {
+                    errorMessage = 'Rate cannot be negative';
+                } else if (numericValue > maxValue) {
+                    errorMessage = `Please enter a rate between ${minValue}% and ${maxValue}%`;
+                }
+            }
         } else if (input.id === 'ira-years-to-contribute') {
-            numericValue = parseInt(value);
+            numericValue = parseInt(value.replace(/[^\d]/g, ''));
             maxValue = 50; // 50 years
             minValue = 1;
-        } else {
-            numericValue = parseFloat(value);
+            if (isNaN(numericValue) && value) {
+                errorMessage = 'Please enter a valid number';
+            } else if (!isNaN(numericValue)) {
+                if (numericValue < minValue) {
+                    errorMessage = `Please enter a value between ${minValue} and ${maxValue} years`;
+                } else if (numericValue > maxValue) {
+                    errorMessage = `Please enter a value between ${minValue} and ${maxValue} years`;
+                }
+            }
         }
         
+        if (errorMessage) {
+            this.showError(input, errorMessage);
+            return false;
+        }
+        
+        // Cap values if needed
         if (value && !isNaN(numericValue)) {
             if (numericValue > maxValue) {
                 if (input.id === 'ira-rate-of-return') {
                     input.value = maxValue.toFixed(1);
                 } else if (input.id === 'ira-years-to-contribute') {
-                    input.value = maxValue;
+                    input.value = maxValue.toString();
                 } else {
                     input.value = maxValue.toLocaleString();
                 }
-                const formattedValue = isPercentage ? `${maxValue}%` : this.formatCurrency(maxValue);
-                this.showError(input, `Value cannot exceed ${formattedValue}`);
-            } else if (numericValue < minValue) {
-            input.value = '';
-                this.showError(input, 'Value cannot be negative');
+                this.clearError(input);
+            } else if (numericValue < minValue && input.id !== 'ira-years-to-contribute') {
+                input.value = '';
             }
         }
+        
+        return true;
     }
     
     showError(input, message) {
@@ -304,6 +578,39 @@ class IRACalculator {
             const errorMsg = inputGroup.querySelector('.ira-error-message');
             if (errorMsg) {
                 errorMsg.remove();
+            }
+        }
+    }
+    
+    showInfo(input, message) {
+        // Remove existing info message
+        this.clearInfo(input);
+        
+        // Add info class
+        const inputGroup = input.closest('.ira-input-group');
+        if (inputGroup) {
+            inputGroup.classList.add('info');
+        }
+        
+        // Create info message
+        const infoMsg = document.createElement('div');
+        infoMsg.className = 'ira-info-message show';
+        infoMsg.textContent = message;
+        
+        // Insert info message after input wrapper
+        const inputWrapper = input.closest('.ira-input-wrapper');
+        if (inputWrapper && inputGroup) {
+            inputWrapper.insertAdjacentElement('afterend', infoMsg);
+        }
+    }
+    
+    clearInfo(input) {
+        const inputGroup = input.closest('.ira-input-group');
+        if (inputGroup) {
+            inputGroup.classList.remove('info');
+            const infoMsg = inputGroup.querySelector('.ira-info-message');
+            if (infoMsg) {
+                infoMsg.remove();
             }
         }
     }
@@ -404,15 +711,21 @@ class IRACalculator {
     }
 
     getFormData() {
-        return {
-            magi: this.parseCurrencyValue(document.getElementById('ira-magi').value),
+        const magiInput = document.getElementById('ira-magi');
+        const initialBalanceInput = document.getElementById('ira-initial-balance');
+        const annualContributionInput = document.getElementById('ira-annual-contribution');
+        
+        const formData = {
+            magi: this.parseCurrencyValue(magiInput.value),
             filingStatus: document.getElementById('ira-filing-status').value,
             hasRetirementPlan: document.getElementById('ira-retirement-plan').value === 'yes',
-            initialBalance: this.parseCurrencyValue(document.getElementById('ira-initial-balance').value),
-            annualContribution: this.parseCurrencyValue(document.getElementById('ira-annual-contribution').value),
-            rateOfReturn: parseFloat(document.getElementById('ira-rate-of-return').value) / 100,
-            yearsToContribute: parseInt(document.getElementById('ira-years-to-contribute').value)
+            initialBalance: this.parseCurrencyValue(initialBalanceInput.value),
+            annualContribution: this.parseCurrencyValue(annualContributionInput.value),
+            rateOfReturn: parseFloat(document.getElementById('ira-rate-of-return').value.replace(/[^\d.]/g, '')) / 100,
+            yearsToContribute: parseInt(document.getElementById('ira-years-to-contribute').value.replace(/[^\d]/g, ''))
         };
+        
+        return formData;
     }
     
     calculateResults(formData) {
@@ -501,8 +814,8 @@ class IRACalculator {
         const { eligibility, results } = calcResults;
         
         // Update eligibility card
-        const statusIcon = this.elements.eligibilityStatus.querySelector('.ira-status-icon');
-        const statusText = this.elements.eligibilityStatus.querySelector('.ira-status-text');
+        const statusIcon = this.elements.eligibilityStatus?.querySelector('.ira-status-icon');
+        const statusText = this.elements.eligibilityStatus?.querySelector('.ira-status-text');
         
         if (eligibility.eligible) {
             statusIcon.textContent = '✓';
@@ -521,9 +834,15 @@ class IRACalculator {
         }
         
         // Update result values
-        this.elements.futureValue.textContent = this.formatCurrency(results.futureValue);
-        this.elements.totalContributions.textContent = this.formatCurrency(results.totalContributions);
-        this.elements.totalEarnings.textContent = this.formatCurrency(results.totalEarnings);
+        if (this.elements.futureValue) {
+            this.elements.futureValue.textContent = this.formatCurrency(results.futureValue);
+        }
+        if (this.elements.totalContributions) {
+            this.elements.totalContributions.textContent = this.formatCurrency(results.totalContributions);
+        }
+        if (this.elements.totalEarnings) {
+            this.elements.totalEarnings.textContent = this.formatCurrency(results.totalEarnings);
+        }
         
         // Generate and display chart
         this.updateChart(results);
@@ -575,8 +894,17 @@ class IRACalculator {
                         }
                     }
                     
-                    // Clear any error states
+                    // Format percent input
+                    if (id === 'ira-rate-of-return') {
+                        const numericValue = parseFloat(input.value.replace(/[^\d.]/g, '')) || 0;
+                        if (numericValue > 0) {
+                            input.value = numericValue.toFixed(1);
+                        }
+                    }
+                    
+                    // Clear any error states and info messages
                     this.clearError(input);
+                    this.clearInfo(input);
                 }
             }
         });
@@ -589,6 +917,58 @@ class IRACalculator {
         
         // Recalculate and display results with default values
         this.calculateAndDisplay();
+        
+        // Move focus to first input field
+        const firstInput = document.getElementById('ira-magi');
+        if (firstInput) {
+            firstInput.focus();
+            // On mobile, scroll to first field
+            if (window.innerWidth <= 750) {
+                firstInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+    
+    toggleChart() {
+        if (!this.chartSection || !this.chartToggle) return;
+        
+        const isCollapsed = this.chartSection.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+            // Expand
+            this.chartSection.classList.remove('collapsed');
+            this.chartToggle.setAttribute('aria-expanded', 'true');
+        } else {
+            // Collapse
+            this.chartSection.classList.add('collapsed');
+            this.chartToggle.setAttribute('aria-expanded', 'false');
+        }
+    }
+    
+    initializeTooltips() {
+        // Make tooltips click/tap only (not hover)
+        const tooltips = document.querySelectorAll('.ira-tooltip');
+        tooltips.forEach(tooltip => {
+            tooltip.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Toggle active state
+                if (tooltip.classList.contains('active')) {
+                    tooltip.classList.remove('active');
+                } else {
+                    // Close other tooltips
+                    tooltips.forEach(t => t.classList.remove('active'));
+                    // Open this tooltip
+                    tooltip.classList.add('active');
+                }
+            });
+        });
+        
+        // Close tooltips when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.ira-tooltip')) {
+                tooltips.forEach(t => t.classList.remove('active'));
+            }
+        });
     }
 
     downloadResults() {
@@ -679,7 +1059,7 @@ class IRACalculator {
         yPosition += PDF_SPACING.CONTENT_LINE_HEIGHT;
         doc.text(`Total Earnings: ${this.formatCurrency(results.totalEarnings)}`, 110, yPosition);
         
-        yPosition = inputY + (PDF_SPACING.CONTENT_LINE_HEIGHT * 6) + PDF_SPACING.SECTION_GAP - 25;
+        yPosition = inputY + (PDF_SPACING.CONTENT_LINE_HEIGHT * 6) + PDF_SPACING.SECTION_GAP;
         
         // Chart
         if (this.chartCanvas) {

@@ -3,7 +3,33 @@
 ## Overview
 All calculators must follow consistent patterns for HTML structure, CSS styling, JavaScript logic, and naming conventions to ensure maintainability and user experience consistency.
 
-**These rules strictly adhere to the Global Financial Calculator UI/UX Standards v3.0.**
+**These rules strictly adhere to the Global Financial Calculator UI/UX Standards v4.0.**
+
+When a PRD explicitly contradicts a rule, the PRD wins.
+
+---
+
+## Purpose & Audience
+
+### Context
+- These calculators are embedded on advisor websites.
+- The primary users are financial advisor clients (end investors).
+- The objective: Create calculators that feel simple, modern, and trustworthy with consistent behavior across ALL tools.
+
+### What PRDs Define
+- Inputs, outputs, formulas, validation
+- Specific ranges, defaults, and chart logic
+- Calculator-specific exceptions
+
+### What These Global Rules Define
+- UI layout
+- UX expectations
+- Input behavior
+- Tooltip rules
+- Slider rules
+- Export behavior
+- Accessibility
+- Typography inheritance
 
 ---
 
@@ -17,17 +43,24 @@ All calculators must follow consistent patterns for HTML structure, CSS styling,
    - Container div: `<div class="{prefix}-container">`
    - Header section: `<div class="{prefix}-header"><p>{subheading text}</p></div>`
    - Calculator layout: `<div class="{prefix}-calculator-layout">`
-   - Input section: `<div class="{prefix}-form-column">` with `<!-- Input Section -->` comment
-   - Results section: `<div class="{prefix}-results-column">` with `<!-- Results Section -->` comment
+   - Form column: `<div class="{prefix}-form-column">` with `<!-- Input Section -->` comment
+     - Input sections and groups
+     - Disclaimer text
+     - Download section with both buttons: `<div class="{prefix}-download-section">`
+   - Results column: `<div class="{prefix}-results-column">` with `<!-- Results Section -->` comment
+     - Results cards, charts, and breakdown
+     - NO buttons in results column
    - Scripts at end: Chart.js, jsPDF, and calculator script
 
 ### Required Elements
-- **Inputs**: Use `type="text"` with `inputmode="numeric"` (for integers/currency) or `inputmode="decimal"` (for percentages).
+- **Inputs**: Use `type="number"` for numeric inputs that need steppers (spinner arrows). Only use `type="text"` with `inputmode="numeric"` if you need comma formatting (but steppers won't work).
 - **Placeholder format**: Use format like `placeholder="i.e., 10,000"` with 55-60% opacity.
 - **Canvas**: Self-closing format: `<canvas id="{prefix}-{name}-chart" />`
 - **Chart Toggle**: Include a "Hide Chart" toggle button/link above the chart container.
 - **No <form> tags**: Use direct button click handlers and event listeners.
 - **Layout**: Form on left (desktop) / top (mobile). Results on right (desktop) / bottom (mobile).
+- **Sticky Behavior**: Form column (left) is sticky on **desktop only**. On mobile (≤750px), remove all sticky positioning - both columns scroll naturally together. Results column (right) scrolls freely on desktop.
+- **Button Placement**: Both "Start Over" and "Download Results" buttons are placed at the bottom of the left form column.
 
 ### Scripts (Required)
 ```html
@@ -66,7 +99,7 @@ Each calculator must have a unique prefix (e.g., `hlywml-`, `winw-`, `ira-`). Al
 - Breakdown label: `{prefix}-breakdown-label`
 - Breakdown value: `{prefix}-breakdown-value`
 - Explanation text: `{prefix}-explanation-text`
-- Download section: `{prefix}-download-section`
+- Download section: `{prefix}-download-section` (container for both buttons at bottom of form column)
 - Download button: `{prefix}-download-btn` (also include `c-btn` class)
 - Start Over button: `{prefix}-start-over-btn` (also include `c-btn` class)
 - Tooltip icon: `{prefix}-tooltip` (for '?' icons)
@@ -87,18 +120,64 @@ Each calculator must have a unique prefix (e.g., `hlywml-`, `winw-`, `ira-`). Al
 ## Input Configuration & Formatting
 
 ### Global Input Rules
-1. **Type**: ALWAYS use `type="text"`. Do not use `type="number"` as it fights formatting logic.
-2. **Input Mode**:
+1. **Type - Choose Based on Requirements**:
+   - **Use `type="number"`** when you need steppers (spinner arrows) to work. This is the preferred approach.
+   - **Use `type="text"` with `inputmode="numeric"`** only if comma formatting is absolutely required (steppers won't work).
+   - **CRITICAL**: Never change input type via JavaScript (e.g., `input.type = 'text'`) as this breaks steppers.
+2. **Input Mode** (for `type="text"` only):
    - Currency/Integers: `inputmode="numeric"`
    - Decimals/Percentages: `inputmode="decimal"`
-3. **Steppers**: Enable steppers (spinner arrows) on **hover/focus only** for fields where fine-tuning is useful.
-4. **Focus Behavior**: Auto-select entire value on focus to allow quick overwriting.
+3. **Numeric-Only Filtering**: For `type="text"` inputs, implement real-time filtering to only allow numeric characters.
+   - **Currency/Integer fields**: Only allow digits (0-9). Strip all other characters immediately as the user types.
+   - **Percentage/Decimal fields**: Only allow digits (0-9) and one decimal point (.). Strip all other characters.
+   - **For non-numeric inputs**: Use dropdowns (e.g., tax filing status, yes/no choices).
+   - Users should NEVER be able to type letters or symbols in numeric fields.
+   - **Note**: `type="number"` inputs handle this natively - no JavaScript filtering needed.
+4. **Steppers**: Enable steppers (spinner arrows) on **hover/focus only** for fields where fine-tuning is useful. **Steppers only work on `type="number"` inputs.**
+5. **Focus Behavior**: Auto-select entire value on focus to allow quick overwriting.
 
 ### Currency Inputs
-1. **Formatting**: Add commas on `input` and `blur` events (e.g., 10,000).
-2. **Parsing**: Use `parseCurrencyValue()` to strip commas/symbols before math.
-3. **Validation**: Validate on blur or meaningful edit. Show errors inline.
-4. **No Dollar Sign in Input**: Do NOT include dollar signs (`$`) inside the input boxes. The label text is sufficient to indicate currency. Use `toLocaleString()` for formatting (commas only), not `formatCurrency()` which adds dollar signs.
+1. **Type Choice - Steppers vs Commas**:
+   - **`type="number"`** (PREFERRED): Steppers work, no comma formatting, values display as plain numbers (e.g., 10000).
+   - **`type="text"`**: Comma formatting works (e.g., 10,000), but steppers will NOT work.
+   - **Recommendation**: Use `type="number"` for most currency inputs. Steppers provide better UX than comma formatting.
+2. **Formatting** (for `type="text"` only): Add commas on `input` and `blur` events.
+   - Format on type OR on blur, but must be smooth (no cursor jump).
+   - Currency symbol may appear as prefix or adjacent label.
+3. **Parsing**: Use `parseCurrencyValue()` to parse values before math.
+   - For `type="number"`: Just use `parseFloat(value)`
+   - For `type="text"`: Strip commas/symbols: `parseFloat(value.replace(/[^\d.]/g, ''))`
+4. **Validation**: Validate on blur or meaningful edit. Show errors inline.
+5. **No Dollar Sign in Input**: Do NOT include dollar signs (`$`) inside the input boxes. The label text is sufficient to indicate currency.
+
+### Percent Inputs
+- Accept integers or decimals.
+- Format on blur (ex: 6 → 6.0 or 6.00 per PRD).
+
+### Plain Numbers
+- Keep unformatted unless very large.
+
+### Dropdowns
+- **Required for non-numeric inputs**: Any input that accepts non-numeric values (e.g., tax filing status, yes/no, categorical choices) MUST use a `<select>` dropdown.
+- Use only when the field has a small set of logical choices.
+- Do not use dropdowns for numeric ranges better suited for typing or sliding.
+- **All text inputs must be numeric-only**: If a field would require the user to type words or letters, it should be a dropdown instead.
+
+### Focus Behavior
+- Focusing an input may auto-select the full text for quick overwrite.
+- Active outline color must match the site's button/link color.
+
+### Validation
+- Validate on blur AND when user meaningfully edits a field.
+- PRD defines specific numeric limits.
+- Show inline messaging under field (e.g., "Please enter a rate between 0.1% and 60%").
+- Only show errors after interaction.
+- If invalid:
+  - Do NOT update results.
+  - Keep prior results or hide results with a polite explanation.
+- When error is fixed:
+  - Clear message.
+  - Recalculate automatically.
 
 ### Sliders
 1. **Requirement**: If a field allows range selection (years, %), pair a text input with a slider.
@@ -111,7 +190,7 @@ Each calculator must have a unique prefix (e.g., `hlywml-`, `winw-`, `ira-`). Al
 <div class="{prefix}-input-group {prefix}-has-slider">
     <label>
         <div class="{prefix}-input-wrapper">
-            <input type="text" id="{prefix}-field" inputmode="decimal" />
+            <input type="number" id="{prefix}-field" min="0" max="20" step="0.1" />
             <span class="{prefix}-unit">%</span>
         </div>
     </label>
@@ -125,7 +204,26 @@ Each calculator must have a unique prefix (e.g., `hlywml-`, `winw-`, `ira-`). Al
 </div>
 ```
 
+**Note**: Use `type="number"` for inputs paired with sliders. This enables steppers and the slider provides an alternative input method.
+
 **JavaScript**: Sync slider with text input bidirectionally, update on input/change events.
+
+**CRITICAL: Exclude Range Sliders from Global Event Listeners**
+When attaching event listeners to all inputs, you MUST exclude range sliders to prevent interference with drag functionality:
+
+```javascript
+// CORRECT: Exclude range sliders
+const inputs = document.querySelectorAll('input:not([type="range"])');
+inputs.forEach(input => {
+    input.addEventListener('input', () => { /* ... */ });
+    input.addEventListener('blur', () => { /* ... */ });
+});
+
+// INCORRECT: This will break slider dragging
+const inputs = document.querySelectorAll('input'); // ❌ Includes range sliders
+```
+
+**Why**: Adding `blur` or other event listeners to range sliders can interfere with the browser's native drag behavior, making sliders non-draggable even though click/tap works.
 
 ---
 
@@ -154,8 +252,10 @@ Each calculator must have a unique prefix (e.g., `hlywml-`, `winw-`, `ira-`). Al
 
 3. **`resetForm()`**:
    - Restores **default example values** (not empty/blank).
-   - Re-runs calculation.
-   - Scrolls user to top of form (mobile).
+   - Re-runs calculation using defaults.
+   - Moves focus to the first input field.
+   - On mobile, also scrolls user to the first field.
+   - This is NOT a "clear-to-blank" behavior. Defaults always repopulate.
 
 ---
 
@@ -164,7 +264,11 @@ Each calculator must have a unique prefix (e.g., `hlywml-`, `winw-`, `ira-`). Al
 ### UX Pattern
 - **Icon**: Use a '?' icon next to the label.
 - **Interaction**: **Click/Tap** to toggle (Not hover). Better for mobile.
-- **Content**: Short, plain language. No jargon.
+  - Only the icon opens/closes the tooltip — NOT the entire label.
+  - Click/tap to open, click/tap to close.
+  - DO NOT open on hover.
+- **Content**: 1–2 sentences max, in plain language. No jargon.
+- **Accessibility**: Tooltip icons must have ARIA labels.
 
 ### Implementation
 **HTML Structure**:
@@ -314,9 +418,21 @@ toggleChart() {
 
 ### Hierarchy
 1. **Headline**: Main result (e.g., "You will save $4,000").
+   - One large primary result (or a small set of key results).
 2. **Interpretation**: One sentence explaining the headline.
+   - Directly followed by a short interpretation sentence.
 3. **Chart**: Visual representation (with toggle).
+   - Position chart below supporting results.
+   - Use a chart when it adds clarity (most financial calculators benefit).
 4. **Breakdown**: Detailed numbers (nested below).
+   - Display key numbers in clean, simple cards or clear list.
+   - Avoid overwhelming data dumps.
+
+### Tone Guidelines
+- **Neutral, calm, professional**: Never promissory. Never "you will achieve X."
+- **Use softer phrasing**: "This scenario may help you…" instead of definitive statements.
+- **Friendly, neutral, plain-language microcopy**: Avoid engineering jargon.
+- **Mirror the tone of client-facing financial education**.
 
 ### Breakdown Section
 - **Divider**: Use `border-top: 1px solid #e2e8f0` (no separate cards).
@@ -333,12 +449,67 @@ toggleChart() {
 ### Layout
 ```css
 /* Ensure container is not constrained to article width */
+/* Calculator must NOT be constrained to narrow CMS article widths (650–700px). Override CMS wrapper width if needed. */
 .{prefix}-container {
     max-width: 1150px; /* 1100-1170px range */
     margin: 0 auto;
     width: 100%;
+    overflow: visible;
+}
+
+/* Two-column grid layout */
+.{prefix}-calculator-layout {
+    display: grid;
+    grid-template-columns: 48% 52%;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible !important;
+    align-items: start;
+}
+
+/* Form column - base styles */
+.{prefix}-form-column {
+    /* Base styles without sticky */
+}
+
+/* Sticky positioning - desktop only (above 750px) */
+@media (min-width: 751px) {
+    .{prefix}-form-column {
+        position: -webkit-sticky !important;
+        position: sticky !important;
+        top: 0 !important;
+        align-self: start !important;
+        height: fit-content;
+    }
+}
+
+/* Results column - scrollable on desktop */
+.{prefix}-results-column {
+    min-width: 0;
+    max-width: 100%;
+    overflow: visible;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Mobile: Stack vertically */
+@media (max-width: 750px) {
+    .{prefix}-calculator-layout {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    /* Remove any min-height added by JavaScript */
+    .{prefix}-results-column {
+        min-height: 0 !important;
+    }
 }
 ```
+
+### Padding
+- **Desktop**: ~2rem horizontal padding
+- **Mobile**: ~1rem horizontal padding; avoid oversized mobile gutters
 
 ### Card Spacing (Consistent Rules)
 All content cards (form columns, result cards, breakdown sections, chart sections, etc.) must follow consistent spacing:
@@ -355,21 +526,25 @@ All content cards (form columns, result cards, breakdown sections, chart section
 - **Padding**: Always `26px` for all cards
 - **Margin-bottom**: `24px` for all cards
 - **Margin-top**: Do NOT declare (should be 0 by default)
-- **Last card exception**: The card immediately above the download button should have `margin-bottom: 32px;` to create extra space before the download button
+- **Download section spacing**: The download section (containing both buttons) should have `margin-top: 32px` and `margin-bottom: 0`
 
 **Example:**
 ```css
 .{prefix}-form-column,
 .{prefix}-main-result,
-.{prefix}-breakdown {
+.{prefix}-breakdown,
+.{prefix}-chart-section {
     padding: 26px;
     margin-bottom: 24px;
 }
 
-.{prefix}-chart-section {
-    /* Last card before download button */
-    padding: 26px;
-    margin-bottom: 32px;
+.{prefix}-download-section {
+    /* Button container at bottom of form column */
+    margin-top: 32px;
+    margin-bottom: 0;
+    display: flex;
+    justify-content: flex-start;
+    gap: 12px;
 }
 ```
 
@@ -391,9 +566,103 @@ All content cards (form columns, result cards, breakdown sections, chart section
 }
 ```
 
+### Unit Symbol Positioning (%, years, etc.)
+When an input has a unit symbol (like % or "years"), position it between the value and the stepper:
+
+**Layout**: `[value] [unit symbol] [stepper]`
+
+```css
+/* Unit symbol positioned between value and stepper */
+.{prefix}-unit {
+    position: absolute;
+    right: 55px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: 500;
+    font-size: 1em;
+    pointer-events: none;
+    z-index: 10;
+    color: #64748b;
+}
+
+/* Input padding for unit symbol */
+.{prefix}-input-wrapper:has(.{prefix}-unit) input {
+    padding-right: 20px;
+}
+```
+
+**Why `right: 55px`**: This positions the unit symbol to the left of where the native stepper arrows appear (which are at the far right edge of the input). The stepper takes roughly 30-40px, so 55px gives proper spacing.
+
+### Preventing Layout Shakiness
+
+When calculators have sticky form columns and dynamically updating charts, users may experience "shakiness" or visual jitter when interacting with inputs (especially steppers). This is caused by layout reflows when the chart updates.
+
+**Solution**: Add GPU layer isolation and layout containment:
+
+```css
+/* Form column - prevent layout shifts */
+.{prefix}-form-column {
+    /* ... existing styles ... */
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+/* Chart container - prevent reflows from affecting layout */
+.{prefix}-chart-container {
+    position: relative;
+    width: 100%;
+    min-height: 200px;
+    contain: layout;
+}
+```
+
+**Why this works:**
+- `transform: translateZ(0)` creates a new GPU compositing layer, isolating the element from reflows in sibling elements
+- `will-change: transform` hints to the browser to optimize for transforms
+- `contain: layout` on the chart container prevents chart updates from triggering layout recalculations outside the container
+- `min-height` on the chart container prevents height changes during updates
+
+**When to apply:** If users report shakiness or visual jitter when using steppers or inputs, especially on calculators with sticky form columns and charts, apply these CSS properties.
+
 ### Buttons
 - **Download Button**: Only for PDF. No Print. No CSV.
 - **Start Over Button**: Must reset to defaults.
+
+### Sticky Positioning (Required)
+
+**Problem**: Sticky positioning only works when the sticky element is shorter than its scrollable container. If the form column is taller than the results column, the form column defines the grid height itself, leaving no room to "stick" within.
+
+**Solution**: Add JavaScript to detect when the form column is too tall and automatically add `min-height` to the results column to create scrollable space.
+
+**JavaScript Implementation**:
+```javascript
+diagnoseStickyPositioning() {
+    // Only apply on desktop (viewport width > 750px)
+    if (window.innerWidth <= 750) return;
+    
+    const formColumn = document.querySelector('.{prefix}-form-column');
+    const resultsColumn = document.querySelector('.{prefix}-results-column');
+    const layoutContainer = document.querySelector('.{prefix}-calculator-layout');
+    
+    if (!formColumn || !resultsColumn || !layoutContainer) return;
+    
+    const formHeight = formColumn.getBoundingClientRect().height;
+    const resultsHeight = resultsColumn.getBoundingClientRect().height;
+    
+    // If form column is taller than results column
+    if (formHeight >= resultsHeight) {
+        const viewportHeight = window.innerHeight;
+        // Add min-height to results column to create scrollable space
+        resultsColumn.style.minHeight = (formHeight + viewportHeight * 0.5) + 'px';
+    }
+}
+```
+
+**When to Call**: Call this function in the `init()` method, right after `cacheElements()`.
+
+**Important**: This fix **only applies on desktop** (viewport width > 750px). Mobile (≤750px) uses `position: static` - no sticky positioning on mobile. The function returns early if viewport is ≤750px.
+
+**Why This Works**: By making the results column taller than the form column, the form column has room to "stick" as the user scrolls through the taller results column on desktop.
 
 ---
 
@@ -413,6 +682,7 @@ class {CalculatorName}Calculator {
     
     init() {
         this.cacheDOM();
+        this.diagnoseStickyPositioning(); // Fix sticky positioning (Required)
         this.initializeInputFormatting();
         this.initializeSliders();
         this.initializeEventListeners();
@@ -448,11 +718,25 @@ class {CalculatorName}Calculator {
 
 ## Required JavaScript Methods
 
+### `diagnoseStickyPositioning()` (Required)
+- Detect when form column is taller than results column
+- Automatically add `min-height` to results column to create scrollable space
+- See "Sticky Positioning" section above for full implementation
+
 ### `initializeInputFormatting()`
-- Change currency inputs to `type="text"` (if not already)
-- Add event listeners: `input`, `blur`, `focus`
-- Format with commas on input/blur
-- Remove commas on focus for easier editing
+- **DO NOT change input types via JavaScript** - this breaks steppers!
+- For `type="number"` inputs (preferred for steppers):
+  - Just add event listeners for slider syncing and calculation triggering
+  - No comma formatting (steppers require plain numbers)
+  - Browser handles numeric-only input natively
+- For `type="text"` inputs (only if comma formatting needed):
+  - Add event listeners: `input`, `blur`, `focus`
+  - Implement real-time numeric-only filtering on `input` event
+  - Format with commas on input/blur
+  - Remove commas on focus for easier editing
+  - **Note**: Steppers will NOT work on text inputs
+
+**CRITICAL**: If inputs are defined as `type="number"` in HTML, keep them that way. Changing to `type="text"` in JavaScript will break steppers.
 
 ### `formatCurrencyInput(event)`
 - Strip non-numeric characters
@@ -483,6 +767,73 @@ class {CalculatorName}Calculator {
 
 ---
 
+## Input Filtering Implementation Examples
+
+### Currency/Integer Fields (Only Digits)
+```javascript
+input.addEventListener('input', (e) => {
+    // Filter to only allow digits (strip all non-numeric characters)
+    const cursorPosition = e.target.selectionStart;
+    const oldValue = e.target.value;
+    const newValue = oldValue.replace(/[^\d]/g, '');
+    
+    if (oldValue !== newValue) {
+        e.target.value = newValue;
+        // Adjust cursor position based on removed characters
+        const removedChars = oldValue.substring(0, cursorPosition).replace(/[^\d]/g, '').length;
+        const newCursorPos = Math.min(removedChars, newValue.length);
+        e.target.setSelectionRange(newCursorPos, newCursorPos);
+    }
+    
+    // Clear errors and trigger calculation
+    this.clearError(e.target);
+    this.clearInfo(e.target);
+    clearTimeout(this.calculationTimeout);
+    this.calculationTimeout = setTimeout(() => {
+        this.calculateAndDisplay();
+    }, 300);
+});
+```
+
+### Percentage/Decimal Fields (Digits and One Decimal Point)
+```javascript
+input.addEventListener('input', (e) => {
+    // Filter to only allow digits and one decimal point
+    const cursorPosition = e.target.selectionStart;
+    const oldValue = e.target.value;
+    let newValue = oldValue.replace(/[^\d.]/g, '');
+    
+    // Ensure only one decimal point
+    const parts = newValue.split('.');
+    if (parts.length > 2) {
+        newValue = parts[0] + '.' + parts.slice(1).join('');
+    }
+    
+    if (oldValue !== newValue) {
+        e.target.value = newValue;
+        // Adjust cursor position
+        const removedChars = oldValue.substring(0, cursorPosition).length - oldValue.substring(0, cursorPosition).replace(/[^\d.]/g, '').length;
+        const newCursorPos = Math.max(0, cursorPosition - removedChars);
+        e.target.setSelectionRange(newCursorPos, newCursorPos);
+    }
+    
+    // Clear errors and trigger calculation
+    this.clearError(e.target);
+    clearTimeout(this.calculationTimeout);
+    this.calculationTimeout = setTimeout(() => {
+        this.calculateAndDisplay();
+    }, 300);
+});
+```
+
+**Key Points:**
+- Filtering happens in real-time on every keystroke
+- Cursor position is adjusted to prevent jumpy behavior
+- Users cannot type letters, symbols, or special characters
+- For non-numeric choices (filing status, yes/no), use `<select>` dropdowns instead
+
+---
+
 ## Responsive Design
 
 ### Media Queries
@@ -499,6 +850,7 @@ class {CalculatorName}Calculator {
 - **Start Over button**: Auto-scroll users up to the form
 - **View Results button** (if used): Auto-scroll users down to the results
 - **Sticky container**: For one/two central outputs, show sticky container at bottom that auto-completes when users edit data
+- Maintain one clean, predictable scroll path
 
 ---
 
@@ -525,9 +877,9 @@ Before considering a calculator complete:
 - [ ] All inputs pre-filled with default values
 - [ ] Results display on page load (auto-calculated)
 - [ ] Real-time calculation works on input changes (debounced 250-400ms)
-- [ ] Currency inputs format with commas
-- [ ] Steppers appear on hover/focus only (if applicable)
-- [ ] Sliders sync bidirectionally with text inputs
+- [ ] **Numeric-only filtering works**: Try typing letters in numeric fields - they should be blocked
+- [ ] **Steppers work on number inputs**: Hover over inputs and verify spinner arrows appear and function
+- [ ] Sliders sync bidirectionally with inputs
 - [ ] Start Over button restores defaults and scrolls to form (mobile)
 - [ ] Chart displays correctly with appropriate colors
 - [ ] Chart toggle works ("Hide Chart" / "Show Chart")
@@ -542,6 +894,7 @@ Before considering a calculator complete:
 - [ ] Typography inherits from host site (no global font-family/font-size)
 - [ ] Container max-width: 1100-1170px
 - [ ] Focus behavior: Auto-select entire value on focus
+- [ ] Non-numeric inputs use dropdowns (not text inputs)
 
 ---
 
@@ -574,6 +927,101 @@ Before considering a calculator complete:
 - **No CSV export**: Do not include CSV export functionality
 - **Implementation**: Use jsPDF library to generate PDF from results
 
+
+### Placement
+- **Location**: At the bottom of the left form column, after the disclaimer text
+- **Buttons**: Both "Start Over" and "Download Results" buttons are placed together in a `.{prefix}-download-section`
+- **Alignment**: 
+  - **Desktop**: Left-aligned, side by side
+  - **Mobile**: Stacked vertically, full-width
+- **Spacing**: `margin-top: 32px` above the button group
+
+### PDF Content
+- Mirror on-screen hierarchy:
+  - Headline result
+  - Interpretation sentence
+  - Key supporting numbers
+  - Short textual chart summary
+- Keep PDF ink-friendly:
+  - Light backgrounds only
+  - Dark text
+  - Minimal brand color
+
+---
+
+## Accessibility & UX Tone
+
+### Tone
+- **Friendly, neutral, plain-language microcopy**: Avoid engineering jargon.
+- **Mirror the tone of client-facing financial education**.
+- **Neutral, calm, professional**: Never promissory. Never "you will achieve X."
+- **Use softer phrasing**: "This scenario may help you…" instead of definitive statements.
+
+### Accessibility Requirements
+- All inputs, sliders, dropdowns, tooltips, and export actions must be keyboard accessible.
+- Tooltip icons must have ARIA labels.
+- Do not rely on color alone for errors or states.
+- All touch targets ~44px minimum.
+
+### Focus Handling
+- After "Start Over," focus moves to first input.
+- On mobile, also scroll the user to the first field.
+
+---
+
+## PRD & Spreadsheet Relationship
+
+### What These Global Rules Define
+- Layout
+- UX expectations
+- Input conventions
+- Tooltip logic
+- Slider logic
+- Export behavior
+- Accessibility
+- Typography
+
+### What the PRD Defines
+- Exact inputs
+- Exact outputs
+- Formulas & financial math
+- Validation rules
+- Slider ranges
+- Step sizes
+- Dropdown options
+- Tooltip copy
+- Chart type
+
+### What the Spreadsheet Defines
+- Default values
+- Which fields have tooltips
+- Which fields have sliders
+- Which fields have steppers
+- Any numeric constraints
+
+### Rule Hierarchy
+**Global rules → PRD → Spreadsheet**
+
+The PRD/spreadsheet may override global rules when necessary.
+
+---
+
+## What NOT to Do
+
+**Do NOT:**
+- Add a Print button
+- Add Excel/CSV export
+- Hide results on initial load
+- Load screens with blank fields
+- Use zero defaults
+- Add sticky action bars unless a PRD specifically requests
+- Override global typography (no font-family or base font-size)
+- Use hover-only tooltips
+- Let invalid values produce updated results
+- Allow users to type non-numeric characters in text inputs (implement real-time filtering)
+- Use text inputs for non-numeric data (use dropdowns instead for categorical choices)
+- **Change input type via JavaScript** (e.g., `input.type = 'text'`) - this breaks steppers!
+
 ---
 
 ## Notes
@@ -585,4 +1033,4 @@ Before considering a calculator complete:
 - Document any deviations from these rules with clear reasoning
 - **Pre-filled forms are mandatory**: All calculators must load with pre-filled example values
 - **Mobile-first considerations**: Ensure all interactions work well on mobile devices
-- **Follow UI/UX Standards v3.0**: These rules align with the Global Financial Calculator UI/UX Standards
+- **Follow UI/UX Standards v4.0**: These rules align with the Global Financial Calculator UI/UX Standards

@@ -90,6 +90,9 @@ body {
     top: 0 !important;
     align-self: start !important;
     height: fit-content;
+    /* Prevent layout shifts during updates */
+    transform: translateZ(0);
+    will-change: transform;
 }
 
 .doi-results-column {
@@ -701,6 +704,9 @@ input[type="number"]::placeholder {
 .doi-chart-container {
     position: relative;
     width: 100%;
+    min-height: 200px;
+    /* Prevent layout shifts during chart updates */
+    contain: layout;
 }
 
 .doi-chart-container canvas {

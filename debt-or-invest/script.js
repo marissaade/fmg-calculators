@@ -208,6 +208,7 @@ class DebtOrInvestCalculator {
         stepperBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 const stepper = btn.closest('[data-stepper]');
                 if (!stepper) return;
 
@@ -216,7 +217,10 @@ class DebtOrInvestCalculator {
                 if (!input) return;
 
                 const action = btn.getAttribute('data-stepper-action');
-                const currentValue = this.parseCurrencyValue(input.value);
+                // Use parseFloat for percentages (preserves decimals), parseCurrencyValue for currency
+                const currentValue = percentageInputs.includes(inputId) 
+                    ? parseFloat(input.value) || 0
+                    : this.parseCurrencyValue(input.value);
                 const step = parseFloat(input.getAttribute('data-step')) || 1;
                 const min = parseFloat(input.getAttribute('data-min')) || 0;
                 const max = parseFloat(input.getAttribute('data-max')) || 1000000;
@@ -243,11 +247,11 @@ class DebtOrInvestCalculator {
                     input.value = newValue.toString();
                 }
 
-                // Trigger calculation
+                // Trigger calculation with small debounce to reduce chart shakiness
                 clearTimeout(this.calculationTimeout);
                 this.calculationTimeout = setTimeout(() => {
                     this.calculateAndDisplay();
-                }, 300);
+                }, 100);
             });
         });
     }

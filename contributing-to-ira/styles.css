@@ -20,39 +20,21 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ensure body doesn't constrain width */
 .ira-body {
     width: 100%;
     box-sizing: border-box;
 }
 
-/* Copy exact body styling from Comparing Investments calculator */
+/* CMS body styling */
 .c-matter--article .c-matter__body {
     max-width: 1170px;
 }
-@media (max-width: 950px) {
-    .c-matter--article .c-matter__body {
-        max-width: 750px;
-        padding: 1.5rem;
-    }
-}
 
-@media (max-width: 750px) {
-    .c-matter--article .c-matter__body {
-        max-width: 100%;
-        margin: 10px;
-        padding: 1rem;
-        border-radius: 8px;
+@media (min-width: 992px) {
+    .c-matter--article .c-matter__body:has(.ci-body) {
+        max-width: 1170px;
+        width: auto;
     }
-}
-
-/* Apply CMS calculator styling - use ci-body class for consistency */
-/* TODO: Update class name to something more universal (e.g., .calculator-body) when dev team refactors */
-@media(min-width: 992px) {
-  .c-matter--article .c-matter__body:has(.ci-body) {
-    max-width: 1170px;
-    width: auto;
-  }
 }
 
 /* Container and layout */
@@ -76,22 +58,22 @@ body {
 }
 
 .ira-form-column {
-    /* Form takes up left column */
     background: #f7fafc;
     border: 2px solid #f3f4f6;
     border-radius: var(--radius-lg);
-    padding: 24px;
+    padding: 26px;
+    margin-bottom: 24px;
     min-width: 0;
     max-width: 100%;
     overflow: visible;
-}
-
-.ira-results-column {
-    /* Results take up right column */
     position: -webkit-sticky !important;
     position: sticky !important;
     top: 0 !important;
     align-self: start !important;
+    height: fit-content;
+}
+
+.ira-results-column {
     min-width: 0;
     max-width: 100%;
     overflow: visible;
@@ -104,123 +86,12 @@ body {
     box-sizing: border-box;
 }
 
-/* Placeholder content styles */
-.ira-placeholder-content {
-    background: #f7fafc;
-    border: 2px solid #f3f4f6;
-    border-radius: var(--radius-lg);
-    padding: 0 24px 24px 24px;
-    box-shadow: none;
-    text-align: left;
-}
-
-/* Chart placeholder styles */
-.ira-chart-placeholder {
-    background: #f7fafc;
-    border: 2px solid #f3f4f6;
-    border-radius: var(--radius-lg);
-    padding: 24px;
-    box-shadow: none;
-    text-align: center;
-    min-height: 400px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.ira-chart-placeholder-content h3 {
-    margin-bottom: 1rem;
-    color: #374151;
-}
-
-.ira-chart-placeholder-content p {
-    margin-bottom: 2rem;
-    color: #6b7280;
-    line-height: 1.6;
-}
-
-.ira-chart-placeholder-icon {
-    font-size: 4rem;
-    opacity: 0.3;
-}
-
-.ira-placeholder-header {
-    margin-bottom: 2rem;
-    padding-top: 24px;
-    text-align: center;
-}
-
-.ira-placeholder-header h3 {
-    margin-bottom: 0.5rem;
-}
-
-.ira-placeholder-header p {
-    line-height: 1.6;
-}
-
-.ira-placeholder-features {
-    margin-bottom: 2rem;
-}
-
-.ira-feature-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    border-radius: var(--radius-md);
-    background: #f3f4f6;
-    transition: all 0.2s ease;
-}
-
-.ira-feature-item:hover {
-    background: #e5e7eb;
-}
-
-.ira-feature-icon {
-    flex-shrink: 0;
-    width: 2.5rem;
-    height: 2.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #ffffff;
-    border-radius: var(--radius-sm);
-    border: 1px solid #e5e7eb;
-}
-
-.ira-feature-text h4 {
-    margin-bottom: 0.25rem;
-}
-
-.ira-feature-text p {
-    line-height: 1.5;
-    margin: 0;
-}
-
-.ira-placeholder-cta {
-    text-align: center;
-    padding: 1.5rem;
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.02), rgba(16, 185, 129, 0.05));
-    border: 1px solid rgba(16, 185, 129, 0.1);
-    border-radius: var(--radius-md);
-}
-
-.ira-placeholder-cta p {
-    line-height: 1.6;
-    margin: 0;
-}
-
-.ira-placeholder-cta strong {
-}
-
 /* Header */
 .ira-header {
     text-align: left;
     margin-bottom: 48px;
     padding-bottom: 0;
 }
-
 
 .ira-header p {
     font-size: 1.0625rem;
@@ -236,19 +107,21 @@ body {
     padding: 0;
     background: transparent;
     border: none;
+    overflow: visible;
 }
 
 .ira-input-section h2 {
-    font-size: 1.1875rem;
     font-weight: 500;
-    margin-bottom: 28px;
-    padding-bottom: 16px;
+    margin-bottom: 20px;
+    margin-top: 0;
     letter-spacing: -0.01em;
+    text-align: center;
 }
 
 /* Input groups */
 .ira-input-group {
     margin-bottom: 24px;
+    overflow: visible;
 }
 
 .ira-input-group label {
@@ -258,9 +131,15 @@ body {
     position: relative;
     letter-spacing: -0.005em;
     cursor: default !important;
+    overflow: visible;
 }
 
-/* Slider input groups have different layout */
+.ira-input-group label > span {
+    display: inline-block;
+    position: relative;
+}
+
+/* Slider input groups */
 .ira-input-group.ira-has-slider label {
     display: flex;
     justify-content: space-between;
@@ -279,54 +158,68 @@ body {
 .ira-tooltip {
     display: inline-block;
     margin-left: 6px;
-    width: 16px;
-    height: 16px;
-    background: var(--color-text-muted);
+    width: 18px;
+    height: 18px;
+    background: #64748b;
     color: white;
     border-radius: 50%;
     text-align: center;
-    font-size: 10px;
+    font-size: 12px;
+    font-weight: 600;
     cursor: help;
     position: relative;
-    line-height: 16px;
+    line-height: 18px;
     transition: all 0.2s ease;
+    vertical-align: middle;
+    flex-shrink: 0;
+    z-index: 999999;
 }
 
 .ira-tooltip:hover {
-    background: var(--color-text-secondary);
+    background: #475569;
     transform: scale(1.1);
 }
 
-.ira-tooltip:hover::after {
+.ira-tooltip:hover::after,
+.ira-tooltip.active::after {
     content: attr(data-tooltip);
     position: absolute;
-    bottom: 130%;
+    bottom: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
+    background: #1e293b;
     color: white;
-    padding: 8px 12px;
+    padding: 10px 14px;
     border-radius: var(--radius-md);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 400;
     white-space: normal;
-    width: 240px;
+    width: 280px;
     text-align: left;
-    z-index: 1000;
-    box-shadow: var(--shadow-lg);
-    line-height: 1.4;
+    z-index: 999999;
+    box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.2);
+    line-height: 1.5;
+    pointer-events: none;
+    opacity: 1;
+    visibility: visible;
 }
 
-.ira-tooltip:hover::before {
+.ira-tooltip:hover::before,
+.ira-tooltip.active::before {
     content: '';
     position: absolute;
-    bottom: 120%;
+    bottom: calc(100% + 2px);
     left: 50%;
     transform: translateX(-50%);
-    border: 4px solid transparent;
-    z-index: 1001;
+    border: 6px solid transparent;
+    border-top-color: #1e293b;
+    z-index: 1000000;
+    pointer-events: none;
+    opacity: 1;
+    visibility: visible;
 }
 
-/* Input wrapper for currency and percent symbols */
+/* Input wrapper */
 .ira-input-wrapper {
     position: relative;
     display: flex;
@@ -336,10 +229,10 @@ body {
 .ira-currency {
     position: absolute;
     left: 16px;
-    top: 50%;
+    top: 45%;
     transform: translateY(-50%);
     font-weight: 500;
-    z-index: 1;
+    z-index: 0;
     pointer-events: none;
 }
 
@@ -350,6 +243,10 @@ body {
     transform: translateY(-50%);
     font-weight: 500;
     pointer-events: none;
+}
+
+.ira-input-wrapper:has(.ira-currency) input {
+    padding-left: 40px;
 }
 
 /* Slider styles */
@@ -412,7 +309,6 @@ body {
     margin-top: 4px;
 }
 
-/* Hide arrows on percentage inputs with sliders */
 .ira-input-group.ira-has-slider input[type="number"]::-webkit-inner-spin-button,
 .ira-input-group.ira-has-slider input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
@@ -438,6 +334,28 @@ input[type="number"],
     background: white;
 }
 
+input[type="text"]:focus,
+input[type="number"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgb(16 185 129 / 0.08);
+    border-color: rgb(16 185 129);
+}
+
+/* Steppers (hover only) */
+.ira-input-wrapper input::-webkit-outer-spin-button,
+.ira-input-wrapper input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.ira-input-wrapper input:hover::-webkit-outer-spin-button,
+.ira-input-wrapper input:hover::-webkit-inner-spin-button,
+.ira-input-wrapper input:focus::-webkit-outer-spin-button,
+.ira-input-wrapper input:focus::-webkit-inner-spin-button {
+    -webkit-appearance: auto;
+}
+
+/* Select dropdown */
 .ira-select {
     cursor: pointer;
     appearance: none;
@@ -451,35 +369,6 @@ input[type="number"],
     outline: none;
     border-color: rgb(16 185 129);
     box-shadow: 0 0 0 2px rgb(16 185 129 / 0.08);
-}
-
-/* Currency inputs need extra left padding */
-.ira-input-wrapper:has(.ira-currency) input {
-    padding-left: 40px;
-}
-
-
-input[type="text"]:focus,
-input[type="number"]:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgb(16 185 129 / 0.08);
-}
-
-input[type="text"]:hover,
-input[type="number"]:hover {
-}
-
-/* Currency inputs need left padding for $ symbol */
-#current-savings,
-#annual-contribution,
-#current-college-cost {
-    padding-left: 32px;
-}
-
-/* Percentage inputs need right padding for % symbol */
-#rate-of-return,
-#college-inflation-rate {
-    padding-right: 32px;
 }
 
 /* Error messages */
@@ -497,88 +386,89 @@ input[type="number"]:hover {
     box-shadow: 0 0 0 3px rgb(239 68 68 / 0.1);
 }
 
-/* Button styles */
-.ira-button-group {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-start;
+/* Info messages */
+.ira-info-message {
+    margin-top: 8px;
+    font-size: 0.875rem;
+    color: #0369a1;
+    font-weight: 400;
+    display: none;
+    line-height: 1.4;
+    background: #e0f2fe;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    border-left: 3px solid #0284c7;
+}
+
+.ira-info-message.show {
+    display: block;
+}
+
+.ira-input-group.info input {
+    box-shadow: 0 0 0 3px rgb(3 105 161 / 0.08);
+    border-color: #0284c7;
+}
+
+/* Disclaimer */
+.ira-disclaimer {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: #f3f3f3;
+    border-left: 3px solid #cbd5e1;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    color: #475569;
+    line-height: 1.5;
+}
+
+/* Download section */
+.ira-download-section {
     margin-top: 32px;
-    align-items: flex-start;
+    margin-bottom: 0;
+    display: flex;
+    justify-content: flex-start;
+    gap: 12px;
+    padding-top: 8px;
+    width: 100%;
 }
 
-.ira-reset-btn {
-    min-width: 200px;
-    flex: 0 0 auto;
+.ira-download-mobile {
+    display: none;
 }
 
-.ira-calculate-btn {
-    margin-top: 1rem;
-    align-self: flex-start;
+.ira-download-btn,
+.ira-start-over-btn {
+    flex: 1;
+    min-width: 0;
 }
 
-/* Initial disabled state - apply immediately on page load */
-.c-btn.ira-calculate-btn {
-    opacity: 0.5 !important;
-    cursor: not-allowed !important;
-    background: #cccccc !important;
-    background-color: #cccccc !important;
-    background-image: none !important;
-    color: #666666 !important;
-    border-color: #cccccc !important;
-}
-
-/* Enabled state - only when not disabled */
-.c-btn.ira-calculate-btn:not(:disabled) {
-    opacity: 1 !important;
-    cursor: pointer !important;
-    background: inherit !important;
-    background-color: inherit !important;
-    background-image: inherit !important;
-    color: inherit !important;
-    border-color: inherit !important;
-}
-
-/* Disabled state - prevent all hover effects including background changes */
-.c-btn.ira-calculate-btn:disabled,
-.c-btn.ira-calculate-btn:disabled:hover,
-.c-btn.ira-calculate-btn:disabled:focus,
-.c-btn.ira-calculate-btn:disabled:active {
-    opacity: 0.5 !important;
-    cursor: not-allowed !important;
-    transform: none !important;
-    box-shadow: none !important;
-    background: #cccccc !important;
-    background-color: #cccccc !important;
-    background-image: none !important;
-    color: #666666 !important;
-    border-color: #cccccc !important;
-}
-
-.ira-calculate-btn:active {
-    transform: translateY(0);
-}
-
-.ira-reset-btn {
-    background: transparent;
-}
-
-.ira-reset-btn:hover {
+/* Stack buttons at earlier breakpoint */
+@media (max-width: 900px) {
+    .ira-download-section {
+        flex-direction: column;
+    }
+    
+    .ira-download-btn,
+    .ira-start-over-btn {
+        width: 100%;
+    }
 }
 
 /* Results section */
 .ira-results-section {
-    margin-top: 24px;
+    margin-top: 0;
     padding: 0;
     background: transparent;
     border: none;
 }
 
-
+/* Eligibility card */
 .ira-eligibility-card {
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
     border: 2px solid rgba(16, 185, 129, 0.3);
     border-radius: var(--radius-lg);
-    padding: 20px 24px;
+    padding: 26px;
     margin-bottom: 24px;
 }
 
@@ -613,19 +503,21 @@ input[type="number"]:hover {
     font-weight: 600;
 }
 
+/* Main result card */
 .ira-main-result {
     background: #f8fafc;
-    padding: 32px 24px;
+    padding: 26px;
     border-radius: 12px;
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
     border: 1px solid #e2e8f0;
 }
 
 .ira-main-result h2 {
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: 500;
+    margin-top: 0;
     margin-bottom: 16px;
+    letter-spacing: -0.01em;
 }
 
 .ira-main-value {
@@ -635,6 +527,16 @@ input[type="number"]:hover {
     margin-bottom: 24px;
 }
 
+.ira-explanation-text {
+    font-size: 0.9375rem;
+    color: #475569;
+    margin-top: 12px;
+    margin-bottom: 0;
+    line-height: 1.6;
+    font-style: italic;
+}
+
+/* Breakdown */
 .ira-breakdown {
     margin-top: 24px;
     padding-top: 24px;
@@ -655,7 +557,7 @@ input[type="number"]:hover {
 .ira-breakdown-items {
     display: flex;
     flex-direction: column;
-    gap: 0px;
+    gap: 0;
 }
 
 .ira-breakdown-item {
@@ -676,44 +578,86 @@ input[type="number"]:hover {
     letter-spacing: -0.02em;
 }
 
-/* Status card colors */
-.ira-status-card.surplus {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.02), rgba(16, 185, 129, 0.05));
-}
-
-.ira-status-card.surplus .ira-result-value {
-    color: var(--color-accent);
-}
-
-.ira-status-card.shortfall {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.02), rgba(239, 68, 68, 0.05));
-}
-
-.ira-status-card.shortfall .ira-result-value {
-}
-
 /* Chart section */
 .ira-chart-section {
     background: #f7fafc;
     border: 2px solid #f3f4f6;
     border-radius: var(--radius-lg);
-    padding: 24px;
-    margin: 0;
+    padding: 26px;
+    margin-bottom: 32px;
     box-shadow: none;
 }
 
-.ira-chart-heading {
+.ira-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.ira-chart-header h2 {
+    margin-top: 0;
+    margin-bottom: 0;
+    flex: 1;
     text-align: center;
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 20px;
-    letter-spacing: -0.01em;
-    color: #1e293b;
+}
+
+.ira-chart-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    flex-shrink: 0;
+}
+
+.ira-chart-toggle:hover {
+    background: #f1f5f9;
+}
+
+.ira-caret {
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 8px solid #64748b;
+    transition: transform 0.3s ease;
+    display: block;
+}
+
+.ira-chart-section.collapsed .ira-caret {
+    transform: rotate(180deg);
+}
+
+.ira-chart-toggle:hover .ira-caret {
+    border-bottom-color: #475569;
+}
+
+.ira-chart-content {
+    margin-top: 20px;
+    overflow: hidden;
+    max-height: 1000px;
+    opacity: 1;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+}
+
+.ira-chart-section.collapsed .ira-chart-content {
+    max-height: 0;
+    margin-top: 0;
+    opacity: 0;
+    overflow: hidden;
 }
 
 .ira-chart-container {
     position: relative;
-    height: 280px;
     width: 100%;
 }
 
@@ -723,68 +667,13 @@ input[type="number"]:hover {
     width: 100% !important;
 }
 
-/* Explanation text */
-.ira-explanation-text {
-    background: #ffffff;
-    padding: 28px;
-    border-radius: var(--radius-lg);
-    margin: 32px 0;
-    line-height: 1.6;
-    box-shadow: var(--shadow-sm);
-}
-
-/* Action buttons */
-.ira-action-buttons {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    margin-top: 32px;
-}
-
-.ira-print-btn,
-.ira-download-btn {
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-decoration: none;
-    display: inline-block;
-    font-family: inherit;
-}
-
-.ira-print-btn:hover,
-.ira-download-btn:hover {
-}
-
-/* CMS Testing Styles */
-/* .c-matter--article .c-matter__title {
-    display: none;
-}
-
-.c-matter__meta {
-    display: none;
-} */
-
-.c-matter--article .c-matter__body {
-    max-width: 1170px;
-}
-
+/* Responsive breakpoints */
 @media (max-width: 950px) {
     .c-matter--article .c-matter__body {
         max-width: 750px;
         padding: 1.5rem;
     }
-}
 
-@media (max-width: 750px) {
-    .c-matter--article .c-matter__body {
-        max-width: 100%;
-        margin: 10px;
-        padding: 1rem;
-        border-radius: 8px;
-    }
-}
-
-/* Standard Breakpoints */
-@media (max-width: 950px) {
     .ira-container {
         max-width: 750px;
         padding: 0 1.5rem;
@@ -793,68 +682,76 @@ input[type="number"]:hover {
 }
 
 @media (max-width: 750px) {
+    .c-matter--article .c-matter__body {
+        max-width: 100%;
+        margin: 10px;
+        padding: 1rem;
+        padding-right: 20px;
+        padding-left: 0;
+        border-radius: 8px;
+    }
+
     .ira-container {
         max-width: 100%;
         margin: 0.5rem auto 1rem auto;
         padding: 0 0.5rem;
     }
-    
-    /* Stack vertically on mobile */
+
     .ira-calculator-layout {
         grid-template-columns: 1fr;
         gap: 1rem;
     }
-    
+
+    .ira-form-column,
     .ira-results-column {
-        position: static;
-    }
-    
-    .ira-header p {
-    }
-    
-    .ira-form-column {
+        position: static !important;
         padding: 16px;
     }
-    
-    .ira-placeholder-content, 
+
+    .ira-download-desktop {
+        display: none !important;
+    }
+
+    .ira-download-mobile {
+        display: flex !important;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 24px;
+        margin-bottom: 24px;
+        padding: 0 16px;
+    }
+
+    .ira-download-mobile button {
+        width: 100%;
+    }
+
+    .ira-download-section {
+        justify-content: center;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .ira-download-btn,
+    .ira-start-over-btn {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: none;
+    }
+
     .ira-results-section {
         padding: 0;
     }
-    
-    .ira-main-result {
-        text-align: left;
-    }
-    
+
+    .ira-main-result,
     .ira-breakdown-header {
         text-align: left;
     }
-    
+
     .ira-input-section {
         margin-bottom: 20px;
         padding: 0;
     }
-    
-    .ira-button-group {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-    }
-    
-    .ira-reset-btn {
-        width: 100%;
-    }
-    
-    .ira-action-buttons {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .ira-print-btn,
-    .ira-download-btn {
-        width: 100%;
-        max-width: 200px;
-    }
-    
+
     .ira-tooltip:hover::after {
         width: 200px;
         font-size: 12px;
@@ -862,32 +759,27 @@ input[type="number"]:hover {
 }
 
 @media (max-width: 480px) {
-    
     .ira-input-section {
         padding: 15px;
     }
-    
+
     .ira-results-section {
-        padding: 25px 15px;
+        padding: 0;
     }
-    
+
     .ira-main-result {
         padding: 24px 16px;
     }
-    
+
     .ira-chart-section {
         padding: 20px;
         margin: 20px 0;
     }
-    
+
     .ira-chart-section h2 {
         margin-bottom: 20px;
     }
-    
-    .ira-chart-container {
-        height: 300px;
-    }
-    
+
     .ira-explanation-text {
         padding: 20px;
     }
@@ -898,39 +790,35 @@ input[type="number"]:hover {
     body {
         background: white;
     }
-    
+
     .ira-container {
         box-shadow: none;
         margin: 0;
         padding: 0;
     }
-    
-    .ira-calculator-form,
-    .ira-action-buttons {
-        display: none;
-    }
-    
+
     .ira-results-section {
         background: white;
         border: 1px solid #333;
         padding: 30px;
     }
-    
+
     .ira-main-result {
         padding: 20px 12px;
     }
-    
+
     .ira-breakdown {
         padding: 20px 12px;
     }
-    
+
     .ira-main-value {
         font-size: 2rem;
     }
-    
+
     .ira-breakdown-item {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
     }
 }
+
