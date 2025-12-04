@@ -23,9 +23,65 @@ class HowLongWillYourMoneyLastCalculator {
         
         this.initializeInputFormatting();
         this.initializeSliders();
+        this.initializeSteppers();
         this.initializeEventListeners();
         // Calculate and display results on page load (includes chart generation)
         this.calculateOnLoad();
+    }
+    
+    initializeSteppers() {
+        const stepperBtns = document.querySelectorAll('[data-stepper-action]');
+        const currencyInputs = ['hlywml-initial-balance', 'hlywml-annual-withdrawal'];
+        const percentageInputs = ['hlywml-rate-of-return', 'hlywml-inflation-rate'];
+        
+        stepperBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const stepper = btn.closest('[data-stepper]');
+                if (!stepper) return;
+                
+                const inputId = stepper.getAttribute('data-stepper');
+                const input = document.getElementById(inputId);
+                if (!input) return;
+                
+                const action = btn.getAttribute('data-stepper-action');
+                const currentValue = this.parseCurrencyValue(input.value);
+                const step = parseFloat(input.getAttribute('data-step')) || 1;
+                const min = parseFloat(input.getAttribute('data-min')) || 0;
+                const max = parseFloat(input.getAttribute('data-max')) || 100000000;
+                
+                let newValue;
+                if (action === 'increment') {
+                    newValue = Math.min(currentValue + step, max);
+                } else {
+                    newValue = Math.max(currentValue - step, min);
+                }
+                
+                // Format based on input type
+                if (currencyInputs.includes(inputId)) {
+                    input.value = this.formatNumber(Math.round(newValue));
+                    // Sync slider
+                    const sliderId = inputId + '-slider';
+                    const slider = document.getElementById(sliderId);
+                    if (slider) slider.value = newValue;
+                } else if (percentageInputs.includes(inputId)) {
+                    newValue = Math.round(newValue * 10) / 10;
+                    input.value = newValue % 1 === 0 ? newValue.toString() : newValue.toFixed(1);
+                } else {
+                    input.value = newValue.toString();
+                }
+                
+                // Trigger calculation
+                clearTimeout(this.calculationTimeout);
+                this.calculationTimeout = setTimeout(() => {
+                    this.calculateAndDisplay();
+                }, 300);
+            });
+        });
+    }
+    
+    formatNumber(value) {
+        return new Intl.NumberFormat('en-US').format(Math.round(value));
     }
 
     initializeEventListeners() {
@@ -96,12 +152,12 @@ class HowLongWillYourMoneyLastCalculator {
         if (initialBalance) {
             initialBalance.value = '2,000,000';
             const slider = document.getElementById('hlywml-initial-balance-slider');
-            if (slider) slider.value = '2000000';
+            if (slider) slider.value = 2000000;
         }
         if (annualWithdrawal) {
             annualWithdrawal.value = '65,000';
             const slider = document.getElementById('hlywml-annual-withdrawal-slider');
-            if (slider) slider.value = '65000';
+            if (slider) slider.value = 65000;
         }
         
         // Set percentage inputs
@@ -152,7 +208,7 @@ class HowLongWillYourMoneyLastCalculator {
                 // Update input when slider changes
                 slider.addEventListener('input', (e) => {
                     const value = parseInt(e.target.value);
-                    input.value = value.toLocaleString();
+                    input.value = this.formatNumber(value);
                     this.clearError(input);
                     clearTimeout(this.calculationTimeout);
                     this.calculationTimeout = setTimeout(() => {
@@ -239,9 +295,7 @@ class HowLongWillYourMoneyLastCalculator {
         let value = input.value.replace(/[^\d]/g, '');
         
         if (value) {
-            // Add commas for display
-            const formattedValue = parseInt(value).toLocaleString();
-            input.value = formattedValue;
+            input.value = this.formatNumber(parseInt(value));
         }
     }
 
@@ -255,8 +309,6 @@ class HowLongWillYourMoneyLastCalculator {
         // Parse numeric value (handles both plain numbers and numbers with commas)
         return parseFloat(String(value).replace(/[^\d.]/g, '')) || 0;
     }
-
-
 
     validateAndCapInput(input) {
         const value = input.value.trim();
@@ -329,7 +381,6 @@ class HowLongWillYourMoneyLastCalculator {
             }
         }
     }
-
 
     getFormData() {
         return {
@@ -501,135 +552,6 @@ class HowLongWillYourMoneyLastCalculator {
         breakdownItemsEl.appendChild(dropdownContainer);
     }
 
-    initializeEmptyChart() {
-        // Show chart container on page load
-        if (this.chartContainer) {
-            this.chartContainer.style.display = 'block';
-        }
-        if (this.placeholderContent) {
-            this.placeholderContent.style.display = 'none';
-        }
-        
-        // Destroy existing chart if it exists
-        if (this.chartInstance) {
-            this.chartInstance.destroy();
-            this.chartInstance = null;
-        }
-        
-        // Create an empty chart placeholder
-        const canvas = document.getElementById('hlywml-balance-chart');
-        if (!canvas) return;
-        
-        const ctx = canvas.getContext('2d');
-        
-        // Get CSS variables from :root for dynamic colors
-        const rootStyles = getComputedStyle(document.documentElement);
-        // TODO: Fix chart color to properly use --paletteColor1 CSS variable
-        // Currently hardcoded to green because CSS variable is returning black
-        // Need to investigate why --paletteColor1 is black and fix the fallback logic
-        const chartColor = "#10b981"; // Green color (temporary hardcoded value)
-        const fontFamily = rootStyles.getPropertyValue("--bodyFontFamily").trim() || "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
-        
-        // Create empty chart with placeholder data
-        this.chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Portfolio Balance',
-                    data: [],
-                    borderColor: chartColor,
-                    backgroundColor: chartColor + '1A',
-                    fill: true,
-                    tension: 0.4,
-                    borderWidth: 3,
-                    pointRadius: 0,
-                    pointHoverRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    title: {
-                        display: false
-                    },
-                    tooltip: {
-                        enabled: true,
-                        mode: 'index',
-                        intersect: false,
-                        titleFont: {
-                            family: fontFamily,
-                            size: 14,
-                            weight: 'bold'
-                        },
-                        bodyFont: {
-                            family: fontFamily,
-                            size: 13
-                        },
-                        padding: 12,
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: '#ffffff',
-                        bodyColor: '#ffffff',
-                        borderColor: chartColor,
-                        borderWidth: 1,
-                        callbacks: {
-                            title: (context) => {
-                                if (context && context.length > 0 && context[0].label) {
-                                    return `Year ${context[0].label}`;
-                                }
-                                return '';
-                            },
-                            label: (context) => {
-                                if (context.parsed && context.parsed.y !== null && context.parsed.y !== undefined) {
-                                    return 'Portfolio Balance: ' + this.formatCurrency(context.parsed.y);
-                                }
-                                return '';
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Portfolio Balance',
-                            font: {
-                                family: fontFamily
-                            }
-                        },
-                        ticks: {
-                            font: {
-                                family: fontFamily
-                            },
-                            callback: (value) => {
-                                return '$' + (value / 1000).toFixed(0) + 'K';
-                            }
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Year',
-                            font: {
-                                family: fontFamily
-                            }
-                        },
-                        ticks: {
-                            font: {
-                                family: fontFamily
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
     generateChart(yearlyData) {
         const canvas = document.getElementById('hlywml-balance-chart');
         if (!canvas) return;
@@ -751,7 +673,6 @@ class HowLongWillYourMoneyLastCalculator {
         });
     }
 
-
     downloadResults() {
         const { jsPDF } = window.jspdf;
         
@@ -854,7 +775,7 @@ class HowLongWillYourMoneyLastCalculator {
                 if (id === 'hlywml-initial-balance' || id === 'hlywml-annual-withdrawal') {
                     const numericValue = parseFloat(input.value.replace(/[^\d]/g, '')) || 0;
                     if (numericValue > 0) {
-                        input.value = numericValue.toLocaleString();
+                        input.value = this.formatNumber(numericValue);
                     }
                 }
                 
