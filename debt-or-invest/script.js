@@ -31,6 +31,7 @@ class DebtOrInvestCalculator {
         this.diagnoseStickyPositioning();
         this.initializeInputFormatting();
         this.initializeSliders();
+        this.initializeSteppers();
         this.initializeTooltips();
         this.attachEventListeners();
         this.calculateOnLoad();
@@ -189,7 +190,7 @@ class DebtOrInvestCalculator {
             // Update input when slider changes
             slider.addEventListener('input', (e) => {
                 const value = parseInt(e.target.value);
-                input.value = value.toLocaleString();
+                input.value = this.formatNumber(value);
                 this.clearError(input);
                 clearTimeout(this.calculationTimeout);
                 this.calculationTimeout = setTimeout(() => {
@@ -197,6 +198,62 @@ class DebtOrInvestCalculator {
                 }, 300);
             });
         }
+    }
+
+    initializeSteppers() {
+        const stepperBtns = document.querySelectorAll('[data-stepper-action]');
+        const currencyInputs = ['doi-total-debt', 'doi-monthly-payment'];
+        const percentageInputs = ['doi-debt-interest-rate', 'doi-investment-rate'];
+
+        stepperBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const stepper = btn.closest('[data-stepper]');
+                if (!stepper) return;
+
+                const inputId = stepper.getAttribute('data-stepper');
+                const input = document.getElementById(inputId);
+                if (!input) return;
+
+                const action = btn.getAttribute('data-stepper-action');
+                const currentValue = this.parseCurrencyValue(input.value);
+                const step = parseFloat(input.getAttribute('data-step')) || 1;
+                const min = parseFloat(input.getAttribute('data-min')) || 0;
+                const max = parseFloat(input.getAttribute('data-max')) || 1000000;
+
+                let newValue;
+                if (action === 'increment') {
+                    newValue = Math.min(currentValue + step, max);
+                } else {
+                    newValue = Math.max(currentValue - step, min);
+                }
+
+                // Format based on input type
+                if (currencyInputs.includes(inputId)) {
+                    input.value = this.formatNumber(Math.round(newValue));
+                    // Sync slider if applicable
+                    if (inputId === 'doi-total-debt') {
+                        const slider = document.getElementById('doi-total-debt-slider');
+                        if (slider) slider.value = newValue;
+                    }
+                } else if (percentageInputs.includes(inputId)) {
+                    newValue = Math.round(newValue * 10) / 10;
+                    input.value = newValue % 1 === 0 ? newValue.toString() : newValue.toFixed(1);
+                } else {
+                    input.value = newValue.toString();
+                }
+
+                // Trigger calculation
+                clearTimeout(this.calculationTimeout);
+                this.calculationTimeout = setTimeout(() => {
+                    this.calculateAndDisplay();
+                }, 300);
+            });
+        });
+    }
+
+    formatNumber(value) {
+        return new Intl.NumberFormat('en-US').format(Math.round(value));
     }
 
     formatCurrencyInput(event) {
@@ -219,8 +276,7 @@ class DebtOrInvestCalculator {
             
             // Add comma formatting for display
             if (value && value !== '0') {
-                const formattedValue = parseInt(value).toLocaleString();
-                input.value = formattedValue;
+                input.value = this.formatNumber(parseInt(value));
             } else if (value === '0') {
                 input.value = '0';
             }
@@ -291,7 +347,7 @@ class DebtOrInvestCalculator {
             if (input && input.value) {
                 const value = this.parseCurrencyValue(input.value);
                 if (value > 0) {
-                    input.value = value.toLocaleString();
+                    input.value = this.formatNumber(value);
                 }
             }
         });
@@ -438,7 +494,7 @@ class DebtOrInvestCalculator {
             }
             
             if (maxValue && value > maxValue) {
-                input.value = maxValue.toLocaleString();
+                input.value = this.formatNumber(maxValue);
         }
         } else {
             // Handle percentage inputs
@@ -705,7 +761,7 @@ class DebtOrInvestCalculator {
                 const defaultValue = this.defaultValues[id];
                 if (id === 'doi-total-debt' || id === 'doi-monthly-payment') {
                     // Format currency values with commas
-                    input.value = parseInt(defaultValue).toLocaleString();
+                    input.value = this.formatNumber(parseInt(defaultValue));
                 } else {
                     input.value = defaultValue;
                 }

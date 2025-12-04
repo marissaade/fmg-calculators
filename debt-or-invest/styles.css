@@ -180,11 +180,79 @@ body {
 
 .doi-unit {
     position: absolute;
-    right: 12px;
-    top: 45%;
+    right: 35px;
+    top: 50%;
     transform: translateY(-50%);
     font-weight: 500;
     pointer-events: none;
+    color: #64748b;
+}
+
+/* Custom stepper styles */
+.doi-input-wrapper:has(.doi-stepper) input {
+    padding-right: 35px;
+}
+
+.doi-has-unit-stepper input {
+    padding-right: 65px !important;
+}
+
+.doi-stepper {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.doi-input-wrapper:hover .doi-stepper,
+.doi-input-wrapper:focus-within .doi-stepper {
+    opacity: 0.7;
+}
+
+.doi-stepper-btn {
+    width: 20px;
+    height: 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: opacity 0.15s ease;
+}
+
+.doi-stepper-btn:hover {
+    opacity: 1;
+}
+
+.doi-stepper-btn--up::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 6px solid #6b7280;
+}
+
+.doi-stepper-btn--down::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #6b7280;
+}
+
+.doi-stepper-btn:hover::before {
+    border-bottom-color: #374151;
+    border-top-color: #374151;
 }
 
 /* Input styles */
@@ -222,17 +290,6 @@ input[type="number"]::placeholder {
     color: #d1d5db;
 }
 
-/* Remove spinner arrows from number inputs */
-input[type="number"] {
-    -moz-appearance: textfield;
-    appearance: textfield;
-}
-
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
 
 /* Tooltip styles */
 .doi-tooltip {
