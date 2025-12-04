@@ -24,6 +24,7 @@ class HowLongWillYourMoneyLastCalculator {
         this.initializeInputFormatting();
         this.initializeSliders();
         this.initializeSteppers();
+        this.initializeTooltips();
         this.initializeEventListeners();
         // Calculate and display results on page load (includes chart generation)
         this.calculateOnLoad();
@@ -82,6 +83,30 @@ class HowLongWillYourMoneyLastCalculator {
     
     formatNumber(value) {
         return new Intl.NumberFormat('en-US').format(Math.round(value));
+    }
+
+    initializeTooltips() {
+        const tooltips = document.querySelectorAll('.hlywml-tooltip');
+        tooltips.forEach(tooltip => {
+            tooltip.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const isActive = tooltip.classList.contains('active');
+                // Close all other tooltips
+                document.querySelectorAll('.hlywml-tooltip').forEach(t => t.classList.remove('active'));
+                // Toggle this tooltip
+                if (!isActive) {
+                    tooltip.classList.add('active');
+                }
+            });
+        });
+        
+        // Close tooltips when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.hlywml-tooltip')) {
+                document.querySelectorAll('.hlywml-tooltip').forEach(t => t.classList.remove('active'));
+            }
+        });
     }
 
     initializeEventListeners() {

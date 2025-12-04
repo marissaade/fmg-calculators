@@ -199,7 +199,7 @@ body {
     text-align: center;
     font-size: 12px;
     font-weight: 600;
-    cursor: help;
+    cursor: pointer;
     position: relative;
     line-height: 18px;
     transition: all 0.2s ease;
@@ -212,7 +212,7 @@ body {
     transform: scale(1.1);
 }
 
-.hlywml-tooltip:hover::after {
+.hlywml-tooltip.active::after {
     content: attr(data-tooltip);
     position: absolute;
     bottom: calc(100% + 8px);
@@ -233,7 +233,7 @@ body {
     pointer-events: none;
 }
 
-.hlywml-tooltip:hover::before {
+.hlywml-tooltip.active::before {
     content: '';
     position: absolute;
     bottom: calc(100% + 2px);
