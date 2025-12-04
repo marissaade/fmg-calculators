@@ -158,7 +158,7 @@ body {
     text-align: center;
     font-size: 12px;
     font-weight: 600;
-    cursor: help;
+    cursor: pointer;
     position: relative;
     line-height: 18px;
     transition: all 0.2s ease;
@@ -171,7 +171,6 @@ body {
     transform: scale(1.1);
 }
 
-.sfc-tooltip:hover::after,
 .sfc-tooltip.active::after {
     content: attr(data-tooltip);
     position: absolute;
@@ -193,7 +192,6 @@ body {
     pointer-events: none;
 }
 
-.sfc-tooltip:hover::before,
 .sfc-tooltip.active::before {
     content: '';
     position: absolute;
@@ -209,29 +207,30 @@ body {
 /* Input wrapper for currency and percent symbols */
 .sfc-input-wrapper {
     position: relative;
-    display: flex;
-    align-items: center;
 }
 
 .sfc-currency {
-    position: absolute !important;
-    left: 12px !important;
-    transform: translateY(-10%) !important;
-    font-weight: 400 !important;
-    z-index: 1 !important;
-    font-size: 1rem !important;
-    line-height: 1 !important;
-    font-family: inherit !important;
-    pointer-events: none !important;
+    position: absolute;
+    left: 12px;
+    top: 46%;
+    transform: translateY(-50%);
+    font-weight: 500;
+    font-size: 1em;
+    pointer-events: none;
+    z-index: 2;
+    color: #64748b;
 }
 
 .sfc-unit {
     position: absolute;
-    right: 12px;
-    top: 45%;
+    right: 35px;
+    top: 50%;
     transform: translateY(-50%);
     font-weight: 500;
+    font-size: 1em;
     pointer-events: none;
+    z-index: 10;
+    color: #64748b;
 }
 
 /* Input styles */
@@ -246,25 +245,107 @@ input[type="number"] {
     font-weight: 400;
 }
 
-/* Steppers (Hover Only) */
-.sfc-input-wrapper input::-webkit-outer-spin-button,
-.sfc-input-wrapper input::-webkit-inner-spin-button {
+/* Hide native steppers (all inputs use custom steppers) */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
+input[type="number"] {
+    -moz-appearance: textfield;
+}
 
-.sfc-input-wrapper input:hover::-webkit-outer-spin-button,
-.sfc-input-wrapper input:hover::-webkit-inner-spin-button,
-.sfc-input-wrapper input:focus::-webkit-outer-spin-button,
-.sfc-input-wrapper input:focus::-webkit-inner-spin-button {
-    -webkit-appearance: auto;
+/* Custom stepper buttons (for text inputs with comma formatting) */
+.sfc-stepper {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    gap: 1px;
+}
+
+.sfc-stepper-btn {
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    position: relative;
+}
+
+.sfc-stepper-btn::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    display: block;
+}
+
+.sfc-stepper-btn--up::before {
+    border-bottom: 4px solid #555;
+    border-top: none;
+}
+
+.sfc-stepper-btn--down::before {
+    border-top: 4px solid #555;
+    border-bottom: none;
+}
+
+.sfc-stepper-btn:hover::before {
+    border-bottom-color: #333 !important;
+    border-top-color: #333 !important;
+}
+
+/* Show steppers on hover/focus */
+.sfc-input-group:hover .sfc-stepper,
+.sfc-input-wrapper:hover .sfc-stepper {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.sfc-input-wrapper:has(input:focus) .sfc-stepper {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Enable pointer events on buttons when stepper is visible */
+.sfc-input-group:hover .sfc-stepper .sfc-stepper-btn,
+.sfc-input-wrapper:hover .sfc-stepper .sfc-stepper-btn,
+.sfc-input-wrapper:has(input:focus) .sfc-stepper .sfc-stepper-btn {
+    pointer-events: auto;
+}
+
+/* Add padding for inputs with custom steppers (currency fields) */
+.sfc-input-wrapper:has(.sfc-stepper) input {
+    padding-right: 35px;
+}
+
+/* Input padding for currency symbol */
+.sfc-input-wrapper:has(.sfc-currency) input {
+    padding-left: 28px;
+}
+
+/* Input padding for unit symbol with stepper (unit in middle, stepper on far right) */
+.sfc-has-unit-stepper input {
+    padding-right: 65px !important;
 }
 
 input[type="text"]::placeholder {
     color: rgba(0, 0, 0, 0.55);
     opacity: 1;
 }
-
 
 input[type="text"]:focus,
 input[type="number"]:focus {
@@ -388,7 +469,7 @@ input[type="number"]:focus {
 
 .sfc-disclaimer p {
     margin: 0;
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     color: #475569;
     line-height: 1.5;
 }
@@ -771,8 +852,9 @@ input[type="number"]:focus {
         padding: 0;
     }
     
-    .sfc-calculator-form,
-    .sfc-action-buttons {
+    .sfc-form-column,
+    .sfc-download-section,
+    .sfc-button-mobile {
         display: none;
     }
     
@@ -780,9 +862,5 @@ input[type="number"]:focus {
         background: white;
         border: 1px solid #333;
         padding: 30px;
-    }
-    
-    .sfc-result-card {
-        border-bottom: 1px solid #333;
     }
 }

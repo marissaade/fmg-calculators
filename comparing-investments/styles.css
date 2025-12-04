@@ -5,7 +5,6 @@
     box-sizing: border-box;
 }
 :root {
-    
     --radius-sm: 4px;
     --radius-md: 6px;
     --radius-lg: 8px;
@@ -141,7 +140,7 @@ body {
 
 .ci-unit {
     position: absolute;
-    right: 55px;
+    right: 35px;
     top: 50%;
     transform: translateY(-50%);
     font-weight: 500;
@@ -151,13 +150,9 @@ body {
     color: #64748b;
 }
 
-/* Add padding for inputs with symbols */
+/* Add padding for inputs with currency symbol */
 .ci-input-wrapper:has(.ci-currency) input {
     padding-left: 28px;
-}
-
-.ci-input-wrapper:has(.ci-unit) input {
-    padding-right: 20px;
 }
 /* Input styles */
 input[type="text"],
@@ -293,35 +288,86 @@ input[type="number"]::placeholder {
     margin-top: 4px;
 }
 
-/* Remove spinner arrows from number inputs */
-input[type="number"] {
-    -moz-appearance: textfield;
-    appearance: textfield;
-}
-
-/* Steppers visible on hover/focus only */
-.ci-input-wrapper input[type="number"]::-webkit-inner-spin-button,
-.ci-input-wrapper input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: inner-spin-button;
+/* Custom stepper buttons */
+.ci-stepper {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    z-index: 5;
     opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    gap: 1px;
+}
+
+.ci-stepper-btn {
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: transparent;
     cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    position: relative;
 }
 
-.ci-input-wrapper:hover input[type="number"]::-webkit-inner-spin-button,
-.ci-input-wrapper:hover input[type="number"]::-webkit-outer-spin-button,
-.ci-input-wrapper input[type="number"]:focus::-webkit-inner-spin-button,
-.ci-input-wrapper input[type="number"]:focus::-webkit-outer-spin-button {
+.ci-stepper-btn::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    display: block;
+}
+
+.ci-stepper-btn--up::before {
+    border-bottom: 4px solid #555;
+    border-top: none;
+}
+
+.ci-stepper-btn--down::before {
+    border-top: 4px solid #555;
+    border-bottom: none;
+}
+
+.ci-stepper-btn:hover::before {
+    border-bottom-color: #333 !important;
+    border-top-color: #333 !important;
+}
+
+/* Show steppers on hover/focus */
+.ci-input-group:hover .ci-stepper,
+.ci-input-wrapper:hover .ci-stepper {
     opacity: 1;
+    pointer-events: auto;
 }
 
-/* Firefox */
-.ci-input-wrapper input[type="number"] {
-    -moz-appearance: textfield;
+.ci-input-wrapper:has(input:focus) .ci-stepper {
+    opacity: 1;
+    pointer-events: auto;
 }
 
-.ci-input-wrapper:hover input[type="number"],
-.ci-input-wrapper input[type="number"]:focus {
-    -moz-appearance: number-input;
+/* Enable pointer events on buttons when stepper is visible */
+.ci-input-group:hover .ci-stepper .ci-stepper-btn,
+.ci-input-wrapper:hover .ci-stepper .ci-stepper-btn,
+.ci-input-wrapper:has(input:focus) .ci-stepper .ci-stepper-btn {
+    pointer-events: auto;
+}
+
+/* Add padding for inputs with custom steppers (currency fields) */
+.ci-input-wrapper:has(.ci-stepper) input {
+    padding-right: 35px;
+}
+
+/* Input padding for unit symbol with stepper (unit in middle, stepper on far right) */
+.ci-has-unit-stepper input {
+    padding-right: 65px !important;
 }
 
 /* Disclaimer */

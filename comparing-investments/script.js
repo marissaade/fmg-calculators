@@ -63,50 +63,6 @@ class InvestmentComparisonCalculator {
                 }
             });
         }
-        
-        // Real-time calculation on all inputs
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.addEventListener('input', () => {
-                this.clearError(input);
-                this.validateAndCapInput(input);
-                clearTimeout(this.calculationTimeout);
-                this.calculationTimeout = setTimeout(() => {
-                    this.calculateAndDisplay();
-                }, 300);
-            });
-            
-            input.addEventListener('blur', () => {
-                this.validateAndCapInput(input);
-                this.calculateAndDisplay();
-            });
-        });
-        
-        // Add real-time validation for years input
-        const yearsInput = document.getElementById('ci-years-to-grow');
-        if (yearsInput) {
-            yearsInput.addEventListener('input', (e) => {
-                const value = parseInt(e.target.value);
-                if (value > 100) {
-                    e.target.value = 100;
-                } else if (value < 1 && e.target.value !== '') {
-                    e.target.value = 1;
-                }
-            });
-        }
-        
-        // Add real-time validation for percentage inputs
-        const percentageInputs = document.querySelectorAll('#ci-rate-of-return-a, #ci-rate-of-return-b');
-        percentageInputs.forEach(input => {
-            input.addEventListener('input', (e) => {
-                const value = parseFloat(e.target.value);
-                if (value > 100) {
-                    e.target.value = 100;
-                } else if (value < 0 && e.target.value !== '') {
-                    e.target.value = 0;
-                }
-            });
-        });
     }
 
     initializeTooltips() {
@@ -136,27 +92,143 @@ class InvestmentComparisonCalculator {
     }
 
     initializeInputFormatting() {
-        // Currency inputs are now type="number" for steppers - no comma formatting needed
+        // Currency inputs use type="text" with comma formatting and custom steppers
         const currencyInputs = ['ci-initial-investment-a', 'ci-annual-contribution-a', 'ci-initial-investment-b', 'ci-annual-contribution-b'];
         currencyInputs.forEach(id => {
             const input = document.getElementById(id);
             if (input) {
+                // Format on input (with comma formatting)
                 input.addEventListener('input', (e) => {
+                    this.formatCurrencyInput(e);
                     this.updateSliderFromInput(input);
+                    this.clearError(e.target);
                     clearTimeout(this.calculationTimeout);
                     this.calculationTimeout = setTimeout(() => {
                         this.calculateAndDisplay();
                     }, 300);
                 });
+                
+                // Format and validate on blur
+                input.addEventListener('blur', (e) => {
+                    this.formatCurrencyInput(e);
+                    this.validateAndCapInput(e.target);
+                    this.calculateAndDisplay();
+                });
+                
+                // Select all on focus
+                input.addEventListener('focus', (e) => {
+                    setTimeout(() => e.target.select(), 50);
+                });
             }
         });
+        
+        // Integer input (years) - digits only, no formatting
+        const yearsInput = document.getElementById('ci-years-to-grow');
+        if (yearsInput) {
+            yearsInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^\d]/g, '');
+                this.clearError(e.target);
+                clearTimeout(this.calculationTimeout);
+                this.calculationTimeout = setTimeout(() => {
+                    this.calculateAndDisplay();
+                }, 300);
+            });
+            yearsInput.addEventListener('blur', (e) => {
+                this.validateAndCapInput(e.target);
+                this.calculateAndDisplay();
+            });
+            yearsInput.addEventListener('focus', (e) => {
+                setTimeout(() => e.target.select(), 50);
+            });
+        }
+        
+        // Percentage inputs - digits and decimal point only
+        const percentageInputs = ['ci-rate-of-return-a', 'ci-rate-of-return-b'];
+        percentageInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('input', (e) => {
+                    let value = e.target.value.replace(/[^\d.]/g, '');
+                    const parts = value.split('.');
+                    if (parts.length > 2) {
+                        value = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                    e.target.value = value;
+                    this.clearError(e.target);
+                    clearTimeout(this.calculationTimeout);
+                    this.calculationTimeout = setTimeout(() => {
+                        this.calculateAndDisplay();
+                    }, 300);
+                });
+                input.addEventListener('blur', (e) => {
+                    this.validateAndCapInput(e.target);
+                    this.calculateAndDisplay();
+                });
+                input.addEventListener('focus', (e) => {
+                    setTimeout(() => e.target.select(), 50);
+                });
+            }
+        });
+        
+        // Initialize custom stepper handlers
+        this.initializeSteppers();
     }
-
-    handleCurrencyFocus(event) {
-        // Remove formatting on focus for easier editing
-        const input = event.target;
-        const rawValue = input.value.replace(/[^\d]/g, '');
-        input.value = rawValue;
+    
+    initializeSteppers() {
+        const stepperBtns = document.querySelectorAll('[data-stepper-action]');
+        const currencyInputs = ['ci-initial-investment-a', 'ci-annual-contribution-a', 'ci-initial-investment-b', 'ci-annual-contribution-b'];
+        const percentageInputs = ['ci-rate-of-return-a', 'ci-rate-of-return-b'];
+        const integerInputs = ['ci-years-to-grow'];
+        
+        stepperBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const stepper = btn.closest('[data-stepper]');
+                if (!stepper) return;
+                
+                const inputId = stepper.getAttribute('data-stepper');
+                const input = document.getElementById(inputId);
+                if (!input) return;
+                
+                const action = btn.getAttribute('data-stepper-action');
+                const currentValue = this.parseCurrencyValue(input.value);
+                const step = parseFloat(input.getAttribute('data-step')) || 1;
+                const min = parseFloat(input.getAttribute('data-min')) || 0;
+                const max = parseFloat(input.getAttribute('data-max')) || 10000000;
+                
+                let newValue;
+                if (action === 'increment') {
+                    newValue = Math.min(currentValue + step, max);
+                } else {
+                    newValue = Math.max(currentValue - step, min);
+                }
+                
+                // Format based on input type
+                if (currencyInputs.includes(inputId)) {
+                    input.value = this.formatNumber(Math.round(newValue));
+                } else if (percentageInputs.includes(inputId)) {
+                    newValue = Math.round(newValue * 10) / 10;
+                    input.value = newValue % 1 === 0 ? newValue.toString() : newValue.toFixed(1);
+                } else if (integerInputs.includes(inputId)) {
+                    input.value = Math.round(newValue).toString();
+                } else {
+                    input.value = newValue.toString();
+                }
+                
+                // Sync slider
+                this.updateSliderFromInput(input);
+                
+                // Trigger calculation
+                clearTimeout(this.calculationTimeout);
+                this.calculationTimeout = setTimeout(() => {
+                    this.calculateAndDisplay();
+                }, 300);
+            });
+        });
+    }
+    
+    formatNumber(value) {
+        return new Intl.NumberFormat('en-US').format(Math.round(value));
     }
 
     formatCurrencyInput(event) {
@@ -164,39 +236,10 @@ class InvestmentComparisonCalculator {
         let value = input.value.replace(/[^\d]/g, '');
         
         if (value) {
-            // Apply caps based on field type
             const numValue = parseInt(value);
-            let maxValue;
-            
-            if (input.id.includes('initial-investment')) {
-                maxValue = 10000000; // $10M cap
-            } else if (input.id.includes('annual-contribution')) {
-                maxValue = 10000000; // $10M annual cap
-            }
-            
-            if (maxValue && numValue > maxValue) {
-                value = maxValue.toString();
-            }
-            
-            // Add comma formatting for display
-            if (value && value !== '0') {
-                const formattedValue = parseInt(value).toLocaleString();
-                input.value = formattedValue;
-            } else if (value === '0') {
-                input.value = '0';
-            }
-            
-            // Update corresponding slider
-            this.updateSliderFromInput(input);
-        } else {
-            input.value = '';
+            // Format with commas
+            input.value = this.formatNumber(numValue);
         }
-        
-        // Trigger calculation after formatting
-        clearTimeout(this.calculationTimeout);
-        this.calculationTimeout = setTimeout(() => {
-            this.calculateAndDisplay();
-        }, 300);
     }
 
     parseCurrencyValue(value) {
@@ -221,20 +264,21 @@ class InvestmentComparisonCalculator {
                 slider.addEventListener('input', (e) => {
                     const value = parseFloat(e.target.value);
                     if (!isNaN(value)) {
-                        input.value = value;
+                        // Format with commas for text inputs
+                        input.value = this.formatNumber(value);
                         clearTimeout(this.calculationTimeout);
                         this.calculationTimeout = setTimeout(() => {
                             this.calculateAndDisplay();
                         }, 300);
                     }
                 });
-                
             }
         });
     }
 
     updateSliderFromInput(input) {
-        const value = parseFloat(input.value) || 0;
+        // Parse value, stripping commas if present
+        const value = this.parseCurrencyValue(input.value);
         let sliderId;
         
         if (input.id === 'ci-initial-investment-a') {
@@ -250,17 +294,7 @@ class InvestmentComparisonCalculator {
         if (sliderId) {
             const slider = document.getElementById(sliderId);
             if (slider && !isNaN(value)) {
-                // Cap value at slider max
-                let maxValue;
-                if (input.id.includes('initial-investment')) {
-                    maxValue = 10000000; // $10M
-                } else if (input.id.includes('annual-contribution')) {
-                    maxValue = 10000000; // $10M
-                } else {
-                    maxValue = parseFloat(slider.getAttribute('max')) || 10000000;
-                }
-                const cappedValue = Math.min(value, maxValue);
-                slider.value = cappedValue;
+                slider.value = value;
             }
         }
     }
@@ -323,13 +357,13 @@ class InvestmentComparisonCalculator {
         return {
             yearsToGrow: parseInt(document.getElementById('ci-years-to-grow').value),
             optionA: {
-                initialInvestment: parseFloat(document.getElementById('ci-initial-investment-a').value) || 0,
-                annualContribution: parseFloat(document.getElementById('ci-annual-contribution-a').value) || 0,
+                initialInvestment: this.parseCurrencyValue(document.getElementById('ci-initial-investment-a').value),
+                annualContribution: this.parseCurrencyValue(document.getElementById('ci-annual-contribution-a').value),
                 rateOfReturn: parseFloat(document.getElementById('ci-rate-of-return-a').value) / 100
             },
             optionB: {
-                initialInvestment: parseFloat(document.getElementById('ci-initial-investment-b').value) || 0,
-                annualContribution: parseFloat(document.getElementById('ci-annual-contribution-b').value) || 0,
+                initialInvestment: this.parseCurrencyValue(document.getElementById('ci-initial-investment-b').value),
+                annualContribution: this.parseCurrencyValue(document.getElementById('ci-annual-contribution-b').value),
                 rateOfReturn: parseFloat(document.getElementById('ci-rate-of-return-b').value) / 100
             }
         };
@@ -674,14 +708,12 @@ class InvestmentComparisonCalculator {
         // Apply limits automatically
         if (!isNaN(numericValue)) {
             if (numericValue > maxValue) {
-                // Set raw numeric value for number inputs, formatted for text inputs
-                if (input.type === 'number') {
-                    input.value = maxValue.toString();
+                // Format currency fields with commas, others as plain numbers
+                if (input.id.includes('investment') || input.id.includes('contribution')) {
+                    input.value = this.formatNumber(maxValue);
                 } else {
-                    input.value = maxValue.toLocaleString();
+                    input.value = maxValue.toString();
                 }
-                
-                // Show prominent alert for capped values
                 this.showCappedValueAlert(input, maxValue);
                 this.showError(input, `⚠️ Value automatically capped at ${this.formatCurrency(maxValue)}`);
                 setTimeout(() => this.clearError(input), 4000);
@@ -689,11 +721,9 @@ class InvestmentComparisonCalculator {
                 input.value = minValue.toString();
                 this.showError(input, `⚠️ Value cannot be less than ${minValue}`);
                 setTimeout(() => this.clearError(input), 3000);
-            } else {
-                // Format the value properly for text inputs only
-                if (input.type === 'text' && (input.id.includes('investment') || input.id.includes('contribution'))) {
-                    input.value = numericValue.toLocaleString();
-                }
+            } else if (input.id.includes('investment') || input.id.includes('contribution')) {
+                // Format currency fields with commas
+                input.value = this.formatNumber(numericValue);
             }
         }
         
@@ -822,11 +852,20 @@ class InvestmentComparisonCalculator {
     }
 
     resetForm() {
+        // Currency fields that need comma formatting
+        const currencyFields = ['ci-initial-investment-a', 'ci-annual-contribution-a', 'ci-initial-investment-b', 'ci-annual-contribution-b'];
+        
         // Reset all inputs to default values
         Object.keys(this.defaultValues).forEach(id => {
             const input = document.getElementById(id);
             if (input) {
-                input.value = this.defaultValues[id];
+                const defaultValue = this.defaultValues[id];
+                // Format currency fields with commas
+                if (currencyFields.includes(id)) {
+                    input.value = this.formatNumber(parseInt(defaultValue));
+                } else {
+                    input.value = defaultValue;
+                }
             }
         });
         
@@ -840,9 +879,8 @@ class InvestmentComparisonCalculator {
         
         sliderPairs.forEach(pair => {
             const slider = document.getElementById(pair.slider);
-            const input = document.getElementById(pair.input);
-            if (slider && input) {
-                slider.value = parseFloat(input.value) || 0;
+            if (slider) {
+                slider.value = this.defaultValues[pair.input];
             }
         });
         
@@ -854,14 +892,6 @@ class InvestmentComparisonCalculator {
         
         // Recalculate with default values
         this.calculateAndDisplay();
-        
-        // Reset chart to empty state instead of destroying it
-        if (this.chartInstance) {
-            this.chartInstance.data.labels = [];
-            this.chartInstance.data.datasets[0].data = [];
-            this.chartInstance.data.datasets[1].data = [];
-            this.chartInstance.update();
-        }
         
         // Scroll to top of form on mobile
         if (window.innerWidth <= 750) {

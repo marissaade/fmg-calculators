@@ -120,51 +120,126 @@ class CollegeSavingsCalculator {
             });
         });
         
-        const yearsInput = document.getElementById('sfc-years-until-college');
-        if (yearsInput) {
-            yearsInput.addEventListener('input', (e) => {
-                let value = e.target.value.replace(/[^\d]/g, '');
-                const numValue = parseInt(value);
-                if (value && !isNaN(numValue)) {
-                    if (numValue > 50) {
-                        value = '50';
-                    } else if (numValue < 1) {
-                        value = '1';
-                    }
-                }
-                e.target.value = value;
-            });
-        }
-        
-        const percentageInputs = document.querySelectorAll('#sfc-rate-of-return, #sfc-college-inflation-rate');
-        percentageInputs.forEach(input => {
-            input.addEventListener('input', (e) => {
-                let value = e.target.value.replace(/[^\d.]/g, '');
-                const numValue = parseFloat(value);
-                if (value && !isNaN(numValue)) {
-                    if (input.id === 'sfc-rate-of-return' && numValue > 100) {
-                        value = '100';
-                    } else if (input.id === 'sfc-college-inflation-rate' && numValue > 50) {
-                        value = '50';
-                    } else if (numValue < 0) {
-                        value = '0';
-                    }
-                }
-                e.target.value = value;
-            });
-        });
     }
 
     initializeInputFormatting() {
+        // Currency inputs use type="text" with comma formatting and custom steppers
         const currencyInputs = ['sfc-current-savings', 'sfc-annual-contribution', 'sfc-current-college-cost'];
         currencyInputs.forEach(id => {
             const input = document.getElementById(id);
             if (input) {
-                input.type = 'text';
-            input.addEventListener('input', (e) => this.formatCurrencyInput(e));
-            input.addEventListener('blur', (e) => this.formatCurrencyInput(e));
-                input.addEventListener('focus', (e) => this.handleCurrencyFocus(e));
+                // Format on input (with comma formatting)
+                input.addEventListener('input', (e) => {
+                    this.formatCurrencyInput(e);
+                    this.updateSliderFromInput(input);
+                    clearTimeout(this.calculationTimeout);
+                    this.calculationTimeout = setTimeout(() => {
+                        this.calculateAndDisplay();
+                    }, 300);
+                });
+                
+                // Format on blur
+                input.addEventListener('blur', (e) => {
+                    this.formatCurrencyInput(e);
+                });
+                
+                // Select all on focus
+                input.addEventListener('focus', (e) => {
+                    setTimeout(() => e.target.select(), 50);
+                });
             }
+        });
+        
+        // Integer input (years) - digits only, no formatting
+        const yearsInput = document.getElementById('sfc-years-until-college');
+        if (yearsInput) {
+            yearsInput.addEventListener('input', (e) => {
+                // Filter to only allow digits
+                e.target.value = e.target.value.replace(/[^\d]/g, '');
+            });
+            yearsInput.addEventListener('focus', (e) => {
+                setTimeout(() => e.target.select(), 50);
+            });
+        }
+        
+        // Percentage inputs - digits and decimal point only
+        const percentageInputs = ['sfc-rate-of-return', 'sfc-college-inflation-rate'];
+        percentageInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+            input.addEventListener('input', (e) => {
+                    // Filter to only allow digits and one decimal point
+                let value = e.target.value.replace(/[^\d.]/g, '');
+                    // Ensure only one decimal point
+                    const parts = value.split('.');
+                    if (parts.length > 2) {
+                        value = parts[0] + '.' + parts.slice(1).join('');
+                }
+                e.target.value = value;
+            });
+                input.addEventListener('focus', (e) => {
+                    setTimeout(() => e.target.select(), 50);
+                });
+            }
+        });
+        
+        // Initialize custom stepper handlers
+        this.initializeSteppers();
+    }
+
+    initializeSteppers() {
+        const stepperBtns = document.querySelectorAll('[data-stepper-action]');
+        const currencyInputs = ['sfc-current-savings', 'sfc-annual-contribution', 'sfc-current-college-cost'];
+        const percentageInputs = ['sfc-rate-of-return', 'sfc-college-inflation-rate'];
+        const integerInputs = ['sfc-years-until-college'];
+        
+        stepperBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const stepper = btn.closest('[data-stepper]');
+                if (!stepper) return;
+                
+                const inputId = stepper.getAttribute('data-stepper');
+                const input = document.getElementById(inputId);
+                if (!input) return;
+                
+                const action = btn.getAttribute('data-stepper-action');
+                const currentValue = this.parseCurrencyValue(input.value);
+                const step = parseFloat(input.getAttribute('data-step')) || 1;
+                const min = parseFloat(input.getAttribute('data-min')) || 0;
+                const max = parseFloat(input.getAttribute('data-max')) || 10000000;
+                
+                let newValue;
+                if (action === 'increment') {
+                    newValue = Math.min(currentValue + step, max);
+                } else {
+                    newValue = Math.max(currentValue - step, min);
+                }
+                
+                // Format based on input type
+                if (currencyInputs.includes(inputId)) {
+                    // Currency: format with commas
+                    input.value = this.formatNumber(Math.round(newValue));
+                } else if (percentageInputs.includes(inputId)) {
+                    // Percentage: show decimal if needed, round to 1 decimal place
+                    newValue = Math.round(newValue * 10) / 10;
+                    input.value = newValue % 1 === 0 ? newValue.toString() : newValue.toFixed(1);
+                } else if (integerInputs.includes(inputId)) {
+                    // Integer: no formatting
+                    input.value = Math.round(newValue).toString();
+        } else {
+                    input.value = newValue.toString();
+        }
+        
+                // Sync slider
+        this.updateSliderFromInput(input);
+                
+                // Trigger calculation
+                clearTimeout(this.calculationTimeout);
+                this.calculationTimeout = setTimeout(() => {
+                    this.calculateAndDisplay();
+                }, 300);
+            });
         });
     }
 
@@ -174,55 +249,25 @@ class CollegeSavingsCalculator {
         
         if (value) {
             const numValue = parseInt(value);
-            let maxValue;
-            
-            if (input.id === 'sfc-current-savings') {
-                maxValue = 500000;
-            } else if (input.id === 'sfc-annual-contribution') {
-                maxValue = 100000;
-            } else if (input.id === 'sfc-current-college-cost') {
-                maxValue = 200000;
-            }
-            
-            if (maxValue && numValue > maxValue) {
-                value = maxValue.toString();
-            }
-            
-            if (value && value !== '0') {
-                input.value = parseInt(value).toLocaleString();
-            } else if (value === '0') {
-                input.value = '0';
-            }
-        } else {
-            input.value = '';
+            // Format with commas
+            input.value = this.formatNumber(numValue);
         }
-        
-        this.updateSliderFromInput(input);
-        this.checkFormValidity();
     }
 
-    handleCurrencyFocus(event) {
-        const input = event.target;
-        input.select();
-        input.value = input.value.replace(/,/g, '');
+    formatNumber(value) {
+        return new Intl.NumberFormat('en-US').format(Math.round(value));
     }
 
     parseCurrencyValue(value) {
+        // Strip commas and parse
+        if (typeof value === 'string') {
         return parseFloat(value.replace(/[^\d.]/g, '')) || 0;
+    }
+        return parseFloat(value) || 0;
     }
 
     calculateOnLoad() {
-        const currencyInputs = ['sfc-current-savings', 'sfc-annual-contribution', 'sfc-current-college-cost'];
-        currencyInputs.forEach(id => {
-            const input = document.getElementById(id);
-            if (input && input.value) {
-                const numericValue = parseFloat(input.value.replace(/[^\d]/g, '')) || 0;
-                if (numericValue > 0) {
-                    input.value = numericValue.toLocaleString();
-                }
-            }
-        });
-        
+        // Sync sliders with initial input values
         const currentSavingsInput = document.getElementById('sfc-current-savings');
         const annualContributionInput = document.getElementById('sfc-annual-contribution');
         if (currentSavingsInput) {
@@ -275,7 +320,8 @@ class CollegeSavingsCalculator {
                 slider.addEventListener('input', (e) => {
                     const value = parseFloat(e.target.value);
                     if (!isNaN(value)) {
-                        input.value = value.toLocaleString();
+                        // Format with commas for text inputs
+                        input.value = this.formatNumber(value);
                         clearTimeout(this.calculationTimeout);
                         this.calculationTimeout = setTimeout(() => {
                             this.calculateAndDisplay();
@@ -287,6 +333,7 @@ class CollegeSavingsCalculator {
     }
 
     updateSliderFromInput(input) {
+        // Parse value, stripping commas if present
         const value = this.parseCurrencyValue(input.value);
         let sliderId;
         
@@ -544,11 +591,11 @@ class CollegeSavingsCalculator {
             this.chartInstance.data.datasets[0].data = chartData.savingsData;
             this.chartInstance.data.datasets[1].data = chartData.collegeCostData;
         
-        if (results.isShortfall) {
+            if (results.isShortfall) {
                 this.chartInstance.data.datasets[1].borderColor = shortfallColor;
                 this.chartInstance.data.datasets[1].backgroundColor = shortfallColor + '0D';
                 this.chartInstance.data.datasets[1].pointBackgroundColor = shortfallColor;
-        } else {
+            } else {
                 this.chartInstance.data.datasets[1].borderColor = collegeCostColor;
                 this.chartInstance.data.datasets[1].backgroundColor = collegeCostColor + '0D';
                 this.chartInstance.data.datasets[1].pointBackgroundColor = collegeCostColor;
@@ -557,144 +604,144 @@ class CollegeSavingsCalculator {
             this.chartInstance.update();
         } else {
             const ctx = document.getElementById('sfc-savings-chart').getContext('2d');
-        this.chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: chartData.years,
-                datasets: [
-                    {
-                        label: 'Total Savings',
-                        data: chartData.savingsData,
+            this.chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.years,
+                    datasets: [
+                        {
+                            label: 'Total Savings',
+                            data: chartData.savingsData,
                             borderColor: savingsColor,
                             backgroundColor: 'rgba(34, 34, 34, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.3,
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3,
                             pointBackgroundColor: savingsColor,
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    },
-                    {
-                        label: 'Annual College Cost',
-                        data: chartData.collegeCostData,
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Annual College Cost',
+                            data: chartData.collegeCostData,
                             borderColor: results.isShortfall ? shortfallColor : collegeCostColor,
                             backgroundColor: results.isShortfall ? shortfallColor + '0D' : collegeCostColor + '0D',
-                        borderWidth: 2,
-                        fill: false,
-                        tension: 0.3,
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.3,
                             pointBackgroundColor: results.isShortfall ? shortfallColor : collegeCostColor,
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        borderDash: [4, 4]
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            borderDash: [4, 4]
+                        }
+                    ]
                 },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 16,
-                            font: {
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 16,
+                                font: {
+                                    size: 13,
+                                    weight: '500'
+                                },
+                                color: '#6b7280'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1a1a1a',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            titleFont: {
                                 size: 13,
                                 weight: '500'
                             },
-                            color: '#6b7280'
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: '#1a1a1a',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: 'rgba(255, 255, 255, 0.1)',
-                        borderWidth: 1,
-                        cornerRadius: 8,
-                        displayColors: true,
-                        titleFont: {
-                            size: 13,
-                            weight: '500'
-                        },
-                        bodyFont: {
-                            size: 12
-                        },
-                        padding: 12,
-                        callbacks: {
-                            label: (context) => {
-                                const label = context.dataset.label || '';
-                                const value = this.formatCurrency(context.parsed.y);
-                                return `${label}: ${value}`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        display: true,
-                        title: {
-                            display: true,
-                            text: 'Years from Now',
-                            font: {
-                                size: 12,
-                                weight: '500'
+                            bodyFont: {
+                                size: 12
                             },
-                            color: '#6b7280'
-                        },
-                        grid: {
-                            color: 'rgba(229, 231, 235, 0.8)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: '#9ca3af',
-                            font: {
-                                size: 11
+                            padding: 12,
+                            callbacks: {
+                                label: (context) => {
+                                    const label = context.dataset.label || '';
+                                    const value = this.formatCurrency(context.parsed.y);
+                                    return `${label}: ${value}`;
+                                }
                             }
                         }
                     },
-                    y: {
-                        display: true,
-                        title: {
+                    scales: {
+                        x: {
                             display: true,
-                            text: 'Amount ($)',
-                            font: {
-                                size: 12,
-                                weight: '500'
+                            title: {
+                                display: true,
+                                text: 'Years from Now',
+                                font: {
+                                    size: 12,
+                                    weight: '500'
+                                },
+                                color: '#6b7280'
                             },
-                            color: '#6b7280'
-                        },
-                        grid: {
-                            color: 'rgba(229, 231, 235, 0.8)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: '#9ca3af',
-                            font: {
-                                size: 11
+                            grid: {
+                                color: 'rgba(229, 231, 235, 0.8)',
+                                drawBorder: false
                             },
-                            callback: function(value) {
-                                return new Intl.NumberFormat('en-US', {
-                                    style: 'currency',
-                                    currency: 'USD',
-                                    minimumFractionDigits: 0,
-                                    maximumFractionDigits: 0
-                                }).format(value);
+                            ticks: {
+                                color: '#9ca3af',
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Amount ($)',
+                                font: {
+                                    size: 12,
+                                    weight: '500'
+                                },
+                                color: '#6b7280'
+                            },
+                            grid: {
+                                color: 'rgba(229, 231, 235, 0.8)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#9ca3af',
+                                font: {
+                                    size: 11
+                                },
+                                callback: function(value) {
+                                    return new Intl.NumberFormat('en-US', {
+                                        style: 'currency',
+                                        currency: 'USD',
+                                        minimumFractionDigits: 0,
+                                        maximumFractionDigits: 0
+                                    }).format(value);
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
         }
     }
 
@@ -732,64 +779,6 @@ class CollegeSavingsCalculator {
         };
     }
 
-    checkFormValidity() {
-        const requiredFields = [
-            'sfc-current-savings',
-            'sfc-years-until-college',
-            'sfc-annual-contribution',
-            'sfc-rate-of-return',
-            'sfc-current-college-cost',
-            'sfc-college-inflation-rate'
-        ];
-
-        let allFieldsValid = true;
-        
-        requiredFields.forEach(fieldId => {
-            const field = document.getElementById(fieldId);
-            if (field) {
-                if (!field.value || field.value.trim() === '') {
-                    allFieldsValid = false;
-                } else {
-                    const isCurrencyField = fieldId === 'sfc-current-savings' || 
-                                          fieldId === 'sfc-annual-contribution' || 
-                                          fieldId === 'sfc-current-college-cost';
-                    const numericValue = isCurrencyField 
-                        ? this.parseCurrencyValue(field.value)
-                        : (fieldId === 'sfc-years-until-college' 
-                            ? parseInt(field.value) 
-                            : parseFloat(field.value));
-                    
-                    if (isNaN(numericValue) || numericValue < 0) {
-                        allFieldsValid = false;
-                    } else {
-                        switch (fieldId) {
-                            case 'sfc-current-savings':
-                                if (numericValue > 500000) allFieldsValid = false;
-                                break;
-                            case 'sfc-annual-contribution':
-                                if (numericValue > 100000) allFieldsValid = false;
-                                break;
-                            case 'sfc-current-college-cost':
-                                if (numericValue > 200000) allFieldsValid = false;
-                                break;
-                            case 'sfc-years-until-college':
-                                if (numericValue < 1 || numericValue > 50) allFieldsValid = false;
-                                break;
-                            case 'sfc-rate-of-return':
-                                if (numericValue > 100) allFieldsValid = false;
-                                break;
-                            case 'sfc-college-inflation-rate':
-                                if (numericValue > 50) allFieldsValid = false;
-                                break;
-                        }
-                    }
-                }
-            }
-        });
-
-        return allFieldsValid;
-    }
-
     validateAndCapInput(input) {
         const value = input.value.trim();
         const numericValue = this.parseCurrencyValue(value);
@@ -823,12 +812,7 @@ class CollegeSavingsCalculator {
         
         if (!isNaN(numericValue)) {
             if (numericValue > maxValue) {
-                if (input.type === 'number') {
                     input.value = maxValue.toString();
-                } else {
-                    input.value = maxValue.toLocaleString();
-                }
-                
                 this.showCappedValueAlert(input, maxValue);
                 this.showError(input, `⚠️ Value automatically capped at ${this.formatCurrency(maxValue)}`);
                 setTimeout(() => this.clearError(input), 4000);
@@ -836,10 +820,6 @@ class CollegeSavingsCalculator {
                 input.value = minValue.toString();
                 this.showError(input, `⚠️ Value cannot be less than ${minValue}`);
                 setTimeout(() => this.clearError(input), 3000);
-            } else {
-                if (input.type === 'text' && (input.id.includes('currency') || input.id.includes('savings') || input.id.includes('contribution') || input.id.includes('cost'))) {
-                    input.value = numericValue.toLocaleString();
-                }
             }
         }
         
@@ -950,8 +930,8 @@ class CollegeSavingsCalculator {
         
         const errorElement = inputGroup.querySelector('.sfc-error-message');
         if (errorElement) {
-        errorElement.textContent = message;
-        errorElement.classList.add('show');
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
         }
     }
 
@@ -965,8 +945,8 @@ class CollegeSavingsCalculator {
         
         const errorElement = inputGroup.querySelector('.sfc-error-message');
         if (errorElement) {
-        errorElement.classList.remove('show');
-        errorElement.textContent = '';
+            errorElement.classList.remove('show');
+            errorElement.textContent = '';
         }
     }
 
@@ -980,26 +960,30 @@ class CollegeSavingsCalculator {
     }
 
     resetForm() {
+        // Currency fields that need comma formatting
+        const currencyFields = ['sfc-current-savings', 'sfc-annual-contribution', 'sfc-current-college-cost'];
+        
+        // Reset all inputs to default values
         Object.keys(this.defaultValues).forEach(id => {
             const input = document.getElementById(id);
             if (input) {
                 const defaultValue = this.defaultValues[id];
+                // Format currency fields with commas
+                if (currencyFields.includes(id)) {
+                    input.value = this.formatNumber(parseInt(defaultValue));
+                } else {
                 input.value = defaultValue;
-                
-                if (id === 'sfc-current-savings' || id === 'sfc-annual-contribution' || id === 'sfc-current-college-cost') {
-                    const numericValue = parseFloat(defaultValue) || 0;
-                    if (numericValue > 0) {
-                        input.value = numericValue.toLocaleString();
-                    }
                 }
             }
         });
         
+        // Reset sliders
         const currentSavingsSlider = document.getElementById('sfc-current-savings-slider');
         const annualContributionSlider = document.getElementById('sfc-annual-contribution-slider');
         if (currentSavingsSlider) currentSavingsSlider.value = this.defaultValues['sfc-current-savings'];
         if (annualContributionSlider) annualContributionSlider.value = this.defaultValues['sfc-annual-contribution'];
         
+        // Clear any error messages
         const inputGroups = document.querySelectorAll('.sfc-input-group');
         inputGroups.forEach(group => {
             group.classList.remove('error', 'value-capped');
@@ -1012,6 +996,7 @@ class CollegeSavingsCalculator {
         
         this.calculateAndDisplay();
         
+        // Scroll to top of form on mobile
         if (window.innerWidth <= 750) {
             const calculator = document.querySelector('.sfc-calculator-layout');
             if (calculator) {
