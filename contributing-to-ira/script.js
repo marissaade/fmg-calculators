@@ -49,6 +49,7 @@ class IRACalculator {
         this.cacheElements();
         this.diagnoseStickyPositioning();
         this.initializeInputFormatting();
+        this.initializeSteppers();
         this.initializeSliders();
         this.attachEventListeners();
         // Calculate and display results on page load
@@ -290,14 +291,11 @@ class IRACalculator {
         let value = input.value.replace(/[^\d]/g, '');
         
         if (value) {
-            // Add commas for display
-            const formattedValue = parseInt(value).toLocaleString();
-            input.value = formattedValue;
+            // Add commas for display using consistent formatter
+            input.value = this.formatNumber(parseInt(value));
         }
     }
 
-    // Removed - functionality moved to initializeInputFormatting()
-    
     handlePercentFocus(event) {
         const input = event.target;
         // Auto-select entire value on focus for quick overwrite
@@ -314,6 +312,71 @@ class IRACalculator {
         const cleaned = value.replace(/[^\d.]/g, '');
         const result = parseFloat(cleaned) || 0;
         return result;
+    }
+
+    initializeSteppers() {
+        const stepperButtons = document.querySelectorAll('.ira-stepper-btn');
+        stepperButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const stepper = btn.closest('.ira-stepper');
+                const inputId = stepper.dataset.stepper;
+                const input = document.getElementById(inputId);
+                
+                if (!input) return;
+                
+                const action = btn.dataset.stepperAction;
+                const min = parseFloat(input.dataset.min) || 0;
+                const max = parseFloat(input.dataset.max) || 10000000;
+                const step = parseFloat(input.dataset.step) || 1000;
+                
+                // Parse current value
+                let currentValue;
+                if (inputId === 'ira-rate-of-return') {
+                    currentValue = parseFloat(input.value) || 0;
+                } else if (inputId === 'ira-years-to-contribute') {
+                    currentValue = parseInt(input.value) || 0;
+                } else {
+                    currentValue = this.parseCurrencyValue(input.value) || 0;
+                }
+                
+                if (action === 'increment') {
+                    currentValue = Math.min(currentValue + step, max);
+                } else if (action === 'decrement') {
+                    currentValue = Math.max(currentValue - step, min);
+                }
+                
+                // Format based on input type
+                if (inputId === 'ira-rate-of-return') {
+                    input.value = currentValue.toFixed(1);
+                    // Update slider
+                    const slider = document.getElementById('ira-rate-of-return-slider');
+                    if (slider) slider.value = currentValue;
+                } else if (inputId === 'ira-years-to-contribute') {
+                    input.value = Math.round(currentValue).toString();
+                    // Update slider
+                    const slider = document.getElementById('ira-years-to-contribute-slider');
+                    if (slider) slider.value = currentValue;
+                } else {
+                    // Currency input
+                    input.value = this.formatNumber(currentValue);
+                }
+                
+                // Trigger calculation with debounce
+                clearTimeout(this.calculationTimeout);
+                this.calculationTimeout = setTimeout(() => {
+                    this.calculateAndDisplay();
+                }, 100);
+            });
+        });
+    }
+    
+    formatNumber(value) {
+        return new Intl.NumberFormat('en-US', {
+            maximumFractionDigits: 0
+        }).format(value);
     }
 
     initializeSliders() {
@@ -369,7 +432,7 @@ class IRACalculator {
             if (input && input.value) {
                 const numericValue = parseFloat(input.value.replace(/[^\d]/g, '')) || 0;
                 if (numericValue > 0) {
-                    input.value = numericValue.toLocaleString();
+                    input.value = this.formatNumber(numericValue);
                 }
             }
         });
@@ -890,7 +953,7 @@ class IRACalculator {
                     if (id === 'ira-magi' || id === 'ira-initial-balance' || id === 'ira-annual-contribution') {
                         const numericValue = parseFloat(input.value.replace(/[^\d]/g, '')) || 0;
                         if (numericValue > 0) {
-                            input.value = numericValue.toLocaleString();
+                            input.value = this.formatNumber(numericValue);
                         }
                     }
                     
@@ -950,14 +1013,14 @@ class IRACalculator {
         const tooltips = document.querySelectorAll('.ira-tooltip');
         tooltips.forEach(tooltip => {
             tooltip.addEventListener('click', (e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 // Toggle active state
-                if (tooltip.classList.contains('active')) {
-                    tooltip.classList.remove('active');
-                } else {
-                    // Close other tooltips
-                    tooltips.forEach(t => t.classList.remove('active'));
-                    // Open this tooltip
+                const isActive = tooltip.classList.contains('active');
+                // Close all other tooltips
+                document.querySelectorAll('.ira-tooltip').forEach(t => t.classList.remove('active'));
+                // Toggle this tooltip
+                if (!isActive) {
                     tooltip.classList.add('active');
                 }
             });
@@ -966,7 +1029,7 @@ class IRACalculator {
         // Close tooltips when clicking outside
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.ira-tooltip')) {
-                tooltips.forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.ira-tooltip').forEach(t => t.classList.remove('active'));
             }
         });
     }

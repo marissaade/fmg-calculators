@@ -71,6 +71,9 @@ body {
     top: 0 !important;
     align-self: start !important;
     height: fit-content;
+    /* Prevent layout shifts during updates */
+    transform: translateZ(0);
+    will-change: transform;
 }
 
 .ira-results-column {
@@ -150,11 +153,11 @@ body {
 .ira-input-group.ira-has-slider .ira-input-wrapper {
     width: auto;
     flex-shrink: 0;
-    min-width: 90px;
-    max-width: 100px;
+    min-width: 110px;
+    max-width: 130px;
 }
 
-/* Tooltip styles */
+/* Tooltip styles - Click to toggle (not hover) */
 .ira-tooltip {
     display: inline-block;
     margin-left: 6px;
@@ -166,7 +169,7 @@ body {
     text-align: center;
     font-size: 12px;
     font-weight: 600;
-    cursor: help;
+    cursor: pointer;
     position: relative;
     line-height: 18px;
     transition: all 0.2s ease;
@@ -175,12 +178,6 @@ body {
     z-index: 999999;
 }
 
-.ira-tooltip:hover {
-    background: #475569;
-    transform: scale(1.1);
-}
-
-.ira-tooltip:hover::after,
 .ira-tooltip.active::after {
     content: attr(data-tooltip);
     position: absolute;
@@ -204,7 +201,6 @@ body {
     visibility: visible;
 }
 
-.ira-tooltip:hover::before,
 .ira-tooltip.active::before {
     content: '';
     position: absolute;
@@ -224,6 +220,75 @@ body {
     position: relative;
     display: flex;
     align-items: center;
+}
+
+/* Custom Stepper Styles */
+.ira-stepper {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.ira-input-wrapper:hover .ira-stepper,
+.ira-input-wrapper:focus-within .ira-stepper {
+    opacity: 0.7;
+}
+
+.ira-stepper-btn {
+    width: 20px;
+    height: 12px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.15s ease;
+    border-radius: 2px;
+}
+
+.ira-stepper-btn:hover {
+    background: #e5e7eb;
+}
+
+.ira-stepper-btn--up::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 6px solid #6b7280;
+}
+
+.ira-stepper-btn--down::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #6b7280;
+}
+
+.ira-stepper-btn:hover::before {
+    border-bottom-color: #374151;
+    border-top-color: #374151;
+}
+
+/* Unit symbol positioning with stepper */
+.ira-has-unit-stepper .ira-unit {
+    right: 35px;
+}
+
+.ira-has-unit-stepper input {
+    padding-right: 65px !important;
 }
 
 .ira-currency {
@@ -341,18 +406,15 @@ input[type="number"]:focus {
     border-color: rgb(16 185 129);
 }
 
-/* Steppers (hover only) */
+/* Hide native steppers - using custom steppers */
 .ira-input-wrapper input::-webkit-outer-spin-button,
 .ira-input-wrapper input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
-.ira-input-wrapper input:hover::-webkit-outer-spin-button,
-.ira-input-wrapper input:hover::-webkit-inner-spin-button,
-.ira-input-wrapper input:focus::-webkit-outer-spin-button,
-.ira-input-wrapper input:focus::-webkit-inner-spin-button {
-    -webkit-appearance: auto;
+.ira-input-wrapper input {
+    -moz-appearance: textfield;
 }
 
 /* Select dropdown */
@@ -659,6 +721,9 @@ input[type="number"]:focus {
 .ira-chart-container {
     position: relative;
     width: 100%;
+    min-height: 200px;
+    /* Prevent layout shifts during chart updates */
+    contain: layout;
 }
 
 .ira-chart-container canvas {
@@ -752,7 +817,7 @@ input[type="number"]:focus {
         padding: 0;
     }
 
-    .ira-tooltip:hover::after {
+    .ira-tooltip.active::after {
         width: 200px;
         font-size: 12px;
     }
