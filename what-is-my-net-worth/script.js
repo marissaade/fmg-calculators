@@ -26,6 +26,7 @@ class WhatIsMyNetWorthCalculator {
         this.cacheElements();
         this.diagnoseStickyPositioning();
         this.initializeInputFormatting();
+        this.initializeSteppers();
         this.initializeTooltips();
         this.initializeEventListeners();
         // Calculate and display results on page load
@@ -180,6 +181,50 @@ class WhatIsMyNetWorthCalculator {
         });
     }
     
+    initializeSteppers() {
+        const stepperButtons = document.querySelectorAll('.winw-stepper-btn');
+        stepperButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const stepper = btn.closest('.winw-stepper');
+                const inputId = stepper.dataset.stepper;
+                const input = document.getElementById(inputId);
+                
+                if (!input) return;
+                
+                const action = btn.dataset.stepperAction;
+                const min = parseFloat(input.dataset.min) || 0;
+                const max = parseFloat(input.dataset.max) || 1000000000;
+                const step = parseFloat(input.dataset.step) || 1000;
+                
+                let currentValue = this.parseCurrencyValue(input.value) || 0;
+                
+                if (action === 'increment') {
+                    currentValue = Math.min(currentValue + step, max);
+                } else if (action === 'decrement') {
+                    currentValue = Math.max(currentValue - step, min);
+                }
+                
+                // Format with commas for currency inputs
+                input.value = this.formatNumber(currentValue);
+                
+                // Trigger calculation with debounce
+                clearTimeout(this.calculationTimeout);
+                this.calculationTimeout = setTimeout(() => {
+                    this.calculateAndDisplay();
+                }, 100);
+            });
+        });
+    }
+    
+    formatNumber(value) {
+        return new Intl.NumberFormat('en-US', {
+            maximumFractionDigits: 0
+        }).format(value);
+    }
+
     initializeTooltips() {
         const tooltips = document.querySelectorAll('.winw-tooltip');
         tooltips.forEach(tooltip => {
@@ -209,23 +254,14 @@ class WhatIsMyNetWorthCalculator {
         let value = input.value.replace(/[^\d]/g, '');
         
         if (value) {
-            // Add commas for display
-            const formattedValue = parseInt(value).toLocaleString();
-            input.value = formattedValue;
+            // Add commas for display using consistent formatter
+            input.value = this.formatNumber(parseInt(value));
         }
-    }
-
-    handleCurrencyFocus(event) {
-        const input = event.target;
-        // Remove commas when focusing for easier editing
-        input.value = input.value.replace(/,/g, '');
     }
 
     parseCurrencyValue(value) {
         return parseFloat(value.replace(/[^\d.]/g, '')) || 0;
     }
-
-
 
     validateAndCapInput(input) {
         const value = input.value.trim();
@@ -236,7 +272,7 @@ class WhatIsMyNetWorthCalculator {
         
         if (value && !isNaN(numericValue)) {
             if (numericValue > maxValue) {
-                input.value = maxValue.toLocaleString();
+                input.value = this.formatNumber(maxValue);
                 this.showError(input, `Value cannot exceed ${this.formatCurrency(maxValue)}`);
             } else if (numericValue < 0) {
                 input.value = '';
@@ -257,7 +293,7 @@ class WhatIsMyNetWorthCalculator {
             if (input && input.value) {
                 const numericValue = parseFloat(input.value.replace(/[^\d]/g, '')) || 0;
                 if (numericValue > 0) {
-                    input.value = numericValue.toLocaleString();
+                    input.value = this.formatNumber(numericValue);
                 }
             }
         });
@@ -303,7 +339,6 @@ class WhatIsMyNetWorthCalculator {
             }
         }
     }
-
 
     getFormData() {
         return {
@@ -459,7 +494,7 @@ class WhatIsMyNetWorthCalculator {
                 // Format currency inputs with commas
                 const numericValue = parseFloat(input.value.replace(/[^\d]/g, '')) || 0;
                 if (numericValue > 0) {
-                    input.value = numericValue.toLocaleString();
+                    input.value = this.formatNumber(numericValue);
                 }
                 
                 // Clear any error states
