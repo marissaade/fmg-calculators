@@ -25,6 +25,7 @@ class WhatIsMyMonthlyBudgetCalculator {
         this.cacheElements();
         this.diagnoseStickyPositioning();
         this.initializeInputFormatting();
+        this.initializeSteppers();
         this.initializeTooltips();
         this.initializeEventListeners();
         // Calculate and display results on page load
@@ -104,27 +105,6 @@ class WhatIsMyMonthlyBudgetCalculator {
                 this.diagnoseStickyPositioning();
             }, 250);
         });
-        
-        // Add real-time calculation listeners to all inputs
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            // Real-time calculation on input change
-            input.addEventListener('input', () => {
-                this.clearError(input);
-                this.validateAndCapInput(input);
-                // Debounce calculation to avoid too many calculations
-                clearTimeout(this.calculationTimeout);
-                this.calculationTimeout = setTimeout(() => {
-                    this.calculateAndDisplay();
-                }, 300);
-            });
-            
-            // Also calculate on blur for immediate feedback
-            input.addEventListener('blur', () => {
-                this.validateAndCapInput(input);
-                this.calculateAndDisplay();
-            });
-        });
     }
 
     initializeInputFormatting() {
@@ -137,10 +117,6 @@ class WhatIsMyMonthlyBudgetCalculator {
         currencyInputs.forEach(id => {
             const input = document.getElementById(id);
             if (input) {
-                // Change to text type to allow commas
-                input.type = 'text';
-                input.inputMode = 'numeric';
-                
                 input.addEventListener('input', (e) => {
                     // Filter to only allow digits (strip all non-numeric characters)
                     const cursorPosition = e.target.selectionStart;
@@ -179,6 +155,48 @@ class WhatIsMyMonthlyBudgetCalculator {
         });
     }
     
+    initializeSteppers() {
+        const stepperBtns = document.querySelectorAll('[data-stepper-action]');
+
+        stepperBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const stepper = btn.closest('[data-stepper]');
+                if (!stepper) return;
+
+                const inputId = stepper.getAttribute('data-stepper');
+                const input = document.getElementById(inputId);
+                if (!input) return;
+
+                const action = btn.getAttribute('data-stepper-action');
+                const currentValue = this.parseCurrencyValue(input.value);
+                const step = parseFloat(input.getAttribute('data-step')) || 100;
+                const min = parseFloat(input.getAttribute('data-min')) || 0;
+                const max = parseFloat(input.getAttribute('data-max')) || 1000000;
+
+                let newValue;
+                if (action === 'increment') {
+                    newValue = Math.min(currentValue + step, max);
+                } else {
+                    newValue = Math.max(currentValue - step, min);
+                }
+
+                // Format with commas (all inputs are currency)
+                input.value = this.formatNumber(Math.round(newValue));
+
+                // Trigger calculation
+                clearTimeout(this.calculationTimeout);
+                this.calculationTimeout = setTimeout(() => {
+                    this.calculateAndDisplay();
+                }, 300);
+            });
+        });
+    }
+    
+    formatNumber(num) {
+        return new Intl.NumberFormat('en-US').format(num);
+    }
+    
     initializeTooltips() {
         const tooltips = document.querySelectorAll('.wimb-tooltip');
         tooltips.forEach(tooltip => {
@@ -209,39 +227,14 @@ class WhatIsMyMonthlyBudgetCalculator {
         
         if (value) {
             // Add commas for display
-            const formattedValue = parseInt(value).toLocaleString();
-            input.value = formattedValue;
+            input.value = this.formatNumber(parseInt(value));
         }
-    }
-
-    handleCurrencyFocus(event) {
-        const input = event.target;
-        // Remove commas when focusing for easier editing
-        input.value = input.value.replace(/,/g, '');
     }
 
     parseCurrencyValue(value) {
         return parseFloat(value.replace(/[^\d.]/g, '')) || 0;
     }
 
-    validateAndCapInput(input) {
-        const value = input.value.trim();
-        const numericValue = this.parseCurrencyValue(value);
-        
-        // Set reasonable limit
-        const maxValue = 1000000; // $1 million per month
-        
-        if (value && !isNaN(numericValue)) {
-            if (numericValue > maxValue) {
-                input.value = maxValue.toLocaleString();
-                this.showError(input, `Value cannot exceed ${this.formatCurrency(maxValue)}`);
-            } else if (numericValue < 0) {
-                input.value = '';
-                this.showError(input, 'Value cannot be negative');
-            }
-        }
-    }
-    
     calculateOnLoad() {
         // Format initial currency values with commas
         const currencyInputs = [
@@ -254,7 +247,7 @@ class WhatIsMyMonthlyBudgetCalculator {
             if (input && input.value) {
                 const numericValue = parseFloat(input.value.replace(/[^\d]/g, '')) || 0;
                 if (numericValue > 0) {
-                    input.value = numericValue.toLocaleString();
+                    input.value = this.formatNumber(numericValue);
                 }
             }
         });
@@ -462,7 +455,7 @@ class WhatIsMyMonthlyBudgetCalculator {
                 // Format currency inputs with commas
                 const numericValue = parseFloat(input.value.replace(/[^\d]/g, '')) || 0;
                 if (numericValue > 0) {
-                    input.value = numericValue.toLocaleString();
+                    input.value = this.formatNumber(numericValue);
                 }
                 
                 // Clear any error states
@@ -652,4 +645,3 @@ if (document.readyState === 'loading') {
 } else {
     initializeCalculator();
 }
-

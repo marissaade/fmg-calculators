@@ -192,6 +192,69 @@ input[type="number"]::placeholder {
     padding-left: 32px !important;
 }
 
+/* Custom stepper styles */
+.wimb-input-wrapper:has(.wimb-stepper) input {
+    padding-right: 35px;
+}
+
+.wimb-stepper {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.wimb-input-wrapper:hover .wimb-stepper,
+.wimb-input-wrapper:focus-within .wimb-stepper {
+    opacity: 0.7;
+}
+
+.wimb-stepper-btn {
+    width: 20px;
+    height: 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: opacity 0.15s ease;
+}
+
+.wimb-stepper-btn:hover {
+    opacity: 1;
+}
+
+.wimb-stepper-btn--up::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 6px solid #6b7280;
+}
+
+.wimb-stepper-btn--down::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #6b7280;
+}
+
+.wimb-stepper-btn:hover::before {
+    border-bottom-color: #374151;
+    border-top-color: #374151;
+}
+
 input[type="text"]:focus,
 input[type="number"]:focus {
     outline: none;
@@ -221,7 +284,7 @@ input[type="number"]:focus {
     text-align: center;
     font-size: 12px;
     font-weight: 600;
-    cursor: help;
+    cursor: pointer;
     position: relative;
     line-height: 18px;
     transition: all 0.2s ease;
@@ -235,7 +298,6 @@ input[type="number"]:focus {
     transform: scale(1.1);
 }
 
-.wimb-tooltip:hover::after,
 .wimb-tooltip.active::after {
     content: attr(data-tooltip);
     position: absolute;
@@ -259,7 +321,6 @@ input[type="number"]:focus {
     visibility: visible;
 }
 
-.wimb-tooltip:hover::before,
 .wimb-tooltip.active::before {
     content: '';
     position: absolute;
@@ -397,7 +458,6 @@ input[type="number"]:focus {
     letter-spacing: -0.02em;
 }
 
-/* Chart section */
 /* Chart section - Expandable card */
 .wimb-chart-section {
     background: #f7fafc;
@@ -505,19 +565,6 @@ input[type="number"]:focus {
     border: 2px solid #f3f4f6;
 }
 
-/* Download section */
-.wimb-download-section {
-    margin-top: 24px;
-}
-
-.wimb-download-btn {
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-decoration: none;
-    display: inline-block;
-    font-family: inherit;
-}
-
 /* Standard Breakpoints */
 @media (max-width: 950px) {
     .wimb-container {
@@ -580,10 +627,6 @@ input[type="number"]:focus {
     
     .wimb-chart-section {
         padding: 16px;
-    }
-    
-    .wimb-placeholder-content {
-        padding: 0;
     }
     
     .wimb-results-section {
@@ -657,4 +700,3 @@ input[type="number"]:focus {
         height: auto;
     }
 }
-
